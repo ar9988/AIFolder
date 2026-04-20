@@ -9,6 +9,6 @@ import androidx.room.Index
     indices = [Index("tagId")]
 )
 data class ResourceTagCrossRef(
-    val id: String,
+    val id: Long,
     val tagId: Long
 )

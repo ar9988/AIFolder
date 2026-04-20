@@ -4,10 +4,11 @@ import java.io.File
 import java.io.FileInputStream
 import java.security.MessageDigest
 import java.util.UUID
+import javax.inject.Inject
 
-object FileHashExtractor {
+class FileHashExtractor @Inject constructor(){
 
-    private fun calculateHash(file: File): String? {
+    fun calculateHash(file: File): String? {
         if (!file.exists() || file.isDirectory) return null
 
         return try {

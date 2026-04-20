@@ -3,6 +3,7 @@ package com.example.myfilemanager.di
 import android.content.Context
 import com.example.data.repository.local.LocalDataSource
 import com.example.local_db.dao.ResourceDao
+import com.example.local_db.dao.TagDao
 import com.example.local_db.db.AppDatabase
 import com.example.local_db.repository.local.LocalDataSourceImpl
 import dagger.Module
@@ -28,8 +29,16 @@ object DatabaseModule {
     }
 
     @Provides
+    fun provideTagDao(database: AppDatabase): TagDao {
+        return database.tagDao()
+    }
+
+    @Provides
     @Singleton
-    fun provideLocalDataSource(resourceDao: ResourceDao): LocalDataSource {
-        return LocalDataSourceImpl(resourceDao)
+    fun provideLocalDataSource(
+        resourceDao: ResourceDao,
+        tagDao: TagDao
+    ): LocalDataSource {
+        return LocalDataSourceImpl(resourceDao,tagDao)
     }
 }

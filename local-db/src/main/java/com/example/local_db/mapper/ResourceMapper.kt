@@ -15,7 +15,10 @@ fun ResourceEntity.toDomain(tags: List<TagEntity> = emptyList()): Resource {
         size = this.size,
         fileHash = this.fileHash,
         lastModified = this.lastModified,
-        tags = tags.map { it.toDomain() } // 태그 리스트도 변환
+        tags = tags.map { it.toDomain() },
+        parentId = this.parentId,
+        mimeType = this.mimeType,
+        extension = this.extension
     )
 }
 
@@ -29,17 +32,19 @@ fun TagEntity.toDomain(): Tag {
     )
 }
 
-fun Resource.toEntity(parentId: String? = null): ResourceEntity {
+fun Resource.toEntity(): ResourceEntity {
     return ResourceEntity(
         id = this.id,
         name = this.name,
         path = this.path,
         isDirectory = this.isDirectory,
         size = this.size,
-        parentId = parentId,
+        parentId = this.parentId,
         lastModified = this.lastModified,
         googleAccountId = null,
-        fileHash = this.fileHash
+        fileHash = this.fileHash,
+        mimeType = this.mimeType,
+        extension = this.extension,
     )
 }
 

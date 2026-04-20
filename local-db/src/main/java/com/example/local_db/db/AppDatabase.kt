@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.local_db.dao.ResourceDao
+import com.example.local_db.dao.TagDao
 import com.example.local_db.entity.ResourceEntity
 import com.example.local_db.entity.ResourceTagCrossRef
 import com.example.local_db.entity.TagEntity
@@ -15,12 +16,13 @@ import com.example.local_db.entity.TagEntity
         TagEntity::class,
         ResourceTagCrossRef::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun resourceDao(): ResourceDao
+    abstract fun tagDao(): TagDao
 
     companion object {
         @Volatile
