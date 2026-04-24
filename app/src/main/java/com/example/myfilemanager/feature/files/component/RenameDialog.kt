@@ -23,8 +23,8 @@ fun RenameDialog(
     state: FilesState,
     onIntent: (FilesIntent) -> Unit
 ) {
-    val targetResource = state.selectedResource
-        ?: state.selectedResources.firstOrNull()
+    val targetResource = state.selectedFile
+        ?: state.files.firstOrNull { it.id in state.selectedFileIds }
 
     val originalNameOnly = remember(targetResource) {
         if (targetResource?.isDirectory == true) {

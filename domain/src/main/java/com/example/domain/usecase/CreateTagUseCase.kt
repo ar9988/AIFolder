@@ -7,14 +7,13 @@ import javax.inject.Inject
 class CreateTagUseCase @Inject constructor(
     private val repository: TagRepository
 ) {
-    suspend operator fun invoke(tag: Tag): Result<Long> {
-//        val existingTag = repository.getTagByName(tag.name)
-//        if (existingTag != null) {
-//            return Result.failure(Exception("Duplicate Tag"))
-//        }
-//
-//        val newId = repository.insertTag(tag)
-//        return Result.success(newId)
-        return Result.success(0L)
+    suspend operator fun invoke(tagName:String, tagColor: Long): Tag {
+        val tag = Tag(
+            name = tagName,
+            color = tagColor,
+            isAiGenerated = false
+        )
+        val newTag = repository.insertTag(tag)
+        return newTag
     }
 }

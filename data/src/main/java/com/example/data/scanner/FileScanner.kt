@@ -8,7 +8,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import java.io.File
-import java.util.UUID
 import javax.inject.Inject
 import kotlin.math.abs
 import com.example.data.scanner.model.ScanResult
@@ -82,7 +81,6 @@ class FileScanner @Inject constructor(
 
                         // DB subtree update
                         localDataSource.updateSubtreePath(oldPath, newPath)
-
                         // cache subtree update
                         val affected = existingResources
                             .filterKeys { it == oldPath || it.startsWith("$oldPath/") }
@@ -110,18 +108,16 @@ class FileScanner @Inject constructor(
 
                     ScanType.INSERT -> {
                         if (result.resource.isDirectory) {
-                            val newId = localDataSource.insertResource(result.resource)
+                            val existing = existingResources[result.resource.path]
 
-                            val newResource = result.resource.copy(id = newId)
+                            val id = existing?.id ?: localDataSource.insertResource(result.resource)
+
+                            val newResource = result.resource.copy(id = id)
 
                             val parentCache = cache.getOrPut(parentId) { mutableMapOf() }
                             parentCache[newResource.path] = newResource
 
-                            result.directory?.let {
-                                queue.add(it to newId)
-                            }
-
-                            trySend(ScanEvent.FileProcessed(newId))
+                            queue.add(result.directory!! to id)
 
                             continue
                         } else {
@@ -176,20 +172,27 @@ class FileScanner @Inject constructor(
         val isDirectory = file.isDirectory
         val path = file.absolutePath
         val existing = existingResources[path]
-        val extension = getExtension(file)
-        val mimeType = getMimeType(file)
 
         val lastModified = file.lastModified()
         val size = if (isDirectory) 0L else file.length()
 
-        // 변경 없음
-        if ( !isDirectory &&
+        val extension = getExtension(file)
+        val mimeType = getMimeType(file)
+
+        // ----------------------------------------
+        // 0. 변경 없음 (파일만 체크)
+        // ----------------------------------------
+        if (!isDirectory &&
             existing != null &&
             existing.lastModified == lastModified &&
             existing.size == size
-        ) return null
+        ) {
+            return null
+        }
 
-        // 1. 폴더 rename 감지
+        // ----------------------------------------
+        // 1. 디렉토리 rename 감지
+        // ----------------------------------------
         val dirMatched = detectDirectoryRename(file, deletedResources)
 
         if (dirMatched != null) {
@@ -199,16 +202,18 @@ class FileScanner @Inject constructor(
                     name = file.name,
                     lastModified = lastModified,
                     extension = null,
-                    mimeType = null,
+                    mimeType = null
                 ),
                 parentId = parentId,
                 directory = file,
                 type = ScanType.DIRECTORY_RENAME,
-                oldPath = dirMatched.path,
+                oldPath = dirMatched.path
             )
         }
 
-        // 2. 파일 rename (기존 hash 방식)
+        // ----------------------------------------
+        // 2. 파일 rename 감지 (hash 기반)
+        // ----------------------------------------
         val hash = if (!isDirectory) {
             hashExtractor.calculateHash(file)
         } else null
@@ -223,13 +228,16 @@ class FileScanner @Inject constructor(
                     lastModified = lastModified
                 ),
                 parentId = parentId,
-                directory = file.takeIf { it.isDirectory },
+                directory = null,
                 type = ScanType.UPDATE,
-                oldPath = matched.path,
+                oldPath = matched.path
             )
         }
 
-        val resource = Resource(
+        // ----------------------------------------
+        // 3. 공통 Resource 생성
+        // ----------------------------------------
+        val newResource = Resource(
             name = file.name,
             path = path,
             isDirectory = isDirectory,
@@ -241,13 +249,53 @@ class FileScanner @Inject constructor(
             mimeType = mimeType
         )
 
-        return ScanResult(
-            resource = resource,
-            parentId = parentId,
-            directory = file.takeIf { it.isDirectory },
-            type = ScanType.INSERT,
-            oldPath = null,
-        )
+        // ----------------------------------------
+        // 4. 디렉토리 처리 (핵심)
+        // ----------------------------------------
+        if (isDirectory) {
+            return if (existing != null) {
+                // 기존 폴더 재사용 (ID 유지)
+                ScanResult(
+                    resource = existing,
+                    parentId = parentId,
+                    directory = file,
+                    type = ScanType.UPDATE, // or NO_OP로 바꿔도 OK
+                    oldPath = null
+                )
+            } else {
+                // 신규 폴더
+                ScanResult(
+                    resource = newResource,
+                    parentId = parentId,
+                    directory = file,
+                    type = ScanType.INSERT,
+                    oldPath = null
+                )
+            }
+        }
+
+        // ----------------------------------------
+        // 5. 파일 처리 (핵심)
+        // ----------------------------------------
+        return if (existing != null) {
+            // 기존 파일 → UPDATE
+            ScanResult(
+                resource = newResource.copy(id = existing.id),
+                parentId = parentId,
+                directory = null,
+                type = ScanType.UPDATE,
+                oldPath = null
+            )
+        } else {
+            // 신규 파일 → INSERT
+            ScanResult(
+                resource = newResource,
+                parentId = parentId,
+                directory = null,
+                type = ScanType.INSERT,
+                oldPath = null
+            )
+        }
     }
 
     private suspend fun flushInsertBuffer() {

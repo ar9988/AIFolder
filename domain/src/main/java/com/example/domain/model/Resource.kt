@@ -1,7 +1,7 @@
 package com.example.domain.model
 
 data class Resource(
-    val id: Long = 0L,           // UUID
+    val id: Long = 0L,
     val name: String,         // 파일/폴더 이름
     val path: String,         // 절대 경로
     val isDirectory: Boolean, // 폴더 여부

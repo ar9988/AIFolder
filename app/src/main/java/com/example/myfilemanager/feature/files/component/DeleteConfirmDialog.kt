@@ -13,8 +13,8 @@ fun DeleteConfirmDialog(
     state: FilesState,
     onIntent: (FilesIntent) -> Unit
 ) {
-    val deleteTargetName = state.selectedResource?.name
-        ?: "${state.selectedResourceIds.size}개의 항목"
+    val deleteTargetName = state.selectedFile?.name
+        ?: "${state.selectedFileIds.size}개의 항목"
 
     AlertDialog(
         onDismissRequest = { onIntent(FilesIntent.DismissDialog) },

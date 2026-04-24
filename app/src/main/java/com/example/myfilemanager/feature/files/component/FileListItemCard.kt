@@ -1,6 +1,5 @@
 package com.example.myfilemanager.feature.files.component
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -26,20 +25,20 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.domain.model.Resource
 import com.example.myfilemanager.R
 import com.example.myfilemanager.feature.files.FilesIntent
+import com.example.myfilemanager.feature.files.model.FileItemUiModel
 import com.example.myfilemanager.feature.files.model.FileMode
 import com.example.myfilemanager.ui.theme.CardWhite
 
 @Composable
 fun FileListItemCard(
-    resource: Resource,
+    resource: FileItemUiModel,
     isSelected: Boolean,
     fileMode: FileMode,
     onIntent: (FilesIntent) -> Unit
 ) {
-    val isParent = resource.isParentPointer
+    val isParent = resource.isParent
     val isMoving = fileMode == FileMode.Move && isSelected
     val isResult = fileMode == FileMode.SearchResult
 
@@ -135,21 +134,64 @@ fun FileListItemCard(
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
-            } else if (!isParent && resource.tags.isNotEmpty()) {
-                Row(modifier = Modifier.padding(top = 4.dp)) {
-                    resource.tags.forEach { tag ->
-                        TagChip(tag)
+            } else if (!isParent) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (resource.tags.isNotEmpty()) {
+                        val visibleTags = resource.tags.take(3)
+                        val remainingCount = resource.tags.size - visibleTags.size
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            visibleTags.forEach { tag ->
+                                TagChip(tag)
+                            }
+
+                            if (remainingCount > 0) {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(end = 4.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color.LightGray)
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "+$remainingCount",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.DarkGray
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    if (resource.metaText.isNotEmpty()) {
+                        Text(
+                            text = resource.metaText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Gray,
+                            maxLines = 1,
+                        )
                     }
                 }
-            } else if (isParent) {
+                if (isResult) {
+                    Text(
+                        text = resource.path,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.DarkGray,
+                        maxLines = 1,
+                    )
+                }
+            }
+            else {
                 Text(
                     text = "상위 폴더로 이동",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.DarkGray
-                )
-            } else if (isResult) {
-                Text(
-                    text = resource.path,
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.DarkGray
                 )

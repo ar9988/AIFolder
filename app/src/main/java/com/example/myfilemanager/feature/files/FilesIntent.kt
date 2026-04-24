@@ -1,7 +1,9 @@
 package com.example.myfilemanager.feature.files
 
 import com.example.domain.model.FileCategory
-import com.example.domain.model.Resource
+import com.example.domain.model.Tag
+import com.example.myfilemanager.feature.files.model.FileItemUiModel
+import com.example.myfilemanager.feature.files.model.SelectionState
 
 sealed class FilesIntent {
     object ClickScan : FilesIntent()
@@ -11,23 +13,19 @@ sealed class FilesIntent {
     data class FilterByCategory(val category: FileCategory) : FilesIntent()
 
     object ClearFilter : FilesIntent()
-    data class ClickResource(val resource: Resource): FilesIntent()
-    data class LongClickResource(val resource: Resource) : FilesIntent()
-    data class UpdateNewTagName(val name: String) : FilesIntent()
-    data class UpdateNewTagColor(val color: String) : FilesIntent()
-    data class ToggleSelection(val resource : Resource) : FilesIntent()
-    data class ShowFileDetail(val resource: Resource): FilesIntent()
-    object CreateTag : FilesIntent()
-    object ShowTagCreateDialog : FilesIntent()
-    object HideTagCreateDialog : FilesIntent()
-    object ShowTagEditSheet : FilesIntent()
+    data class ClickResource(val resource: FileItemUiModel): FilesIntent()
+    data class LongClickResource(val resource: FileItemUiModel) : FilesIntent()
+    data class ToggleSelection(val resource : FileItemUiModel) : FilesIntent()
+    data class ShowFileDetail(val resource: FileItemUiModel): FilesIntent()
+    object ShowTagActionSheet : FilesIntent()
+    object HideTagActionSheet : FilesIntent()
     object ShowBottomSheet: FilesIntent()
     object ClearBottomSheet: FilesIntent()
     object ShowDeleteConfirmDialog : FilesIntent()
     object ConfirmDelete : FilesIntent()
     object ShowRenameDialog : FilesIntent()
     object DismissDialog : FilesIntent()
-    data class ConfirmRename(val name: String,val resource: Resource?): FilesIntent()
+    data class ConfirmRename(val name: String,val resource: FileItemUiModel?): FilesIntent()
     object StartMove : FilesIntent()
     object ConfirmMove : FilesIntent()
     object ShowAddButton : FilesIntent()
@@ -37,5 +35,11 @@ sealed class FilesIntent {
     object ConfirmSearch: FilesIntent()
     object OpenSearch: FilesIntent()
     data class ConfirmAdd(val name: String,val parentPath:String) : FilesIntent()
-    data class FileOpen(val resource: Resource): FilesIntent()
+    data class FileOpen(val resource: FileItemUiModel): FilesIntent()
+    data class CreateAndAddTag(val tagName: String): FilesIntent()
+    data class ToggleTagSelection(val tag: Tag,val nextState: SelectionState): FilesIntent()
+    data class AddTag(val tag: Tag): FilesIntent()
+    object ApplyTagChanges: FilesIntent()
+    data class RemoveActiveTag(val tag: Tag): FilesIntent()
+    data class AddActiveTag(val tag: Tag): FilesIntent()
 }

@@ -1,10 +1,11 @@
 package com.example.myfilemanager.feature.files
 
 import com.example.domain.model.FileCategory
-import com.example.domain.model.Resource
 import com.example.domain.model.Tag
+import com.example.myfilemanager.feature.files.model.FileItemUiModel
 import com.example.myfilemanager.feature.files.model.FileMode
 import com.example.myfilemanager.feature.files.model.FileOverlay
+import com.example.myfilemanager.feature.files.model.SelectionState
 import com.example.myfilemanager.feature.files.model.ViewMode
 
 data class FilesState(
@@ -14,18 +15,17 @@ data class FilesState(
 
     val navigationStack: List<Pair<String, Long?>> = emptyList(), // Path, Id
     val currentFolderId: Long? = null,
-    val selectedResource: Resource? = null,
-    val selectedResourceIds: Set<Long> = emptySet(),
-    val selectedResources: Set<Resource> = emptySet(),
+    val selectedFile: FileItemUiModel? = null,
+    val selectedFileIds: Set<Long> = emptySet(),
     val selectedCategory: FileCategory? = null,
-    val selectedTags: Set<Tag> = emptySet(),
-    val files: List<Resource> = emptyList(),
+    val selectedTagIds: Set<Long> = emptySet(),
+    val activeTags: Set<Long> = emptySet(),
+    val files: List<FileItemUiModel> = emptyList(),
     val currentPath: String = "",
     val searchQuery: String = "",
-
-    val allTags: List<Tag> = emptyList(),
+    val filteredTags: List<Tag> = emptyList(),
+    val isExactMatch: Boolean = false,
+    val allTags: Map<Long,Tag> = emptyMap(),
     val isLoading: Boolean = false,
-    val error: String? = null,
-    val newTagName: String = "",
-    val newTagColor: String = "#6200EE",
+    val tagStatusMap: Map<Long, SelectionState> = emptyMap(),
 )

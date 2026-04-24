@@ -2,6 +2,8 @@ package com.example.local_db.repository.local
 
 import com.example.data.repository.local.LocalDataSource
 import com.example.domain.model.Resource
+import com.example.domain.model.ResourceTagCrossRefModel
+import com.example.domain.model.Tag
 import com.example.local_db.dao.ResourceDao
 import com.example.local_db.dao.TagDao
 import com.example.local_db.entity.ResourceTagCrossRef
@@ -12,8 +14,12 @@ import kotlinx.coroutines.flow.map
 
 class LocalDataSourceImpl(
     private val resourceDao: ResourceDao,
-    private val tagDao: TagDao
+    private val tagDao: TagDao,
 ) : LocalDataSource {
+
+    override suspend fun renameResource(id: Long, newName: String, newPath: String) {
+        resourceDao.renameResource(id,newName,newPath)
+    }
 
     override suspend fun updateResource(resource: Resource) {
         resourceDao.updateResource(resource.toEntity())
@@ -61,17 +67,18 @@ class LocalDataSourceImpl(
         resourceDao.addTagToResource(ResourceTagCrossRef(resourceId, tagId))
     }
 
-    override suspend fun removeTagFromResource(resourceId: Long, tagId: Long) {
-        resourceDao.deleteResourceTagCrossRef(resourceId,tagId)
-    }
-
     override suspend fun insertAll(resources: List<Resource>) {
         resourceDao.insertAll(resources.map { it.toEntity() })
     }
 
     override suspend fun deleteAll(resources: List<Resource>) {
-        val entities = resources.map { it.toEntity() }
-        resourceDao.deleteAll(entities)
+        if(resources.isEmpty()) return
+        resourceDao.deleteAll(resources.map { it.toEntity() })
+    }
+
+    override suspend fun deleteAllByIds(resources: List<Long>) {
+        if(resources.isEmpty()) return
+        resourceDao.deleteAllByIds(resources)
     }
 
     override suspend fun deleteResource(resource: Resource) {
@@ -93,6 +100,16 @@ class LocalDataSourceImpl(
         }
     }
 
+    override suspend fun updateAllByIds(updated: List<Triple<Long,String,Long?>>) {
+        // id, path, parentId
+        if (updated.isEmpty()) return
+        updated.chunked(900).forEach { chunk ->
+            chunk.forEach { (id, path, parentId) ->
+                resourceDao.updatePathAndParent(id, path, parentId)
+            }
+        }
+    }
+
     override suspend fun updateSubtreePath(oldPath: String, newPath: String) {
         resourceDao.updateSubtreePath(oldPath,newPath)
     }
@@ -110,6 +127,25 @@ class LocalDataSourceImpl(
         return resourceDao.getResourcesByTagsAndQuery(query,tagIds).map { entities ->
             entities.map{it.toDomain()}
         }
+    }
+
+    override suspend fun insertTag(tag: Tag): Tag {
+        val id = tagDao.insertTag(tag.toEntity())
+        return tagDao.getTag(id).toDomain()
+    }
+
+    override fun getAllTags(): Flow<List<Tag>> {
+        return tagDao.getAllTags().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun insertResourceTagCrossRefs(refs: List<ResourceTagCrossRefModel>) {
+        resourceDao.addTagToResourceAll(refs.map { it.toEntity() })
+    }
+
+    override suspend fun deleteResourceTagCrossRefs(refs: List<ResourceTagCrossRefModel>) {
+        resourceDao.deleteResourceTagCrossRef(refs.map { it.toEntity() })
     }
 
 }

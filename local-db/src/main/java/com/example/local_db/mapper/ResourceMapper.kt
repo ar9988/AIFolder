@@ -1,8 +1,10 @@
 package com.example.local_db.mapper
 
 import com.example.domain.model.Resource
+import com.example.domain.model.ResourceTagCrossRefModel
 import com.example.domain.model.Tag
 import com.example.local_db.entity.ResourceEntity
+import com.example.local_db.entity.ResourceTagCrossRef
 import com.example.local_db.entity.ResourceWithTags
 import com.example.local_db.entity.TagEntity
 
@@ -22,12 +24,19 @@ fun ResourceEntity.toDomain(tags: List<TagEntity> = emptyList()): Resource {
     )
 }
 
-// TagEntity -> Domain Tag 모델로 변환
 fun TagEntity.toDomain(): Tag {
     return Tag(
         id = this.tagId,
         name = this.tagName,
         color = this.tagColor,
+        isAiGenerated = this.isAiGenerated
+    )
+}
+
+fun Tag.toEntity(): TagEntity{
+    return TagEntity(
+        tagName = this.name,
+        tagColor = this.color,
         isAiGenerated = this.isAiGenerated
     )
 }
@@ -50,4 +59,11 @@ fun Resource.toEntity(): ResourceEntity {
 
 fun ResourceWithTags.toDomain(): Resource {
     return resource.toDomain(tags)
+}
+
+fun ResourceTagCrossRefModel.toEntity(): ResourceTagCrossRef{
+    return ResourceTagCrossRef(
+        tagId = this.tagId,
+        resourceId= this.resourceId
+    )
 }

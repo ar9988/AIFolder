@@ -22,6 +22,7 @@ import com.example.myfilemanager.feature.files.component.FilesActionSheet
 import com.example.myfilemanager.feature.files.component.MoveDialog
 import com.example.myfilemanager.feature.files.component.MoveFab
 import com.example.myfilemanager.feature.files.component.RenameDialog
+import com.example.myfilemanager.feature.files.component.TagActionSheet
 import com.example.myfilemanager.feature.files.model.FileMode
 import com.example.myfilemanager.feature.files.model.FileOverlay
 import com.example.myfilemanager.feature.files.model.ViewMode
@@ -62,12 +63,12 @@ fun FilesDashboardScreen(
         when (state.fileMode) {
             is FileMode.Selection -> {
                 EditFab(
-                    count = state.selectedResourceIds.size,
+                    count = state.selectedFileIds.size,
                     onClick = { viewModel.handleIntent(FilesIntent.ShowBottomSheet) }
                 )
             }
             is FileMode.Move -> {
-                val totalCount = state.selectedResourceIds.size + (if (state.selectedResource != null) 1 else 0)
+                val totalCount = state.selectedFileIds.size + (if (state.selectedFile != null) 1 else 0)
                 MoveFab(
                     count = totalCount,
                     onClick = { viewModel.handleIntent(FilesIntent.ShowMoveDialog) }
@@ -87,8 +88,8 @@ fun FilesDashboardScreen(
                 FileOverlay.RenameDialog -> RenameDialog(state, viewModel::handleIntent)
                 FileOverlay.DeleteDialog -> DeleteConfirmDialog(state, viewModel::handleIntent)
                 FileOverlay.BottomSheet -> FilesActionSheet(state, viewModel::handleIntent)
+                FileOverlay.TagActionSheet -> TagActionSheet(state, viewModel::handleIntent)
                 FileOverlay.MoveDialog -> MoveDialog(state, viewModel::handleIntent)
-                FileOverlay.TagDialog -> TODO()
                 FileOverlay.AddDialog -> AddDialog(state,viewModel::handleIntent)
             }
         }

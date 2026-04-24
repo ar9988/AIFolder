@@ -9,7 +9,11 @@ data class ResourceWithTags(
     @Relation(
         parentColumn = "id",
         entityColumn = "tagId",
-        associateBy = Junction(ResourceTagCrossRef::class)
+        associateBy = Junction(
+            value = ResourceTagCrossRef::class,
+            parentColumn = "resourceId",
+            entityColumn = "tagId"
+        )
     )
     val tags: List<TagEntity>
 )

@@ -3,19 +3,23 @@ package com.example.myfilemanager.feature.files
 import android.app.Application
 import android.content.Intent
 import android.os.Build
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.domain.model.Resource
 import com.example.domain.usecase.*
 import com.example.local_db.util.FileConstants
+import com.example.myfilemanager.feature.files.model.FileItemUiModel
 import com.example.myfilemanager.feature.files.model.FileMode
+import com.example.myfilemanager.feature.files.model.SelectionState
+import com.example.myfilemanager.feature.files.model.toUiModel
 import com.example.myfilemanager.service.SyncService
+import com.example.myfilemanager.ui.theme.getRandomColor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.stream.Collectors
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,6 +36,8 @@ class FilesViewModel @Inject constructor(
     private val renameResourceUseCase: RenameResourceUseCase,
     private val addResourceUseCase: AddResourceUseCase,
     private val moveResourceUseCase: MoveResourceUseCase,
+    private val getAllTagsUseCase: GetAllTagsUseCase,
+    private val openFileUseCase: OpenFileUseCase
 ) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(FilesState())
@@ -41,6 +47,7 @@ class FilesViewModel @Inject constructor(
     val sideEffect = _sideEffect.receiveAsFlow()
 
     init {
+        observeTags()
         observeFiles()
         startScan(FileConstants.ROOT_PATH)
     }
@@ -52,7 +59,11 @@ class FilesViewModel @Inject constructor(
                     _state.update { FilesReducer.reduceOpenFolder(it) }
                     navigateToPath(intent.resource.path)
                 }
-                else {}
+                else {
+                    openFileUseCase(intent.resource.path)
+                    _state.update { FilesReducer.reduceOpenFile(it) }
+                }
+
             }
             is FilesIntent.NavigateTo -> navigateToPath(intent.path)
 
@@ -84,10 +95,6 @@ class FilesViewModel @Inject constructor(
 
             is FilesIntent.ShowFileDetail -> {
                 _state.update { FilesReducer.reduceShowFileDetail(it,intent.resource) }
-            }
-
-            is FilesIntent.ShowTagCreateDialog -> {
-                _state.update { FilesReducer.reduceShowTagCreateDialog(it) }
             }
 
             is FilesIntent.ShowBottomSheet ->{
@@ -153,24 +160,75 @@ class FilesViewModel @Inject constructor(
                 _state.update { FilesReducer.reduceOpenSearch(it) }
             }
 
-            is FilesIntent.CreateTag -> {
-
+            is FilesIntent.AddTag -> {
+                _state.update { FilesReducer.reduceCreateAndAddTag(it,intent.tag) }
+            }
+            is FilesIntent.ShowTagActionSheet -> {
+                _state.update { FilesReducer.reduceShowTagActionSheet(it) }
+            }
+            is FilesIntent.ApplyTagChanges -> {
+                handleApplyTagChanges()
+                _state.update { FilesReducer.reduceHideTagActionSheet(it) }
+            }
+            is FilesIntent.CreateAndAddTag -> {
+                handleCreateAndAddTag(intent.tagName)
+            }
+            is FilesIntent.ToggleTagSelection -> {
+                _state.update { FilesReducer.reduceToggleTag(it,intent.tag, intent.nextState) }
+            }
+            is FilesIntent.HideTagActionSheet -> {
+                _state.update { FilesReducer.reduceHideTagActionSheet(it) }
             }
 
-            is FilesIntent.HideTagCreateDialog -> TODO()
-            is FilesIntent.UpdateNewTagColor -> TODO()
-            is FilesIntent.UpdateNewTagName -> TODO()
-            is FilesIntent.ShowTagEditSheet -> TODO()
+            is FilesIntent.AddActiveTag -> {
+                _state.update { FilesReducer.reduceAddActiveTag(it,intent.tag) }
+            }
+            is FilesIntent.RemoveActiveTag ->
+                _state.update { FilesReducer.reduceRemoveActiveTag(it,intent.tag) }
+        }
+    }
+
+    private fun handleApplyTagChanges() {
+        val currentState = _state.value
+        val targets = if (currentState.selectedFile != null) {
+            listOf(currentState.selectedFile.id)
+        } else {
+            currentState.selectedFileIds.toList()
+        }
+
+        if (targets.isEmpty()) return
+
+        viewModelScope.launch {
+            currentState.tagStatusMap.forEach { (tagId, selectionState) ->
+                when (selectionState) {
+                    SelectionState.ALL -> {
+                        addTagToResourceUseCase(targets, tagId)
+                    }
+                    SelectionState.NONE -> {
+                        removeTagFromResourceUseCase(targets, tagId)
+                    }
+                    SelectionState.SOME -> {
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleCreateAndAddTag(newTagName:String){
+        viewModelScope.launch {
+            val newTag = createTagUseCase(newTagName, getRandomColor())
+            _state.update { FilesReducer.reduceCreateAndAddTag(it,newTag) }
         }
     }
 
     private fun handleConfirmMove(){
         val currentState = state.value
 
-        val targets = if (currentState.selectedResource != null) {
-            listOf(currentState.selectedResource)
+        val targets = if (currentState.selectedFile != null) {
+            listOf(Triple(currentState.selectedFile.id,currentState.selectedFile.path,currentState.selectedFile.name))
         } else {
-            currentState.selectedResources.toList()
+            val temp = currentState.files.filter{ it.id in currentState.selectedFileIds }
+            temp.stream().map { it -> Triple(it.id,it.path, it.name) }.collect(Collectors.toList())
         }
         viewModelScope.launch {
             val result = moveResourceUseCase(targets,currentState.currentFolderId,currentState.currentPath)
@@ -197,10 +255,10 @@ class FilesViewModel @Inject constructor(
         }
     }
 
-    private fun handleConfirmRename(newName:String,resource: Resource?){
+    private fun handleConfirmRename(newName:String,resource: FileItemUiModel?){
         if(resource == null) return
         viewModelScope.launch {
-            val result = renameResourceUseCase(resource, newName)
+            val result = renameResourceUseCase(Triple(resource.id,resource.path,resource.name), newName)
 
             result.onSuccess {
                 _state.update { FilesReducer.reduceRenameSuccess(it) }
@@ -214,10 +272,11 @@ class FilesViewModel @Inject constructor(
     private fun handleConfirmDelete(){
         val currentState = state.value
 
-        val targets = if (currentState.selectedResource != null) {
-            listOf(currentState.selectedResource)
+        val targets = if (currentState.selectedFile != null) {
+            listOf(Pair(currentState.selectedFile.id,currentState.selectedFile.path))
         } else {
-            currentState.selectedResources.toList()
+            val temp = currentState.files.filter { it.id in currentState.selectedFileIds }
+            temp.stream().map { it -> Pair(it.id,it.path) }.collect(Collectors.toList())
         }
         viewModelScope.launch {
             val result = deleteResourceUseCase(targets)
@@ -253,7 +312,9 @@ class FilesViewModel @Inject constructor(
             .flatMapLatest { (folderId, category, mode) ->
                 when {
                     category != null -> getResourcesByCategoryUseCase(category)
-                    mode == FileMode.SearchResult -> getFilteredResourcesUseCase(state.value.searchQuery,state.value.selectedTags.toList())
+                    mode == FileMode.SearchResult -> getFilteredResourcesUseCase(state.value.searchQuery,state.value.activeTags.mapNotNull { id ->
+                        state.value.allTags[id]
+                    })
                     folderId != null -> getResourcesByParentIdUseCase(folderId)
                     else -> emptyFlow()
                 }
@@ -273,7 +334,7 @@ class FilesViewModel @Inject constructor(
                     )
                 } else null
 
-                val finalList = if (parentPointer != null) listOf(parentPointer) + resourceList else resourceList
+                val finalList = (if (parentPointer != null) listOf(parentPointer) + resourceList else resourceList).map { it.toUiModel() }
                 _state.update { FilesReducer.reduceObserveFiles(it, finalList) }
             }
             .launchIn(viewModelScope)
@@ -288,6 +349,14 @@ class FilesViewModel @Inject constructor(
         } else {
             getApplication<Application>().startService(intent)
         }
+    }
+
+    private fun observeTags() {
+        getAllTagsUseCase()
+            .onEach { tags ->
+                _state.update { FilesReducer.reduceObserveTags(it,tags) }
+            }
+            .launchIn(viewModelScope)
     }
 
 }

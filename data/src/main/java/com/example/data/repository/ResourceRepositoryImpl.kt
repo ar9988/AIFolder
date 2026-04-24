@@ -36,27 +36,27 @@ class ResourceRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteResources(resources: List<Resource>): Result<Unit> = withContext(
+    override suspend fun deleteResources(resources: List<Pair<Long,String>>): Result<Unit> = withContext(
         Dispatchers.IO) {
-
-        val deletedResources = mutableListOf<Resource>()
+        //id , path
+        val deletedResources = mutableListOf<Long>()
 
         resources.forEach { resource ->
-            val file = File(resource.path)
+            val file = File(resource.second)
 
             val success = if (file.exists()) {
-                if (resource.isDirectory) file.deleteRecursively()
+                if (file.isDirectory) file.deleteRecursively()
                 else file.delete()
             } else true
 
             if (success) {
-                deletedResources.add(resource)
+                deletedResources.add(resource.first)
             }
         }
 
         return@withContext try {
             if (deletedResources.isNotEmpty()) {
-                localDataSource.deleteAll(deletedResources)
+                localDataSource.deleteAllByIds(deletedResources)
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -66,10 +66,6 @@ class ResourceRepositoryImpl @Inject constructor(
 
     override suspend fun addTagToResource(resourceId: Long, tagId: Long) {
         localDataSource.addTagToResource(resourceId, tagId)
-    }
-
-    override suspend fun removeTagFromResource(resourceId: Long, tagId: Long) {
-        localDataSource.removeTagFromResource(resourceId, tagId)
     }
 
     override suspend fun updateAiTags(resourceId: Long, tags: List<String>) {
@@ -105,38 +101,34 @@ class ResourceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun moveResource(
-        resources: List<Resource>,
+        targets: List<Triple<Long, String, String>>, // id, path, name
         targetParentId: Long?,
         targetParentPath: String
     ): Result<Unit> = withContext(Dispatchers.IO) {
-        val movedResources = mutableListOf<Resource>()
+        val movedResources = mutableListOf<Triple<Long,String,Long?>>() //id, path, parentId
         val movedFolders = mutableListOf<Pair<String, String>>() // oldPath, newPath
 
         runCatching {
-            resources.forEach { resource ->
-                val sourceFile = File(resource.path)
-                val targetFile = File(targetParentPath, resource.name)
+            targets.forEach { it ->
+                val sourceFile = File(it.second)
+                val targetFile = File(targetParentPath, it.third)
 
-                if (!sourceFile.exists()) throw Exception("${resource.name} 원본 파일이 없습니다.")
+                if (!sourceFile.exists()) throw Exception("${it.third} 원본 파일이 없습니다.")
                 if (targetFile.exists()) throw Exception("대상 위치에 같은 이름의 항목이 이미 있습니다.")
 
                 val moveSuccess = sourceFile.renameTo(targetFile)
-                if (!moveSuccess) throw Exception("${resource.name} 이동에 실패했습니다.")
+                if (!moveSuccess) throw Exception("${it.third} 이동에 실패했습니다.")
 
                 val newPath = targetFile.path
-                val updatedResource = resource.copy(
-                    path = newPath,
-                    parentId = targetParentId
-                )
-                movedResources.add(updatedResource)
+                movedResources.add(Triple(it.first,newPath,targetParentId))
 
-                if (resource.isDirectory) {
-                    movedFolders.add(resource.path to newPath)
+                if (targetFile.isDirectory) {
+                    movedFolders.add(it.second to newPath)
                 }
             }
 
             if (movedResources.isNotEmpty()) {
-                localDataSource.updateAll(movedResources)
+                localDataSource.updateAllByIds(movedResources.toList())
 
                 movedFolders.forEach { (oldPath, newPath) ->
                     localDataSource.updateSubtreePath(oldPath, newPath)
@@ -146,19 +138,19 @@ class ResourceRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun renameResource(resource: Resource, newName: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun renameResource(resource: Triple<Long,String,String>, newName: String): Result<Unit> = withContext(Dispatchers.IO) {
+        //id ,path, name
         try {
-            val oldFile = File(resource.path)
+            val oldFile = File(resource.second)
             val parentPath = oldFile.parent ?: ""
             val newPath = if (parentPath.isEmpty()) newName else "$parentPath/$newName"
             val newFile = File(newPath)
 
             if (oldFile.renameTo(newFile)) {
-                val updatedResource = resource.copy(name = newName, path = newPath)
-                localDataSource.updateResource(updatedResource)
+                localDataSource.renameResource(resource.first,newName,newPath)
 
-                if (resource.isDirectory) {
-                    localDataSource.updateSubtreePath(resource.path, newPath)
+                if (newFile.isDirectory) {
+                    localDataSource.updateSubtreePath(resource.second, newPath)
                 }
                 Result.success(Unit)
             } else {

@@ -1,8 +1,8 @@
 package com.example.domain.model
 
 data class Tag(
-    val id: Long,
+    val id: Long = 0L,
     val name: String,
-    val color: String,
+    val color: Long,
     val isAiGenerated: Boolean
 )

@@ -31,10 +31,9 @@ fun FilesActionSheet(
     state: FilesState,
     onIntent: (FilesIntent) -> Unit
 ) {
-    // 1. 단일 아이템 여부 판단 및 아이템 추출 (안전한 getOrNull 처리)
-    val selectedCount = if (state.selectedResource != null) 1 else state.selectedResourceIds.size
+    val selectedCount = if (state.selectedFile != null) 1 else state.selectedFileIds.size
     val isSingleItem = selectedCount == 1
-    val singleItem = state.selectedResource ?: state.selectedResources.firstOrNull()
+    val singleItem = state.selectedFile ?: state.files.firstOrNull { it.id in state.selectedFileIds }
 
     ModalBottomSheet(
         onDismissRequest = { onIntent(FilesIntent.ClearBottomSheet) },
@@ -48,14 +47,12 @@ fun FilesActionSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
-            // 헤더 영역
             if (isSingleItem && singleItem != null) {
                 SingleFileHeader(resource = singleItem)
             } else {
                 MultiSelectionHeader(count = selectedCount)
             }
 
-            // 액션 버튼 영역 (위치 고정)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -63,7 +60,6 @@ fun FilesActionSheet(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // [열기] 단일 아이템일 때만 활성화
                 ActionEditItem(
                     icon = if (singleItem?.isDirectory == true) Icons.Outlined.FolderOpen else Icons.Outlined.FileOpen,
                     label = if (singleItem?.isDirectory == true) "폴더 열기" else "파일 열기",
@@ -71,7 +67,6 @@ fun FilesActionSheet(
                     onClick = { singleItem?.let { onIntent(FilesIntent.FileOpen(it)) } }
                 )
 
-                // [이름 변경] 단일 아이템일 때만 활성화
                 ActionEditItem(
                     icon = Icons.Default.Edit,
                     label = "이름 변경",
@@ -79,15 +74,13 @@ fun FilesActionSheet(
                     onClick = { onIntent(FilesIntent.ShowRenameDialog) }
                 )
 
-                // [태그 편집] 항상 활성화 (통합된 기능)
                 ActionEditItem(
                     icon = Icons.AutoMirrored.Outlined.Label,
                     label = "태그 편집",
                     enabled = selectedCount > 0,
-                    onClick = { onIntent(FilesIntent.ShowTagEditSheet) }
+                    onClick = { onIntent(FilesIntent.ShowTagActionSheet) }
                 )
 
-                // [이동] 항상 활성화
                 ActionEditItem(
                     icon = Icons.AutoMirrored.Outlined.DriveFileMove,
                     label = "이동",
@@ -101,7 +94,6 @@ fun FilesActionSheet(
                         .padding(horizontal = 4.dp)
                 )
 
-                // [삭제] 항상 활성화 (빨간색 포인트)
                 ActionEditItem(
                     icon = Icons.Default.Delete,
                     label = "삭제",

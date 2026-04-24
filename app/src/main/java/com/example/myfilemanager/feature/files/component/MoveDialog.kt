@@ -13,8 +13,8 @@ fun MoveDialog(
     state: FilesState,
     onIntent: (FilesIntent) -> Unit
 ) {
-    val selectedTarget = state.selectedResource?.name
-        ?: "${state.selectedResourceIds.size}개의 항목"
+    val selectedTarget = state.selectedFile?.name
+        ?: "${state.selectedFileIds.size}개의 항목"
 
     AlertDialog(
         onDismissRequest = { onIntent(FilesIntent.DismissDialog) },

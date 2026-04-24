@@ -1,21 +1,24 @@
 package com.example.myfilemanager.feature.files.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +55,11 @@ fun ListHeader(
         is FileMode.Move -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
         is FileMode.Search -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         else -> Color.Transparent
+    }
+
+    val scrollState = rememberScrollState()
+    LaunchedEffect(state.searchQuery, state.activeTags) {
+        scrollState.scrollTo(scrollState.maxValue)
     }
 
     Row(
@@ -107,30 +115,55 @@ fun ListHeader(
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                         decorationBox = { innerTextField ->
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .background(Color.White, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                                    .fillMaxWidth()
+                                    .horizontalScroll(scrollState),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(modifier = Modifier.weight(1f)) {
-                                    if (state.searchQuery.isEmpty()) {
-                                        Text("파일 또는 태그 검색", color = Color.LightGray)
+                                state.activeTags.forEach { tagId ->
+                                    val tag = state.allTags[tagId]
+                                    if (tag != null) {
+                                        InputTagChip(tag) { onIntent(FilesIntent.RemoveActiveTag(tag)) }
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                    }
+                                }
+
+                                Box(
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    if (state.searchQuery.isEmpty() && state.activeTags.isEmpty()) {
+                                        Text(
+                                            "파일 또는 태그 검색",
+                                            color = Color.LightGray,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            softWrap = false
+                                        )
                                     }
                                     innerTextField()
-                                }
-                                if (state.searchQuery.isNotEmpty()) {
-                                    IconButton(
-                                        onClick = { onIntent(FilesIntent.UpdateSearchQuery("")) },
-                                        modifier = Modifier.size(20.dp)
-                                    ) {
-                                        Icon(Icons.Default.Close, contentDescription = "Clear", tint = Color.Gray)
-                                    }
                                 }
                             }
                         },
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = { onIntent(FilesIntent.ConfirmSearch) })
                     )
+                    if (state.filteredTags.isNotEmpty() && state.searchQuery.isNotEmpty()) {
+                        FlowRow(
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            state.filteredTags.take(5).forEach { tag ->
+                                TagChip(
+                                    tag = tag,
+                                    onIntent = { onIntent(FilesIntent.AddActiveTag(tag)) }
+                                )
+                            }
+                        }
+                    }
                 }
                 else -> {
                     Text(

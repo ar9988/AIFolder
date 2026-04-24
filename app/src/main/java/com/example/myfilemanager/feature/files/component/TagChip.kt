@@ -13,18 +13,23 @@ import androidx.compose.ui.unit.dp
 import com.example.domain.model.Tag
 
 @Composable
-fun TagChip(tag: Tag) {
+fun TagChip(
+    tag: Tag,
+    onIntent: (() -> Unit)? = null
+) {
     Surface(
         modifier = Modifier.padding(end = 6.dp),
-        color = Color(0xFF2196F3).copy(alpha = 0.15f), // 연한 블루 배경
-        shape = RoundedCornerShape(8.dp)
+        color = Color(tag.color),
+        shape = RoundedCornerShape(8.dp),
+        enabled = onIntent != null,
+        onClick = { onIntent?.invoke() }
     ) {
         Text(
             text = "#${tag.name}",
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF1976D2) // 진한 블루 글자
+            color = Color.Black
         )
     }
 }

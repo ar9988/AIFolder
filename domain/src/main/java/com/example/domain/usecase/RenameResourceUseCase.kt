@@ -9,12 +9,13 @@ class RenameResourceUseCase @Inject constructor(
 ) {
     private val forbiddenChars = Regex("[\\\\/:*?\"<>|]")
 
-    suspend operator fun invoke(resource: Resource, newName: String): Result<Unit> {
+    suspend operator fun invoke(resource: Triple<Long,String,String>, newName: String): Result<Unit> {
+        //id, path, name
         if (newName.isBlank()) {
             return Result.failure(Exception("새 이름을 입력해주세요."))
         }
 
-        if (resource.name == newName) {
+        if (resource.third == newName) {
             return Result.failure(Exception("기존 이름과 동일합니다."))
         }
 

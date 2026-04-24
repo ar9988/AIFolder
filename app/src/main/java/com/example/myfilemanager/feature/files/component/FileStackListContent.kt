@@ -41,8 +41,8 @@ fun FileStackListContent(
                 sortedFiles,
                 key= {it.id}
             ) { resource ->
-                val isSelected = remember(state.selectedResourceIds, state.selectedResource, state.fileMode) {
-                    state.selectedResourceIds.contains(resource.id) || state.selectedResource?.id == resource.id
+                val isSelected = remember(state.selectedFileIds, state.selectedFile, state.fileMode) {
+                    state.selectedFileIds.contains(resource.id) || state.selectedFile?.id == resource.id
                 }
 
                 FileListItemCard(

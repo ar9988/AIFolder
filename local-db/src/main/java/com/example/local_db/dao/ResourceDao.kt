@@ -29,10 +29,12 @@ interface ResourceDao {
     // 2. 특정 태그가 달린 모든 리소스 검색
     @Transaction
     @Query("""
-        SELECT * FROM resource 
-        INNER JOIN resource_tag_cross_ref ON resource.id = resource_tag_cross_ref.id 
-        WHERE resource_tag_cross_ref.tagId = :tagId
-    """)
+    SELECT resource.*
+    FROM resource 
+    INNER JOIN resource_tag_cross_ref 
+    ON resource.id = resource_tag_cross_ref.resourceId 
+    WHERE resource_tag_cross_ref.tagId = :tagId
+""")
     fun getResourcesByTag(tagId: Long): Flow<List<ResourceWithTags>>
 
     // 3. 리소스 삽입 및 업데이트
@@ -43,14 +45,20 @@ interface ResourceDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun addTagToResource(crossRef: ResourceTagCrossRef)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun addTagToResourceAll(crossRefs: List<ResourceTagCrossRef>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(resources: List<ResourceEntity>)
 
-    @Query("DELETE FROM resource_tag_cross_ref WHERE id = :resourceId AND tagId = :tagId")
-    suspend fun deleteResourceTagCrossRef(resourceId: Long, tagId: Long)
+    @Delete
+    suspend fun deleteResourceTagCrossRef(refs:List<ResourceTagCrossRef>)
 
     @Delete
     suspend fun deleteAll(entities: List<ResourceEntity>)
+
+    @Query("DELETE FROM resource WHERE id IN (:ids)")
+    suspend fun deleteAllByIds(ids: List<Long>)
 
     @Query("DELETE FROM resource WHERE path IN (:paths)")
     suspend fun deleteByPaths(paths: List<String>)
@@ -60,6 +68,17 @@ interface ResourceDao {
 
     @Update
     suspend fun updateResources(resources: List<ResourceEntity>)
+
+    @Query("""
+    UPDATE resource 
+    SET path = :path, parentId = :parentId 
+    WHERE id = :id
+""")
+    suspend fun updatePathAndParent(
+        id: Long,
+        path: String,
+        parentId: Long?
+    )
 
     @Update
     suspend fun updateResource(resources: ResourceEntity)
@@ -92,10 +111,10 @@ interface ResourceDao {
     @Query("""
         SELECT * FROM resource 
         WHERE id IN (
-            SELECT id
+            SELECT resourceId
             FROM resource_tag_cross_ref 
             WHERE tagId IN (:tagIds)
-            GROUP BY id
+            GROUP BY resourceId
             HAVING COUNT(DISTINCT tagId) = :tagCount
         )
         AND (:query == '' OR name LIKE '%' || :query || '%')
@@ -109,4 +128,7 @@ interface ResourceDao {
        OR extension LIKE '%' || :query || '%'
 """)
     fun getResourcesByQuery(query: String): Flow<List<ResourceWithTags>>
+
+    @Query("UPDATE resource SET path = :newPath, name = :newName WHERE id == :id")
+    suspend fun renameResource(id: Long, newName: String, newPath: String)
 }
