@@ -13,16 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.myfilemanager.feature.files.component.AddDialog
-import com.example.myfilemanager.feature.files.component.AddFab
 import com.example.myfilemanager.feature.files.component.DashboardContent
 import com.example.myfilemanager.feature.files.component.DeleteConfirmDialog
-import com.example.myfilemanager.feature.files.component.EditFab
 import com.example.myfilemanager.feature.files.component.FileStackListContent
 import com.example.myfilemanager.feature.files.component.FilesActionSheet
+import com.example.myfilemanager.feature.files.component.MainFab
 import com.example.myfilemanager.feature.files.component.MoveDialog
-import com.example.myfilemanager.feature.files.component.MoveFab
 import com.example.myfilemanager.feature.files.component.RenameDialog
 import com.example.myfilemanager.feature.files.component.TagActionSheet
+import com.example.myfilemanager.feature.files.model.FabState
 import com.example.myfilemanager.feature.files.model.FileMode
 import com.example.myfilemanager.feature.files.model.FileOverlay
 import com.example.myfilemanager.feature.files.model.ViewMode
@@ -60,27 +59,36 @@ fun FilesDashboardScreen(
             }
         }
 
-        when (state.fileMode) {
+        val fabState: FabState? = when (state.fileMode) {
             is FileMode.Selection -> {
-                EditFab(
-                    count = state.selectedFileIds.size,
-                    onClick = { viewModel.handleIntent(FilesIntent.ShowBottomSheet) }
-                )
+                FabState.Edit(count = state.selectedFileIds.size)
             }
+
             is FileMode.Move -> {
-                val totalCount = state.selectedFileIds.size + (if (state.selectedFile != null) 1 else 0)
-                MoveFab(
-                    count = totalCount,
-                    onClick = { viewModel.handleIntent(FilesIntent.ShowMoveDialog) }
-                )
+                val totalCount = state.selectedFileIds.size +
+                        (if (state.selectedFile != null) 1 else 0)
+                FabState.Move(count = totalCount)
             }
+
             is FileMode.Normal -> {
-                if(state.viewMode== ViewMode.LIST)
-                AddFab(
-                    onClick = { viewModel.handleIntent(FilesIntent.ShowAddButton) }
-                )
+                if (state.viewMode == ViewMode.LIST) {
+                    FabState.Add
+                } else null
             }
-            else -> {}
+
+            else -> null
+        }
+        fabState?.let { state ->
+            MainFab(
+                fabState = state,
+                onClick = {
+                    when (state) {
+                        FabState.Add -> viewModel.handleIntent(FilesIntent.ShowAddButton)
+                        is FabState.Edit -> viewModel.handleIntent(FilesIntent.ShowBottomSheet)
+                        is FabState.Move -> viewModel.handleIntent(FilesIntent.ShowMoveDialog)
+                    }
+                }
+            )
         }
 
         state.fileOverlay?.let { overlay ->

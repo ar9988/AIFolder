@@ -282,6 +282,10 @@ object FilesReducer {
     fun reduceHideTagActionSheet(currentState: FilesState): FilesState {
         return currentState.copy(
             fileOverlay = null,
+            fileMode = FileMode.Normal,
+            selectedTagIds = emptySet(),
+            selectedFile = null,
+            selectedFileIds = emptySet(),
         )
     }
 

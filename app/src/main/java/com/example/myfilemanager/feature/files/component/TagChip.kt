@@ -15,14 +15,11 @@ import com.example.domain.model.Tag
 @Composable
 fun TagChip(
     tag: Tag,
-    onIntent: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier.padding(end = 6.dp),
         color = Color(tag.color),
         shape = RoundedCornerShape(8.dp),
-        enabled = onIntent != null,
-        onClick = { onIntent?.invoke() }
     ) {
         Text(
             text = "#${tag.name}",

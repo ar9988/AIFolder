@@ -43,6 +43,7 @@ import com.example.myfilemanager.R
 import com.example.myfilemanager.feature.files.FilesIntent
 import com.example.myfilemanager.feature.files.FilesState
 import com.example.myfilemanager.feature.files.model.FileMode
+import com.example.myfilemanager.feature.files.model.TagChipAction
 
 @Composable
 fun ListHeader(
@@ -125,7 +126,11 @@ fun ListHeader(
                                 state.activeTags.forEach { tagId ->
                                     val tag = state.allTags[tagId]
                                     if (tag != null) {
-                                        InputTagChip(tag) { onIntent(FilesIntent.RemoveActiveTag(tag)) }
+                                        InputTagChip(
+                                            tag,
+                                            action = TagChipAction.REMOVE,
+                                            onClick = {onIntent(FilesIntent.RemoveActiveTag(tag)) }
+                                        )
                                         Spacer(modifier = Modifier.width(4.dp))
                                     }
                                 }
@@ -157,9 +162,10 @@ fun ListHeader(
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             state.filteredTags.take(5).forEach { tag ->
-                                TagChip(
+                                InputTagChip(
                                     tag = tag,
-                                    onIntent = { onIntent(FilesIntent.AddActiveTag(tag)) }
+                                    action = TagChipAction.ADD,
+                                    onClick = { onIntent(FilesIntent.AddActiveTag(tag)) },
                                 )
                             }
                         }
