@@ -3,7 +3,7 @@ package com.example.myfilemanager.feature.files
 import com.example.domain.model.Resource
 import com.example.domain.model.FileCategory
 import com.example.domain.model.Tag
-import com.example.myfilemanager.feature.files.model.FileItemUiModel
+import com.example.myfilemanager.feature.common.model.FileItemUiModel
 import com.example.myfilemanager.feature.files.model.FileMode
 import com.example.myfilemanager.feature.files.model.FileOverlay
 import com.example.myfilemanager.feature.files.model.SelectionState

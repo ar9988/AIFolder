@@ -6,12 +6,24 @@ import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.domain.model.Resource
-import com.example.domain.usecase.*
+import com.example.domain.usecase.files.AddResourceUseCase
+import com.example.domain.usecase.files.AddTagToResourceUseCase
+import com.example.domain.usecase.files.CreateTagUseCase
+import com.example.domain.usecase.files.DeleteResourceUseCase
+import com.example.domain.usecase.common.GetAllTagsUseCase
+import com.example.domain.usecase.files.GetFilteredResourcesUseCase
+import com.example.domain.usecase.files.GetResourceByPathUseCase
+import com.example.domain.usecase.files.GetResourcesByCategoryUseCase
+import com.example.domain.usecase.files.GetResourcesByParentIdUseCase
+import com.example.domain.usecase.files.MoveResourceUseCase
+import com.example.domain.usecase.files.OpenFileUseCase
+import com.example.domain.usecase.files.RemoveTagFromResourceUseCase
+import com.example.domain.usecase.files.RenameResourceUseCase
 import com.example.local_db.util.FileConstants
-import com.example.myfilemanager.feature.files.model.FileItemUiModel
+import com.example.myfilemanager.feature.common.model.FileItemUiModel
 import com.example.myfilemanager.feature.files.model.FileMode
 import com.example.myfilemanager.feature.files.model.SelectionState
-import com.example.myfilemanager.feature.files.model.toUiModel
+import com.example.myfilemanager.feature.common.model.toUiModel
 import com.example.myfilemanager.service.SyncService
 import com.example.myfilemanager.ui.theme.getRandomColor
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -216,8 +228,9 @@ class FilesViewModel @Inject constructor(
 
     private fun handleCreateAndAddTag(newTagName:String){
         viewModelScope.launch {
-            val newTag = createTagUseCase(newTagName, getRandomColor())
-            _state.update { FilesReducer.reduceCreateAndAddTag(it,newTag) }
+            val newTag = createTagUseCase(newTagName, getRandomColor()).getOrNull()
+            if(newTag!=null)
+            _state.update { FilesReducer.reduceCreateAndAddTag(it,newTag)}
         }
     }
 

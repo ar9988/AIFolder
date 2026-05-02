@@ -16,7 +16,7 @@ import com.example.local_db.entity.TagEntity
         TagEntity::class,
         ResourceTagCrossRef::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.text)
+    implementation(libs.androidx.compose.foundation.layout)
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.hilt.android)

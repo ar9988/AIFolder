@@ -27,7 +27,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.myfilemanager.R
 import com.example.myfilemanager.feature.files.FilesIntent
-import com.example.myfilemanager.feature.files.model.FileItemUiModel
+import com.example.myfilemanager.feature.common.model.FileItemUiModel
+import com.example.myfilemanager.feature.common.model.TagChip
 import com.example.myfilemanager.feature.files.model.FileMode
 import com.example.myfilemanager.ui.theme.CardWhite
 

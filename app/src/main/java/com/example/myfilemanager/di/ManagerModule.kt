@@ -1,7 +1,7 @@
 package com.example.myfilemanager.di
 
 import com.example.domain.manager.FileOpener
-import com.example.myfilemanager.manager.AndroidFileOpener
+import com.example.myfilemanager.feature.common.manager.AndroidFileOpener
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

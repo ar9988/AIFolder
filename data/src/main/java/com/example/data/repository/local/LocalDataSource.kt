@@ -3,6 +3,7 @@ package com.example.data.repository.local
 import com.example.domain.model.Resource
 import com.example.domain.model.ResourceTagCrossRefModel
 import com.example.domain.model.Tag
+import com.example.domain.model.TagWithCount
 import kotlinx.coroutines.flow.Flow
 
 interface LocalDataSource {
@@ -26,8 +27,15 @@ interface LocalDataSource {
     fun getResourcesByTagsAndQuery(query: String, tagIds: List<Long>): Flow<List<Resource>>
     suspend fun insertTag(tag: Tag): Tag
     fun getAllTags(): Flow<List<Tag>>
-    suspend fun insertResourceTagCrossRefs(refs: List<ResourceTagCrossRefModel>)
+    suspend fun insertResourceTagCrossRefs(
+        resourceIds: List<Long>,
+        tagId: Long
+    )
     suspend fun deleteResourceTagCrossRefs(refs: List<ResourceTagCrossRefModel>)
     suspend fun renameResource(id: Long, newName: String, newPath: String)
     suspend fun updateAll(updated: List<Resource>)
+    fun getTagsWithCount(): Flow<List<TagWithCount>>
+    fun getResourcesByTags(selectedTags: kotlin.collections.List<Long>): kotlinx.coroutines.flow.Flow<kotlin.collections.List<com.example.domain.model.Resource>>
+    fun deleteTag(tagId: Long)
+    fun updateTag(tagId: Long, tagName: String, tagColor: Long)
 }

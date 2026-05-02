@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.domain.model.Tag
+import com.example.myfilemanager.feature.common.model.TagChip
 
 @Composable
 fun TagSuggestButton(

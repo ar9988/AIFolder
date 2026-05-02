@@ -1,11 +1,14 @@
 package com.example.local_db.repository.local
 
+import androidx.room.withTransaction
 import com.example.data.repository.local.LocalDataSource
 import com.example.domain.model.Resource
 import com.example.domain.model.ResourceTagCrossRefModel
 import com.example.domain.model.Tag
+import com.example.domain.model.TagWithCount
 import com.example.local_db.dao.ResourceDao
 import com.example.local_db.dao.TagDao
+import com.example.local_db.db.AppDatabase
 import com.example.local_db.entity.ResourceTagCrossRef
 import com.example.local_db.mapper.toDomain
 import com.example.local_db.mapper.toEntity
@@ -15,6 +18,7 @@ import kotlinx.coroutines.flow.map
 class LocalDataSourceImpl(
     private val resourceDao: ResourceDao,
     private val tagDao: TagDao,
+    private val appDatabase: AppDatabase
 ) : LocalDataSource {
 
     override suspend fun renameResource(id: Long, newName: String, newPath: String) {
@@ -100,6 +104,10 @@ class LocalDataSourceImpl(
         }
     }
 
+    override fun getTagsWithCount(): Flow<List<TagWithCount>> {
+        return tagDao.getTagsWithCount()
+    }
+
     override suspend fun updateAllByIds(updated: List<Triple<Long,String,Long?>>) {
         // id, path, parentId
         if (updated.isEmpty()) return
@@ -129,6 +137,13 @@ class LocalDataSourceImpl(
         }
     }
 
+
+    override fun getResourcesByTags(selectedTags: List<Long>): Flow<List<Resource>> {
+        return resourceDao.getResourcesByTags(selectedTags,selectedTags.size).map { entities ->
+            entities.map{it.toDomain()}
+        }
+    }
+
     override suspend fun insertTag(tag: Tag): Tag {
         val id = tagDao.insertTag(tag.toEntity())
         return tagDao.getTag(id).toDomain()
@@ -140,12 +155,28 @@ class LocalDataSourceImpl(
         }
     }
 
-    override suspend fun insertResourceTagCrossRefs(refs: List<ResourceTagCrossRefModel>) {
-        resourceDao.addTagToResourceAll(refs.map { it.toEntity() })
+    override suspend fun insertResourceTagCrossRefs(
+        resourceIds: List<Long>,
+        tagId: Long
+    ) {
+        val refs = resourceIds.map { resId ->
+            ResourceTagCrossRefModel(resourceId = resId, tagId = tagId)
+        }
+        appDatabase.withTransaction {
+            resourceDao.addTagToResourceAll(refs.map { it.toEntity() })
+            tagDao.updateLastUsedAt(tagId, System.currentTimeMillis())
+        }
     }
 
     override suspend fun deleteResourceTagCrossRefs(refs: List<ResourceTagCrossRefModel>) {
         resourceDao.deleteResourceTagCrossRef(refs.map { it.toEntity() })
     }
 
+    override fun deleteTag(tagId: Long) {
+        tagDao.deleteTag(tagId)
+    }
+
+    override fun updateTag(tagId: Long, tagName: String, tagColor: Long) {
+        tagDao.updateTag(tagId,tagName,tagColor)
+    }
 }

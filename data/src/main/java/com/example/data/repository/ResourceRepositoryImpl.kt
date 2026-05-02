@@ -189,10 +189,14 @@ class ResourceRepositoryImpl @Inject constructor(
         return localDataSource.getResourcesByQuery(query)
     }
 
-    override fun getResourcesByMultipleTags(
+    override fun getResourcesByMultipleTagsAndQuery(
         query: String,
         tagIds: List<Long>
     ): Flow<List<Resource>> {
         return localDataSource.getResourcesByTagsAndQuery(query,tagIds)
+    }
+
+    override fun getResourcesByTags(selectedTags: List<Long>): Flow<List<Resource>> {
+        return localDataSource.getResourcesByTags(selectedTags)
     }
 }

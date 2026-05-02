@@ -8,5 +8,7 @@ data class TagEntity(
     @PrimaryKey(autoGenerate = true) val tagId: Long = 0,
     val tagName: String,
     val tagColor: Long,
-    val isAiGenerated: Boolean = false
+    val isAiGenerated: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis(),
+    val lastUsedAt: Long = System.currentTimeMillis()
 )

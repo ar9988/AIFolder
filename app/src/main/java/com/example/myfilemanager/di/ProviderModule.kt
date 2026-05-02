@@ -1,7 +1,7 @@
 package com.example.myfilemanager.di
 
 import com.example.data.scanner.MimeTypeProvider
-import com.example.myfilemanager.provider.AndroidMimeTypeProvider
+import com.example.myfilemanager.feature.common.provider.AndroidMimeTypeProvider
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

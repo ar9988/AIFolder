@@ -131,4 +131,17 @@ interface ResourceDao {
 
     @Query("UPDATE resource SET path = :newPath, name = :newName WHERE id == :id")
     suspend fun renameResource(id: Long, newName: String, newPath: String)
+
+    @Transaction
+    @Query("""
+        SELECT * FROM resource 
+        WHERE id IN (
+            SELECT resourceId
+            FROM resource_tag_cross_ref 
+            WHERE tagId IN (:selectedTags)
+            GROUP BY resourceId
+            HAVING COUNT(DISTINCT tagId) = :tagCount
+        )
+    """)
+    fun getResourcesByTags(selectedTags: List<Long>, tagCount: Int): Flow<List<ResourceWithTags>>
 }

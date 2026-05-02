@@ -40,10 +40,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.example.myfilemanager.R
+import com.example.myfilemanager.feature.common.model.InputTagChip
 import com.example.myfilemanager.feature.files.FilesIntent
 import com.example.myfilemanager.feature.files.FilesState
 import com.example.myfilemanager.feature.files.model.FileMode
-import com.example.myfilemanager.feature.files.model.TagChipAction
+import com.example.myfilemanager.feature.common.model.TagChipAction
 
 @Composable
 fun ListHeader(
@@ -129,7 +130,7 @@ fun ListHeader(
                                         InputTagChip(
                                             tag,
                                             action = TagChipAction.REMOVE,
-                                            onClick = {onIntent(FilesIntent.RemoveActiveTag(tag)) }
+                                            onClick = { onIntent(FilesIntent.RemoveActiveTag(tag)) }
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
                                     }

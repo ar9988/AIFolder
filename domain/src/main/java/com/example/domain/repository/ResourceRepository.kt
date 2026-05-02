@@ -25,5 +25,6 @@ interface ResourceRepository {
     suspend fun renameResource(resource: Triple<Long,String,String>, newName: String): Result<Unit>
     fun createPhysicalFile(parentPath: String, inputName: String, isDirectory: Boolean): Result<File>
     fun getResourcesByQuery(query: String): Flow<List<Resource>>
-    fun getResourcesByMultipleTags(query: String, tagIds: List<Long>): Flow<List<Resource>>
+    fun getResourcesByMultipleTagsAndQuery(query: String, tagIds: List<Long>): Flow<List<Resource>>
+    fun getResourcesByTags(selectedTags: List<Long>): Flow<List<Resource>>
 }

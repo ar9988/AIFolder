@@ -37,8 +37,9 @@ object DatabaseModule {
     @Singleton
     fun provideLocalDataSource(
         resourceDao: ResourceDao,
-        tagDao: TagDao
+        tagDao: TagDao,
+        appDatabase: AppDatabase
     ): LocalDataSource {
-        return LocalDataSourceImpl(resourceDao,tagDao)
+        return LocalDataSourceImpl(resourceDao,tagDao,appDatabase)
     }
 }

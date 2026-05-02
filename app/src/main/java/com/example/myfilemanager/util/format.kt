@@ -15,7 +15,7 @@ fun formatFileSize(size: Long): String {
     }
 }
 
-fun formatDate(time: Long): String {
+fun formatCreateDate(time: Long): String {
     val now = System.currentTimeMillis()
     val diff = now - time
 

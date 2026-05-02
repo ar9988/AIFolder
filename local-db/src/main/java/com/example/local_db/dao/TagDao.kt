@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import com.example.domain.model.Tag
+import com.example.domain.model.TagWithCount
 import com.example.local_db.entity.ResourceTagCrossRef
 import com.example.local_db.entity.ResourceWithTags
 import com.example.local_db.entity.TagEntity
@@ -45,4 +45,31 @@ interface TagDao {
     @Transaction
     @Query("SELECT * FROM tags")
     fun getAllTags(): Flow<List<TagEntity>>
+
+    @Query("""
+    SELECT 
+        T.tagId, 
+        T.tagName, 
+        T.tagColor, 
+        COUNT(FT.resourceId) as count,
+        T.createdAt,
+        T.lastUsedAt as usedAt
+    FROM tags T
+    LEFT JOIN RESOURCE_TAG_CROSS_REF FT ON T.tagId = FT.tagId
+    GROUP BY T.tagId
+""")
+    fun getTagsWithCount(): Flow<List<TagWithCount>>
+
+    @Query("UPDATE tags SET lastUsedAt = :timestamp WHERE tagId = :tagId")
+    fun updateLastUsedAt(tagId: Long, timestamp: Long)
+
+    @Query("DELETE FROM tags WHERE tagId = :tagId")
+    fun deleteTag(tagId: Long)
+
+    @Query("""
+    UPDATE tags 
+    SET tagName = :tagName, tagColor = :tagColor 
+    WHERE tagId = :tagId
+""")
+    fun updateTag(tagId: Long, tagName: String, tagColor: Long)
 }

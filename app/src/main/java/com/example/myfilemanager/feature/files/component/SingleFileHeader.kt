@@ -19,7 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.myfilemanager.feature.files.model.FileItemUiModel
+import com.example.myfilemanager.feature.common.model.FileItemUiModel
+import com.example.myfilemanager.feature.common.model.TagChip
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
