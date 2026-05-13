@@ -5,9 +5,13 @@ import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class ImageTextProcessor(private val context: Context) {
+class ImageTextProcessor @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
 
     private val recognizer = TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
 
