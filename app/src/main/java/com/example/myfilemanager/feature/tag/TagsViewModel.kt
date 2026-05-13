@@ -2,7 +2,7 @@ package com.example.myfilemanager.feature.tag
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.domain.usecase.files.CreateTagUseCase
+import com.example.domain.usecase.common.CreateTagUseCase
 import com.example.domain.usecase.tag.DeleteTagUseCase
 import com.example.domain.usecase.tag.GetTagsWithCountUseCase
 import com.example.domain.usecase.tag.UpdateTagUseCase
@@ -112,9 +112,14 @@ class TagsViewModel @Inject constructor(
             is TagsIntent.SaveTag -> {
                 handleSaveTag()
             }
-
-            is TagsIntent.DeleteTag -> {
-                handleDeleteTag(intent.tagId)
+            is TagsIntent.ConfirmDelete -> {
+                handleDeleteTag()
+            }
+            is TagsIntent.DismissDialog -> {
+                _uiState.update { TagsReducer.reduceDismissDialog(it) }
+            }
+            is TagsIntent.ShowDeleteDialog -> {
+                _uiState.update { TagsReducer.reduceShowDialog(it) }
             }
         }
     }
@@ -146,14 +151,20 @@ class TagsViewModel @Inject constructor(
                     }
                 }
                 .onFailure {e->
-                    _sideEffect.emit(TagsSideEffect.ShowToast("태그 저장 실패"))
+                    if(e.message!=null)
+                        _sideEffect.emit(TagsSideEffect.ShowToast(e.message!!))
+                    else
+                        _sideEffect.emit(TagsSideEffect.ShowToast("태그 저장 실패"))
                 }
         }
     }
 
-    private fun handleDeleteTag(tagId: Long) {
+    private fun handleDeleteTag() {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = deleteTagUseCase(tagId)
+            val current = _uiState.value
+
+            current.selectedTagId ?: return@launch
+            val result = deleteTagUseCase(current.selectedTagId)
 
             result
                 .onSuccess {

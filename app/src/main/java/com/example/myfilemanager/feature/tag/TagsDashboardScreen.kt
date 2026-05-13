@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.myfilemanager.feature.tag.component.DeleteTagConfirmDialog
 import com.example.myfilemanager.feature.tag.component.EditTagBottomSheet
 import com.example.myfilemanager.feature.tag.component.FilterChips
 import com.example.myfilemanager.feature.tag.component.SearchBar
@@ -47,6 +48,10 @@ fun TagsDashboardScreen(
         viewModel.sideEffect.collect { message ->
             Toast.makeText(context, message.toString(), Toast.LENGTH_SHORT).show()
         }
+    }
+
+    if(state.showDeleteDialog&&state.selectedTagId!=null){
+        DeleteTagConfirmDialog(state,viewModel::handleIntent)
     }
 
     Box(modifier = Modifier.fillMaxSize()){

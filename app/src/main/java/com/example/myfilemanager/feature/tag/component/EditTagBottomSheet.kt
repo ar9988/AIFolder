@@ -101,7 +101,7 @@ fun EditTagBottomSheet(
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Button(
-                onClick = {onIntent(TagsIntent.DeleteTag(tagId = state.selectedTagId))},
+                onClick = {onIntent(TagsIntent.ShowDeleteDialog)},
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),

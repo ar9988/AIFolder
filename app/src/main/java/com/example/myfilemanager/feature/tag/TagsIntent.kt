@@ -10,9 +10,11 @@ sealed class TagsIntent {
     data class UpdateTagName(val name: String) : TagsIntent()
     data class UpdateTagColor(val color: Long) : TagsIntent()
     object SaveTag : TagsIntent()
-    data class DeleteTag(val tagId: Long) : TagsIntent()
     data class ChangeSortType(val sortType: SortType): TagsIntent()
     data class ChangeSortOrder(val sortOrder: SortOrder): TagsIntent()
     data class UpdateSearchQuery(val searchQuery: String): TagsIntent()
     object CreateTag : TagsIntent()
+    object ConfirmDelete: TagsIntent()
+    object ShowDeleteDialog: TagsIntent()
+    object DismissDialog: TagsIntent()
 }

@@ -19,14 +19,12 @@ fun HsvColorPicker(
     onColorChanged: (Color) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val hsvArr = remember(initialColor) {
-        val arr = FloatArray(3)
-        android.graphics.Color.colorToHSV(initialColor.toArgb(), arr)
-        arr
+    val hsvArr = FloatArray(3).apply {
+        android.graphics.Color.colorToHSV(initialColor.toArgb(), this)
     }
-    var hue by remember(initialColor) { mutableFloatStateOf(hsvArr[0]) }
-    var sat by remember(initialColor) { mutableFloatStateOf(hsvArr[1]) }
-    var value by remember(initialColor) { mutableFloatStateOf(hsvArr[2]) }
+    var hue by remember { mutableFloatStateOf(hsvArr[0]) }
+    var sat by remember{ mutableFloatStateOf(hsvArr[1]) }
+    var value by remember { mutableFloatStateOf(hsvArr[2]) }
     Column(modifier = modifier) {
         SatValPanel(hue = hue, sat = sat, value = value) { s, v ->
             sat = s; value = v

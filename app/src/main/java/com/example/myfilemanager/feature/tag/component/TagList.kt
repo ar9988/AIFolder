@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myfilemanager.feature.tag.model.TagWithCountUiModel
+import com.example.myfilemanager.ui.theme.CardWhite
 
 @Composable
 fun TagsList(
@@ -49,7 +50,7 @@ fun TagsList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onTagClick(tag.id) }
-                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .background(CardWhite, RoundedCornerShape(16.dp))
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {

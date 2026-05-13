@@ -20,7 +20,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.myfilemanager.feature.files.FilesDashboardScreen
+import com.example.myfilemanager.feature.assistant.AssistantScreen
+import com.example.myfilemanager.feature.file.FilesDashboardScreen
 import com.example.myfilemanager.feature.main.model.Screen
 import com.example.myfilemanager.feature.tag.TagsDashboardScreen
 import com.example.myfilemanager.ui.theme.CardWhite
@@ -79,7 +80,7 @@ fun MainContentWithBottomBar() {
                 TagsDashboardScreen()
             }
             composable(Screen.AI.route) {
-                // AiAssistantScreen() (준비 중)
+                AssistantScreen()
             }
             composable(Screen.Settings.route) {
                 // SettingsScreen() (준비 중)

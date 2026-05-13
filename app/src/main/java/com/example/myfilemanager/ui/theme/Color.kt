@@ -17,6 +17,7 @@ val CyanGradient = Brush.verticalGradient(
     colors = listOf(Color(0xFF8CC6FF), Color(0xFFD6E9FF))
 )
 val CardWhite = Color(0xFFFFFFFF).copy(alpha = 0.7f) // 반투명 화이트
+val CardBlack = Color(0xFF000000).copy(alpha = 0.7f)
 
 val LightBluePrimary = Color(0xFF90CAF9)
 val LightBlueSecondary = Color(0xFF64B5F6)

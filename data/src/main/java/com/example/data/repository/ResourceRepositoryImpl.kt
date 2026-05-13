@@ -2,6 +2,7 @@ package com.example.data.repository
 
 import com.example.data.repository.local.LocalDataSource
 import com.example.data.scanner.FileScanner
+import com.example.domain.model.DateRange
 import com.example.domain.model.FileCategory
 import com.example.domain.model.Resource
 import com.example.domain.model.ScanEvent
@@ -18,6 +19,9 @@ class ResourceRepositoryImpl @Inject constructor(
     private val localDataSource: LocalDataSource,
     private val fileScanner: FileScanner,
 ) : ResourceRepository {
+    override suspend fun getResourceById(id: Long): Resource? {
+        return localDataSource.getResourceById(id)
+    }
 
     override suspend fun getResourceByPath(path: String): Resource? {
         return localDataSource.getResourceByPath(path)
@@ -96,7 +100,7 @@ class ResourceRepositoryImpl @Inject constructor(
         emitAll(fileScanner.scanDirectory(startFile, rootId))
     }
 
-    override fun getResourcesByID(id: Long?): Flow<List<Resource>> {
+    override fun getResourcesByParentID(id: Long?): Flow<List<Resource>> {
         return localDataSource.getResourcesInFolder(id)
     }
 
@@ -198,5 +202,16 @@ class ResourceRepositoryImpl @Inject constructor(
 
     override fun getResourcesByTags(selectedTags: List<Long>): Flow<List<Resource>> {
         return localDataSource.getResourcesByTags(selectedTags)
+    }
+
+    override suspend fun searchByTagsAndDate(
+        tagIds: List<Long>,
+        dateRange: DateRange?,
+    ): List<Resource> {
+        return if (tagIds.isEmpty()) {
+            localDataSource.searchByDateAndKeyword(dateRange)
+        } else {
+            localDataSource.searchByTagsAndDate(tagIds, dateRange)
+        }
     }
 }

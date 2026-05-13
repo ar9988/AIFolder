@@ -15,7 +15,11 @@ object TagsReducer {
     }
 
     fun reduceDismissEdit(state: TagsState): TagsState {
-        return state.copy(selectedTagId = null)
+        return state.copy(
+            selectedTagId = null,
+            tempEditName = "",
+            tempEditColor = 0xFF000000
+        )
     }
 
     fun reduceUpdateName(state: TagsState, name: String): TagsState {
@@ -59,6 +63,18 @@ object TagsReducer {
             selectedTagId = -1L,
             tempEditName = "",
             tempEditColor = 0xFF6200EE
+        )
+    }
+
+    fun reduceDismissDialog(state: TagsState): TagsState{
+        return state.copy(
+            showDeleteDialog = false
+        )
+    }
+
+    fun reduceShowDialog(state: TagsState): TagsState{
+        return state.copy(
+            showDeleteDialog = true
         )
     }
 }

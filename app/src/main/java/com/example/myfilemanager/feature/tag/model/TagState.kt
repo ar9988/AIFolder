@@ -10,5 +10,6 @@ data class TagsState(
     val searchQuery: String = "",
     val selectedFilter: SortType = SortType.Recent,
     val tempEditName: String = "",
-    val tempEditColor: Long = 0xFF000000
+    val tempEditColor: Long = 0xFF000000,
+    val showDeleteDialog: Boolean = false
 )

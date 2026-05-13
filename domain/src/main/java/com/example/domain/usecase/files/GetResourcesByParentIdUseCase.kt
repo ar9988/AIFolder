@@ -9,6 +9,6 @@ class GetResourcesByParentIdUseCase @Inject constructor(
     private val repository: ResourceRepository
 ) {
     operator fun invoke(id: Long): Flow<List<Resource>> {
-        return repository.getResourcesByID(id)
+        return repository.getResourcesByParentID(id)
     }
 }

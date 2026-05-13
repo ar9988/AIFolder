@@ -23,4 +23,5 @@ rootProject.name = "MyFileManager"
 include(":app")
 include(":data")
 include(":domain")
-include(":local-db")
+include(":local-source")
+include(":di-bridge")

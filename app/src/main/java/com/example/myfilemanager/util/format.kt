@@ -1,5 +1,8 @@
 package com.example.myfilemanager.util
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+
 fun formatFileSize(size: Long): String {
     if (size <= 0) return ""
 
@@ -29,4 +32,10 @@ fun formatCreateDate(time: Long): String {
             sdf.format(java.util.Date(time))
         }
     }
+}
+
+
+fun getCurrentTime(): String {
+    val now = java.time.LocalTime.now()
+    return String.format("%02d:%02d", now.hour, now.minute)
 }
