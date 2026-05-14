@@ -38,8 +38,11 @@ class LocalDataSourceImpl(
         }
     }
 
-    override fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray) {
-        tagDao.updateTagEmbedding(tagId,newEmbedding)
+    override suspend fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray) {
+        val newTag = tagDao.getTag(tagId).copy(
+            embedding = newEmbedding
+        )
+        tagDao.updateTagEmbedding(newTag)
     }
 
     override suspend fun renameResource(id: Long, newName: String, newPath: String) {

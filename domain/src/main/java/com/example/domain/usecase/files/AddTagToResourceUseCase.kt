@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class AddTagToResourceUseCase @Inject constructor(
@@ -22,7 +23,7 @@ class AddTagToResourceUseCase @Inject constructor(
     suspend operator fun invoke(
         resourceIds: List<Long>,
         tagId: Long
-    ) = coroutineScope {
+    ) = withContext(Dispatchers.IO) {
 
         // 1. semantic source 생성
         val semanticSources = resourceIds.map { resId ->

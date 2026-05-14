@@ -20,5 +20,5 @@ interface TagRepository {
     fun updateTag(tagId: Long, tagName: String, tagColor: Long): Result<Unit>
     suspend fun getTagName(tagId: Long) : String
     suspend fun getSemanticSourcesByTagId(tagId: Long): List<TagSemanticSource>
-    fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray)
+    suspend fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray)
 }

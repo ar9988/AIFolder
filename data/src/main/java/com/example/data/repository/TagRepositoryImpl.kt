@@ -60,7 +60,7 @@ class TagRepositoryImpl  @Inject constructor(
         return localDataSource.getSemanticSourcesByTagId(tagId)
     }
 
-    override fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray) {
+    override suspend fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray) {
         localDataSource.updateTagEmbedding(tagId,newEmbedding)
     }
 }

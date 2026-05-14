@@ -54,5 +54,5 @@ interface LocalDataSource {
     suspend fun getResourceById(id: Long): Resource?
     suspend fun getTagName(tagId: Long): String
     suspend fun getSemanticSourcesByTagId(tagId: Long): List<TagSemanticSource>
-    fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray)
+    suspend fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray)
 }

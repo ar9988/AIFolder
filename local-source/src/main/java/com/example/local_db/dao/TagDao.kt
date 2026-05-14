@@ -6,6 +6,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
+import com.example.domain.model.Tag
 import com.example.domain.model.TagWithCount
 import com.example.local_db.entity.ResourceWithTags
 import com.example.local_db.entity.TagEntity
@@ -76,8 +78,8 @@ interface TagDao {
     @Query("SELECT * FROM tag_semantic_sources WHERE tagId = :tagId")
     fun getSemanticSourcesByTagId(tagId: Long): List<TagSemanticSourceEntity>
 
-    @Query("UPDATE tags SET embedding = :newEmbedding WHERE tagId = :tagId")
-    fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray)
+    @Update(entity = TagEntity::class)
+    fun updateTagEmbedding(tag: TagEntity)
 
     @Query(
         """
