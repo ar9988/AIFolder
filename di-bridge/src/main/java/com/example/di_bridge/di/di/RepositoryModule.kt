@@ -3,6 +3,7 @@ package com.example.di_bridge.di.di
 import com.example.data.repository.ResourceRepositoryImpl
 import com.example.data.repository.TagRepositoryImpl
 import com.example.domain.repository.ResourceRepository
+import com.example.domain.repository.SettingsRepository
 import com.example.domain.repository.TagRepository
 import dagger.Binds
 import dagger.Module

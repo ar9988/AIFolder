@@ -7,11 +7,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.example.domain.model.Tag
 import com.example.domain.model.TagWithCount
 import com.example.local_db.entity.ResourceWithTags
 import com.example.local_db.entity.TagEntity
-import com.example.local_db.entity.TagSemanticSourceEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -21,12 +19,6 @@ interface TagDao {
 
     @Query("SELECT * FROM tags WHERE tagId = :id")
     suspend fun getTag(id: Long): TagEntity
-
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertSemanticSources(semanticSources: List<TagSemanticSourceEntity>)
-
-    @Delete
-    suspend fun deleteSemanticSources(semanticSources: List<TagSemanticSourceEntity>)
 
     @Transaction
     @Query("SELECT * FROM resource WHERE id = :resourceId")
@@ -66,39 +58,8 @@ interface TagDao {
     fun updateLastUsedAt(tagId: Long, timestamp: Long)
 
     @Query("DELETE FROM tags WHERE tagId = :tagId")
-    fun deleteTag(tagId: Long)
-
-    @Query("""
-    UPDATE tags 
-    SET tagName = :tagName, tagColor = :tagColor 
-    WHERE tagId = :tagId
-""")
-    fun updateTag(tagId: Long, tagName: String, tagColor: Long)
-
-    @Query("SELECT * FROM tag_semantic_sources WHERE tagId = :tagId")
-    fun getSemanticSourcesByTagId(tagId: Long): List<TagSemanticSourceEntity>
+    fun deleteTag(tagId: Long): Int
 
     @Update(entity = TagEntity::class)
-    fun updateTagEmbedding(tag: TagEntity)
-
-    @Query(
-        """
-    DELETE FROM tag_semantic_sources
-    WHERE id IN (
-        SELECT id
-        FROM tag_semantic_sources
-        WHERE tagId = :tagId
-        ORDER BY addedAt ASC
-        LIMIT (
-            SELECT MAX(COUNT(*) - :maxCount, 0)
-            FROM tag_semantic_sources
-            WHERE tagId = :tagId
-        )
-    )
-    """
-    )
-    suspend fun trimOldSources(
-        tagId: Long,
-        maxCount: Int
-    )
+    fun updateTag(tag: TagEntity): Int
 }

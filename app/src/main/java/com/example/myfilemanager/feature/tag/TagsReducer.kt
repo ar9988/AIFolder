@@ -1,6 +1,6 @@
 package com.example.myfilemanager.feature.tag
 
-import com.example.myfilemanager.feature.tag.model.SortOrder
+import com.example.myfilemanager.feature.common.model.SortOrder
 import com.example.myfilemanager.feature.tag.model.SortType
 import com.example.myfilemanager.feature.tag.model.TagsState
 object TagsReducer {

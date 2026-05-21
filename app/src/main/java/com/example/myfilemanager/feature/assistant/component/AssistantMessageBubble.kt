@@ -19,12 +19,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.myfilemanager.feature.assistant.AssistantIntent
+import com.example.myfilemanager.feature.assistant.model.AssistantMessage
+import com.example.myfilemanager.feature.assistant.model.AssistantSortType
 import com.example.myfilemanager.feature.assistant.model.MessageContent
+import com.example.myfilemanager.feature.common.model.FileItemUiModel
+import com.example.myfilemanager.feature.common.model.SortOrder
+import com.example.myfilemanager.ui.theme.CardWhite
 
 @Composable
 fun AssistantMessageBubble(
-    content: MessageContent,
+    message: AssistantMessage,
     timestamp: String,
+    tagFilter: Map<Long, Set<Long>>,
+    displayFiles: List<FileItemUiModel>,
+    currentSortType: AssistantSortType,
+    currentSortOrder: SortOrder,
+    onSortTypeChange: (AssistantSortType) -> Unit,
+    onSortOrderToggle: () -> Unit,
+    onIntent: (AssistantIntent)->Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -34,7 +47,7 @@ fun AssistantMessageBubble(
     ) {
         Surface(
             shape = RoundedCornerShape(10.dp),
-            color = MaterialTheme.colorScheme.primaryContainer,
+            color = CardWhite,
             modifier = Modifier.size(32.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -48,10 +61,20 @@ fun AssistantMessageBubble(
         }
 
         Column(modifier = Modifier.weight(1f)) {
-            when (content) {
+            when (val content = message.content) {
                 is MessageContent.Text -> TextBubble(text = content.text)
-                is MessageContent.FileResult -> FileResultBubble(content = content)
-            }
+                is MessageContent.FileResult -> FileResultBubble(
+                    content = content,
+                    selectedTagIds = tagFilter[message.id] ?: emptySet(),
+                    onTagToggle = { tagId ->
+                        onIntent(AssistantIntent.ToggleTagFilter(message.id, tagId))
+                    },
+                    displayFiles = displayFiles,
+                    currentSortType = currentSortType,
+                    currentSortOrder = currentSortOrder,
+                    onSortTypeChange = onSortTypeChange,
+                    onSortOrderToggle = onSortOrderToggle,
+                )}
             Spacer(Modifier.height(4.dp))
             Text(
                 text = timestamp,

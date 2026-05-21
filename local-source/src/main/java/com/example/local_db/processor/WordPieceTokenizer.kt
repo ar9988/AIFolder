@@ -52,4 +52,5 @@ class WordPieceTokenizer(context: Context, vocabFile: String = "model/vocab.txt"
         }
         return result
     }
+
 }

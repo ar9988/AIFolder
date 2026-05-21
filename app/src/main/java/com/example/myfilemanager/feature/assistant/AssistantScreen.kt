@@ -25,6 +25,8 @@ import com.example.myfilemanager.feature.assistant.component.AssistantLoadingBub
 import com.example.myfilemanager.feature.assistant.component.AssistantMessageItem
 import com.example.myfilemanager.feature.assistant.component.AssistantTopBar
 import com.example.myfilemanager.feature.assistant.model.AssistantMessage
+import com.example.myfilemanager.feature.assistant.model.AssistantSortType
+import com.example.myfilemanager.feature.common.model.SortOrder
 
 @Composable
 fun AssistantScreen(
@@ -61,7 +63,20 @@ fun AssistantScreen(
                         visible = true,
                         enter = fadeIn() + slideInVertically { it / 2 }
                     ) {
-                        AssistantMessageItem(message = message)
+                        AssistantMessageItem(
+                            message = message,
+                            tagFilter = state.tagFilters,
+                            onIntent = viewModel::onIntent,
+                            displayFiles = state.filteredFiles[message.id] ?: emptyList(),
+                            currentSortType = state.messageSortTypes[message.id] ?: AssistantSortType.Recent,
+                            currentSortOrder = state.messageSortOrders[message.id] ?: SortOrder.ASC,
+                            onSortTypeChange = { newType ->
+                                viewModel.onIntent(AssistantIntent.ChangeSortType(message.id, newType))
+                            },
+                            onSortOrderToggle = {
+                                viewModel.onIntent(AssistantIntent.ToggleSortOrder(message.id))
+                            },
+                        )
                     }
                 }
                 if (state.isLoading) {

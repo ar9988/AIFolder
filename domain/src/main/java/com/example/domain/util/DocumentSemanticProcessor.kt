@@ -95,7 +95,7 @@ object DocumentSemanticProcessor {
 
             // 문서 앞부분 보너스
             val positionBonus =
-                if (index < 50) 2.0 else 0.0
+                if (index < 10) 2.0 else 0.0
 
             scoreMap[word] =
                 (scoreMap[word] ?: 0.0) +

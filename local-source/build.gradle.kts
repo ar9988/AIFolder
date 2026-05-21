@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.onnxruntime.android)
     implementation(libs.mlkit.text.recognition.korean)
     implementation(libs.pdfbox.android)
+    implementation(libs.androidx.datastore.preferences)
 
     implementation(project(":domain"))
     implementation(project(":data"))

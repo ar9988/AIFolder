@@ -6,7 +6,6 @@ import com.example.domain.model.DateRange
 import com.example.domain.model.Resource
 import com.example.domain.model.ResourceTagCrossRefModel
 import com.example.domain.model.Tag
-import com.example.domain.model.TagSemanticSource
 import com.example.domain.model.TagWithCount
 import com.example.local_db.dao.ResourceDao
 import com.example.local_db.dao.TagDao
@@ -30,19 +29,6 @@ class LocalDataSourceImpl(
 
     override suspend fun getTagName(tagId: Long): String {
         return tagDao.getTag(tagId).tagName
-    }
-
-    override suspend fun getSemanticSourcesByTagId(tagId: Long): List<TagSemanticSource> {
-        return tagDao.getSemanticSourcesByTagId(tagId).map { entity ->
-            entity.toDomain()
-        }
-    }
-
-    override suspend fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray) {
-        val newTag = tagDao.getTag(tagId).copy(
-            embedding = newEmbedding
-        )
-        tagDao.updateTagEmbedding(newTag)
     }
 
     override suspend fun renameResource(id: Long, newName: String, newPath: String) {
@@ -179,20 +165,16 @@ class LocalDataSourceImpl(
         }
     }
 
-    override suspend fun insertResourceTagCrossRefsAndSemanticSource(
+    override suspend fun insertResourceTagCrossRefs(
         resourceIds: List<Long>,
         tagId: Long,
-        semanticSources: List<TagSemanticSource>
     ) {
         appDatabase.withTransaction {
             val refs = resourceIds.map { resId ->
                 ResourceTagCrossRefModel(resourceId = resId, tagId = tagId)
             }
             resourceDao.addTagToResourceAll(refs.map { it.toEntity() })
-            val sources = semanticSources.map { it.toEntity() }
-            tagDao.insertSemanticSources(sources)
             tagDao.updateLastUsedAt(tagId, System.currentTimeMillis())
-            tagDao.trimOldSources(tagId,50)
         }
     }
 
@@ -200,12 +182,12 @@ class LocalDataSourceImpl(
         resourceDao.deleteResourceTagCrossRef(refs.map { it.toEntity() })
     }
 
-    override fun deleteTag(tagId: Long) {
-        tagDao.deleteTag(tagId)
+    override fun deleteTag(tagId: Long): Int {
+        return tagDao.deleteTag(tagId)
     }
 
-    override fun updateTag(tagId: Long, tagName: String, tagColor: Long) {
-        tagDao.updateTag(tagId,tagName,tagColor)
+    override fun updateTag(tag: Tag): Int {
+        return tagDao.updateTag(tag.toEntity())
     }
 
     override suspend fun searchByTagsAndDate(
@@ -228,8 +210,7 @@ class LocalDataSourceImpl(
         ).map { it.toDomain() }
     }
 
-    override fun recalculateTagEmbedding(tagId: Long) {
-        TODO("Not yet implemented")
+    override suspend fun getTag(tagId: Long) : Tag{
+        return tagDao.getTag(tagId).toDomain()
     }
-
 }

@@ -4,7 +4,6 @@ import com.example.domain.model.DateRange
 import com.example.domain.model.Resource
 import com.example.domain.model.ResourceTagCrossRefModel
 import com.example.domain.model.Tag
-import com.example.domain.model.TagSemanticSource
 import com.example.domain.model.TagWithCount
 import kotlinx.coroutines.flow.Flow
 
@@ -29,18 +28,17 @@ interface LocalDataSource {
     fun getResourcesByTagsAndQuery(query: String, tagIds: List<Long>): Flow<List<Resource>>
     suspend fun insertTag(tag: Tag): Tag
     fun getAllTags(): Flow<List<Tag>>
-    suspend fun insertResourceTagCrossRefsAndSemanticSource(
+    suspend fun insertResourceTagCrossRefs(
         resourceIds: List<Long>,
         tagId: Long,
-        semanticSources: List<TagSemanticSource>
     )
     suspend fun deleteResourceTagCrossRefs(refs: List<ResourceTagCrossRefModel>)
     suspend fun renameResource(id: Long, newName: String, newPath: String)
     suspend fun updateAll(updated: List<Resource>)
     fun getTagsWithCount(): Flow<List<TagWithCount>>
     fun getResourcesByTags(selectedTags: kotlin.collections.List<Long>): kotlinx.coroutines.flow.Flow<kotlin.collections.List<com.example.domain.model.Resource>>
-    fun deleteTag(tagId: Long)
-    fun updateTag(tagId: Long, tagName: String, tagColor: Long)
+    fun deleteTag(tagId: Long): Int
+    fun updateTag(tag: Tag): Int
     suspend fun searchByTagsAndDate(
         tagIds: List<Long>,
         dateRange: DateRange?,
@@ -50,9 +48,7 @@ interface LocalDataSource {
         dateRange: DateRange?,
     ): List<Resource>
 
-    fun recalculateTagEmbedding(tagId: Long)
     suspend fun getResourceById(id: Long): Resource?
     suspend fun getTagName(tagId: Long): String
-    suspend fun getSemanticSourcesByTagId(tagId: Long): List<TagSemanticSource>
-    suspend fun updateTagEmbedding(tagId: Long, newEmbedding: FloatArray)
+    suspend fun getTag(tagId: Long): Tag
 }

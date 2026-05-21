@@ -2,7 +2,6 @@ package com.example.myfilemanager.feature.tag.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -15,7 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.myfilemanager.feature.tag.model.SortOrder
+import com.example.myfilemanager.feature.common.model.SortOrder
+import com.example.myfilemanager.feature.common.model.SortOrderButton
 import com.example.myfilemanager.feature.tag.model.SortType
 
 @Composable

@@ -3,12 +3,10 @@ package com.example.local_db.mapper
 import com.example.domain.model.Resource
 import com.example.domain.model.ResourceTagCrossRefModel
 import com.example.domain.model.Tag
-import com.example.domain.model.TagSemanticSource
 import com.example.local_db.entity.ResourceEntity
 import com.example.local_db.entity.ResourceTagCrossRef
 import com.example.local_db.entity.ResourceWithTags
 import com.example.local_db.entity.TagEntity
-import com.example.local_db.entity.TagSemanticSourceEntity
 
 fun ResourceEntity.toDomain(tags: List<TagEntity> = emptyList()): Resource {
     return Resource(
@@ -38,6 +36,7 @@ fun TagEntity.toDomain(): Tag {
 
 fun Tag.toEntity(): TagEntity{
     return TagEntity(
+        tagId = this.id,
         tagName = this.name,
         tagColor = this.color,
         isAiGenerated = this.isAiGenerated,
@@ -69,24 +68,6 @@ fun ResourceTagCrossRefModel.toEntity(): ResourceTagCrossRef{
     return ResourceTagCrossRef(
         tagId = this.tagId,
         resourceId= this.resourceId
-    )
-}
-
-fun TagSemanticSource.toEntity(): TagSemanticSourceEntity{
-    return TagSemanticSourceEntity(
-        tagId = this.tagId,
-        resourceId = this.resourceId,
-        keywords = this.keywords,
-        addedAt = this.addedAt
-    )
-}
-
-fun TagSemanticSourceEntity.toDomain(): TagSemanticSource{
-    return TagSemanticSource(
-        tagId = this.tagId,
-        resourceId = this.resourceId,
-        keywords = this.keywords,
-        addedAt = this.addedAt
     )
 }
 

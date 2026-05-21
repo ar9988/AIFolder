@@ -145,6 +145,7 @@ interface ResourceDao {
     """)
     fun getResourcesByTags(selectedTags: List<Long>, tagCount: Int): Flow<List<ResourceWithTags>>
 
+    @Transaction
     @Query("""
 SELECT DISTINCT r.*
 FROM resource r
@@ -159,8 +160,9 @@ ORDER BY r.lastModified DESC
         tagIds: List<Long>,
         startDate: Long?,
         endDate: Long?,
-    ): List<ResourceEntity>
+    ): List<ResourceWithTags>
 
+    @Transaction
     @Query("""
 SELECT *
 FROM resource
@@ -171,7 +173,7 @@ ORDER BY lastModified DESC
     suspend fun searchByDateAndKeyword(
         startDate: Long?,
         endDate: Long?,
-    ): List<ResourceEntity>
+    ): List<ResourceWithTags>
 
     @Query("SELECT * FROM resource WHERE id = :resId LIMIT 1")
     suspend fun getResourceById(resId: Long): ResourceEntity?

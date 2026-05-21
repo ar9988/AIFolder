@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.myfilemanager.feature.assistant.model.MessageContent
+import com.example.myfilemanager.ui.theme.CardWhite
 
 @Composable
 fun UserMessageBubble(
@@ -36,7 +37,7 @@ fun UserMessageBubble(
                 1.dp,
                 Color.White.copy(alpha = 0.25f)
             ),
-            color = MaterialTheme.colorScheme.primary
+            color = CardWhite
         ) {
             Text(
                 text = (content as? MessageContent.Text)?.text ?: "",

@@ -7,6 +7,8 @@ class DeleteTagUseCase @Inject constructor(
     private val tagRepository: TagRepository
 ) {
     operator fun invoke(tagId: Long) : Result<Unit>{
-        return tagRepository.deleteTag(tagId)
+        return runCatching {
+            tagRepository.deleteTag(tagId)
+        }
     }
 }

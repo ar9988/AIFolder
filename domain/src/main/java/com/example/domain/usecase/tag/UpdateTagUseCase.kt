@@ -1,12 +1,14 @@
 package com.example.domain.usecase.tag
 
 import com.example.domain.repository.TagRepository
+import com.example.domain.service.EmbeddingModel
 import javax.inject.Inject
 
 class UpdateTagUseCase @Inject constructor(
-    private val tagRepository: TagRepository
+    private val tagRepository: TagRepository,
+    private val embeddingModel: EmbeddingModel
 ){
-    operator fun invoke(tagId: Long, tagName: String, tagColor: Long): Result<Unit> {
+    suspend operator fun invoke(tagId: Long, tagName: String, tagColor: Long): Result<Unit> {
         return runCatching {
             val normalizedName = tagName.trim()
 
@@ -14,7 +16,15 @@ class UpdateTagUseCase @Inject constructor(
                 "태그 이름은 최소 2자 이상이어야 합니다."
             }
 
-            tagRepository.updateTag(tagId, normalizedName, tagColor)
+            val embedding = embeddingModel.encode(normalizedName)
+
+            val tag = tagRepository.getTag(tagId).copy(
+                name = normalizedName,
+                color = tagColor,
+                embedding = embedding
+            )
+
+            tagRepository.updateTag(tag)
         }
     }
 }

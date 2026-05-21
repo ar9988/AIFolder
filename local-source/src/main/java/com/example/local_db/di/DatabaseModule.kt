@@ -5,7 +5,6 @@ import com.example.data.repository.local.LocalDataSource
 import com.example.local_db.dao.ResourceDao
 import com.example.local_db.dao.TagDao
 import com.example.local_db.db.AppDatabase
-import com.example.local_db.processor.AndroidTextExtractor
 import com.example.local_db.repository.local.LocalDataSourceImpl
 import dagger.Module
 import dagger.Provides

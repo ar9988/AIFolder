@@ -10,7 +10,6 @@ import com.example.local_db.dao.TagDao
 import com.example.local_db.entity.ResourceEntity
 import com.example.local_db.entity.ResourceTagCrossRef
 import com.example.local_db.entity.TagEntity
-import com.example.local_db.entity.TagSemanticSourceEntity
 import com.example.local_db.util.EmbeddingConverter
 
 @Database(
@@ -18,9 +17,8 @@ import com.example.local_db.util.EmbeddingConverter
         ResourceEntity::class,
         TagEntity::class,
         ResourceTagCrossRef::class,
-        TagSemanticSourceEntity::class
     ],
-    version = 9,
+    version = 11,
     exportSchema = true
 )
 @TypeConverters(EmbeddingConverter::class)

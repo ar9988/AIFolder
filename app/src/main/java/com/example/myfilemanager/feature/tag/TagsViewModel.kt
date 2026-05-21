@@ -6,7 +6,7 @@ import com.example.domain.usecase.common.CreateTagUseCase
 import com.example.domain.usecase.tag.DeleteTagUseCase
 import com.example.domain.usecase.tag.GetTagsWithCountUseCase
 import com.example.domain.usecase.tag.UpdateTagUseCase
-import com.example.myfilemanager.feature.tag.model.SortOrder
+import com.example.myfilemanager.feature.common.model.SortOrder
 import com.example.myfilemanager.feature.tag.model.SortType
 import com.example.myfilemanager.feature.tag.model.TagWithCountUiModel
 import com.example.myfilemanager.feature.tag.model.TagsState
