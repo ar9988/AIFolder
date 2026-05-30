@@ -173,12 +173,21 @@ fun ListHeader(
                     }
                 }
                 else -> {
-                    Text(
-                        text = folderName,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.DarkGray
-                    )
+                    if(state.selectedCategory==null){
+                        Text(
+                            text = folderName,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.DarkGray
+                        )
+                    } else{
+                        Text(
+                            text = state.selectedCategory.toString(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.DarkGray
+                        )
+                    }
                 }
             }
         }

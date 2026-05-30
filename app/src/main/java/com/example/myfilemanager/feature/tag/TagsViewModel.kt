@@ -9,7 +9,6 @@ import com.example.domain.usecase.tag.UpdateTagUseCase
 import com.example.myfilemanager.feature.common.model.SortOrder
 import com.example.myfilemanager.feature.tag.model.SortType
 import com.example.myfilemanager.feature.tag.model.TagWithCountUiModel
-import com.example.myfilemanager.feature.tag.model.TagsState
 import com.example.myfilemanager.feature.tag.model.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers

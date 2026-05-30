@@ -2,8 +2,6 @@ package com.example.myfilemanager.service
 
 import com.example.myfilemanager.R
 import android.content.Intent
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
@@ -20,13 +18,17 @@ import javax.inject.Inject
 class SyncService : LifecycleService() {
 
     @Inject lateinit var syncStorageUseCase: SyncStorageUseCase
+    @Inject lateinit var syncStateHolder: SyncStateHolder
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(FlowPreview::class)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val target = intent?.getStringExtra("TARGET")
             ?: return super.onStartCommand(intent, flags, startId)
-
+        if (syncStateHolder.isScanning.value) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        syncStateHolder.isScanning.value = true
 
         createNotificationChannel()
 
@@ -52,12 +54,13 @@ class SyncService : LifecycleService() {
                     }
 
             } finally {
+                syncStateHolder.isScanning.value = false
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
         }
 
-        return super.onStartCommand(intent, flags, startId)
+        return START_NOT_STICKY
     }
 
     private fun createNotificationBuilder(contentText: String): NotificationCompat.Builder {
@@ -71,7 +74,6 @@ class SyncService : LifecycleService() {
             .setProgress(100, 0, true) // 초기 indeterminate
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel() {
         val channelId = "sync_channel"
         val channelName = "파일 동기화"

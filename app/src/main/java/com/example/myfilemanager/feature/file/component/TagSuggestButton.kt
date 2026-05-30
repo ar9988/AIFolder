@@ -16,14 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.domain.model.Tag
 import com.example.myfilemanager.feature.common.model.TagChip
+import com.example.myfilemanager.feature.common.model.TagUiModel
 
 @Composable
 fun TagSuggestButton(
     tagName: String,
     label: String,
-    tag: Tag? = null,
+    tag: TagUiModel? = null,
     onClick: () -> Unit
 ) {
     Row(

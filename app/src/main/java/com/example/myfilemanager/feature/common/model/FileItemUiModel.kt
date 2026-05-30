@@ -1,7 +1,6 @@
 package com.example.myfilemanager.feature.common.model
 
 import com.example.domain.model.Resource
-import com.example.domain.model.Tag
 import com.example.myfilemanager.util.formatCreateDate
 import com.example.myfilemanager.util.formatFileSize
 
@@ -13,7 +12,7 @@ data class FileItemUiModel(
     val sizeText: String,
     val dateText: String,
     val metaText: String,
-    val tags: List<Tag>,
+    val tags: List<TagUiModel>,
     val path: String,
     val extension: String?
 )
@@ -35,7 +34,7 @@ fun Resource.toUiModel(): FileItemUiModel {
         sizeText = sizeText,
         dateText = dateText,
         metaText = metaText,
-        tags = this.tags,
+        tags = this.tags.map { it.toUiModel() },
         path = this.path,
         extension = this.extension
     )

@@ -6,7 +6,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.example.myfilemanager.feature.tag.TagsIntent
-import com.example.myfilemanager.feature.tag.model.TagsState
+import com.example.myfilemanager.feature.tag.TagsState
 
 @Composable
 fun DeleteTagConfirmDialog(

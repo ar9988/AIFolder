@@ -3,7 +3,6 @@ package com.example.myfilemanager.feature.assistant
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,7 +22,6 @@ import com.example.myfilemanager.feature.assistant.component.AssistantInputBar
 import com.example.myfilemanager.feature.assistant.component.AssistantLoadingBubble
 import com.example.myfilemanager.feature.assistant.component.AssistantMessageItem
 import com.example.myfilemanager.feature.assistant.component.AssistantTopBar
-import com.example.myfilemanager.feature.assistant.model.AssistantMessage
 import com.example.myfilemanager.feature.assistant.model.AssistantSortType
 import com.example.myfilemanager.feature.common.model.SortOrder
 
@@ -55,7 +52,7 @@ fun AssistantScreen(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(state.messages, key = { it.id }) { message ->

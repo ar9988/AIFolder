@@ -37,6 +37,7 @@ import com.example.myfilemanager.ui.theme.CardWhite
 fun FileListItemCard(
     resource: FileItemUiModel,
     isSelected: Boolean,
+    hasSelection: Boolean,
     fileMode: FileMode,
     onIntent: (FilesIntent) -> Unit
 ) {
@@ -62,26 +63,40 @@ fun FileListItemCard(
             .combinedClickable(
                 enabled = !isMoving,
                 onClick = {
-                    if (isParent) {
-                        onIntent(FilesIntent.NavigateToParent(resource.path))
-                    } else if (fileMode == FileMode.Selection) {
-                        onIntent(FilesIntent.ToggleSelection(resource))
-                    } else {
-                        if (resource.isDirectory) {
+                    when {
+                        isParent -> {
+                            onIntent(FilesIntent.NavigateToParent(resource.path))
+                        }
+
+                        fileMode == FileMode.Move -> {
+                            if (resource.isDirectory) {
+                                onIntent(FilesIntent.ClickResource(resource))
+                            }
+                        }
+
+                        hasSelection -> {
+                            onIntent(FilesIntent.ToggleSelection(resource))
+                        }
+
+                        resource.isDirectory -> {
                             onIntent(FilesIntent.ClickResource(resource))
-                        } else {
+                        }
+
+                        else -> {
                             onIntent(FilesIntent.ShowFileDetail(resource))
                         }
                     }
                 },
-                onLongClick = if (isParent || isMoving || fileMode != FileMode.Normal) null else {
+                onLongClick = if (fileMode == FileMode.Move ||
+                    fileMode == FileMode.Search ||
+                    fileMode == FileMode.SearchResult) null else {
                     { onIntent(FilesIntent.ToggleSelection(resource)) }
                 }
             )
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (fileMode == FileMode.Selection && !isParent) {
+        if (hasSelection && !isParent && fileMode!= FileMode.Move){
             Checkbox(
                 checked = isSelected,
                 onCheckedChange = null

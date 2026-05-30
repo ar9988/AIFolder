@@ -31,6 +31,7 @@ fun TagEntity.toDomain(): Tag {
         color = this.tagColor,
         isAiGenerated = this.isAiGenerated,
         embedding = this.embedding,
+        lastUsedAt = this.lastUsedAt
     )
 }
 
@@ -70,4 +71,3 @@ fun ResourceTagCrossRefModel.toEntity(): ResourceTagCrossRef{
         resourceId= this.resourceId
     )
 }
-

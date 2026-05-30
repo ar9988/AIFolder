@@ -1,7 +1,8 @@
-package com.example.myfilemanager.feature.tag.model
+package com.example.myfilemanager.feature.tag
 
 import com.example.myfilemanager.feature.common.model.SortOrder
 import com.example.myfilemanager.feature.tag.model.SortType
+import com.example.myfilemanager.feature.tag.model.TagWithCountUiModel
 
 data class TagsState(
     val allTags: Map<Long, TagWithCountUiModel> = emptyMap(),

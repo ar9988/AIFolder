@@ -13,13 +13,10 @@ fun DeleteFilesConfirmDialog(
     state: FilesState,
     onIntent: (FilesIntent) -> Unit
 ) {
-    val deleteTargetName = state.selectedFile?.name
-        ?: "${state.selectedFileIds.size}개의 항목"
-
     AlertDialog(
         onDismissRequest = { onIntent(FilesIntent.DismissDialog) },
         title = { Text(text = "항목 삭제") },
-        text = { Text(text = "$deleteTargetName 을 삭제하시겠습니까?\n 이 작업은 취소할 수 없습니다.") },
+        text = { Text(text = "${state.selectionLabel} 을 삭제하시겠습니까?\n 이 작업은 취소할 수 없습니다.") },
         confirmButton = {
             TextButton(
                 onClick = { onIntent(FilesIntent.ConfirmDelete) }

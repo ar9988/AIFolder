@@ -60,8 +60,12 @@ interface ResourceDao {
     @Query("DELETE FROM resource WHERE id IN (:ids)")
     suspend fun deleteAllByIds(ids: List<Long>)
 
-    @Query("DELETE FROM resource WHERE path IN (:paths)")
-    suspend fun deleteByPaths(paths: List<String>)
+    @Query("""
+    DELETE FROM resource
+    WHERE path LIKE :folderPath || '/%'
+    OR path = :folderPath
+""")
+    suspend fun deleteByPath(folderPath: String)
 
     @Delete
     suspend fun deleteResource(entity: ResourceEntity)

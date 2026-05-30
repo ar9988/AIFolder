@@ -5,5 +5,6 @@ data class Tag(
     val name: String,
     val color: Long,
     val embedding: FloatArray,
-    val isAiGenerated: Boolean
+    val isAiGenerated: Boolean,
+    val lastUsedAt: Long = 0L,
 )

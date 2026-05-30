@@ -12,11 +12,14 @@ import javax.inject.Inject
 import kotlin.math.abs
 import com.example.data.scanner.model.ScanResult
 import com.example.data.scanner.model.ScanType
+import com.example.domain.usecase.common.SettingsUseCase
+import kotlinx.coroutines.flow.first
 
 class FileScanner @Inject constructor(
     private val localDataSource: LocalDataSource,
     private val hashExtractor: FileHashExtractor,
-    private val mimeTypeProvider: MimeTypeProvider
+    private val mimeTypeProvider: MimeTypeProvider,
+    private val settingsUseCase: SettingsUseCase,
 ) {
 
     private val insertBuffer = mutableListOf<Resource>()
@@ -27,6 +30,16 @@ class FileScanner @Inject constructor(
     private val dispatcher = Dispatchers.IO.limitedParallelism(4)
 
     fun scanDirectory(startFile: File, startFileId: Long?) : Flow<ScanEvent> = channelFlow {
+        val settings = settingsUseCase().first()
+
+        val excludedFolders =
+            settings.excludedFolders.toSet()
+
+        val excludedExtensions =
+            settings.excludedExtensions
+                .map { it.lowercase() }
+                .toSet()
+
         val queue = ArrayDeque<Pair<File, Long?>>()
         queue.add(startFile to startFileId)
 
@@ -37,13 +50,35 @@ class FileScanner @Inject constructor(
 
             val files = try {
                 directory.listFiles()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 continue
             } ?: continue
 
+            val filteredFiles =
+                files.filterNot { file ->
+
+                    val path =
+                        file.absolutePath
+
+                    val extension =
+                        file.extension.lowercase()
+
+                    val excludedByFolder =
+                        excludedFolders.any {
+                            path == it ||
+                                    path.startsWith("$it/")
+                        }
+
+                    val excludedByExtension =
+                        !file.isDirectory &&
+                                extension in excludedExtensions
+
+                    excludedByFolder || excludedByExtension
+                }
+
             val existingResources = getCached(parentId)
 
-            val actualPaths = files.map { it.absolutePath }.toSet()
+            val actualPaths = filteredFiles.map { it.absolutePath }.toSet()
             val deletedPaths = existingResources.keys - actualPaths
 
             val deletedResources = existingResources
@@ -56,11 +91,11 @@ class FileScanner @Inject constructor(
                 .associateBy { it.fileHash!! }
 
 
-            files.forEach { file ->
+            filteredFiles.forEach { file ->
                 trySend(ScanEvent.FileDiscovered(file.absolutePath))
             }
 
-            val jobs = files.map { file ->
+            val jobs = filteredFiles.map { file ->
                 async(dispatcher) {
                     processFile(
                         file, parentId, existingResources, deletedResources, deletedByHash

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.myfilemanager.feature.assistant.AssistantScreen
 import com.example.myfilemanager.feature.file.FilesDashboardScreen
 import com.example.myfilemanager.feature.main.model.Screen
+import com.example.myfilemanager.feature.setting.SettingsScreen
 import com.example.myfilemanager.feature.tag.TagsDashboardScreen
 import com.example.myfilemanager.ui.theme.CardWhite
 
@@ -55,6 +57,9 @@ fun MainContentWithBottomBar() {
                                 restoreState = true
                             }
                         },
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = Color.LightGray
+                        ) ,
                         icon = {
                             if (screen.iconRes != null) {
                                 Icon(ImageVector.vectorResource(screen.iconRes), contentDescription = screen.title)
@@ -83,7 +88,7 @@ fun MainContentWithBottomBar() {
                 AssistantScreen()
             }
             composable(Screen.Settings.route) {
-                // SettingsScreen() (준비 중)
+                SettingsScreen()
             }
         }
     }

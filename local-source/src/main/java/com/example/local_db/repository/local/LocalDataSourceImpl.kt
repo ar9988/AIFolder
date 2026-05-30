@@ -100,11 +100,8 @@ class LocalDataSourceImpl(
         resourceDao.deleteResource(entity)
     }
 
-    override suspend fun deleteByPaths(deleted: Set<String>) {
-        if (deleted.isEmpty()) return
-        deleted.chunked(900).forEach {
-            resourceDao.deleteByPaths(it)
-        }
+    override suspend fun deleteByFolderPath(path: String) {
+        resourceDao.deleteByPath(path)
     }
 
     override suspend fun updateAll(updated: List<Resource>) {

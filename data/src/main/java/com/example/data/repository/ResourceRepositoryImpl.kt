@@ -1,5 +1,6 @@
 package com.example.data.repository
 
+import com.example.data.mapper.toResource
 import com.example.data.repository.local.LocalDataSource
 import com.example.data.scanner.FileScanner
 import com.example.domain.model.DateRange
@@ -33,10 +34,10 @@ class ResourceRepositoryImpl @Inject constructor(
 
     override fun getResourcesByCategory(category: FileCategory): Flow<List<Resource>> {
         return when (category) {
-            FileCategory.IMAGES -> localDataSource.getResourcesByMimeType("image/%")
-            FileCategory.VIDEOS -> localDataSource.getResourcesByMimeType("video/%")
-            FileCategory.AUDIO -> localDataSource.getResourcesByMimeType("audio/%")
-            FileCategory.DOCUMENTS -> localDataSource.getResourcesByExtensions(listOf("pdf", "docx", "txt", "xlsx", "pptx"))
+            FileCategory.Images -> localDataSource.getResourcesByMimeType("image/%")
+            FileCategory.Videos -> localDataSource.getResourcesByMimeType("video/%")
+            FileCategory.Audios -> localDataSource.getResourcesByMimeType("audio/%")
+            FileCategory.Documents -> localDataSource.getResourcesByExtensions(listOf("pdf", "docx", "txt", "xlsx", "pptx"))
         }
     }
 
@@ -68,6 +69,19 @@ class ResourceRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun excludeResource(
+        paths: List<String>
+    ): Result<Unit> {
+        return try {
+            paths.forEach { path ->
+                localDataSource.deleteByFolderPath(path)
+            }
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
     override suspend fun addTagToResource(resourceId: Long, tagId: Long) {
         localDataSource.addTagToResource(resourceId, tagId)
     }
@@ -214,4 +228,150 @@ class ResourceRepositoryImpl @Inject constructor(
             localDataSource.searchByTagsAndDate(tagIds, dateRange)
         }
     }
+
+    override suspend fun copyResource(
+        targets: List<Triple<Long, String, String>>,
+        targetParentId: Long?,
+        targetParentPath: String
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+
+        runCatching {
+
+            targets.forEach { target ->
+
+                val sourceFile = File(target.second)
+                val targetFile =
+                    createUniqueFile(
+                        parent = File(targetParentPath),
+                        originalName = target.third
+                    )
+                if (!sourceFile.exists()) {
+                    throw Exception("${target.third} 원본 파일이 없습니다.")
+                }
+
+                if (targetFile.exists()) {
+                    throw Exception("대상 위치에 같은 이름의 항목이 이미 있습니다.")
+                }
+
+                if (sourceFile.isDirectory) {
+
+                    copyDirectory(
+                        source = sourceFile,
+                        target = targetFile
+                    )
+
+                } else {
+
+                    sourceFile.copyTo(
+                        target = targetFile,
+                        overwrite = false
+                    )
+                }
+
+                val copiedResource =
+                    targetFile.toResource(
+                        parentId = targetParentId
+                    )
+
+                localDataSource.insertResource(copiedResource)
+
+                if (targetFile.isDirectory) {
+
+                    insertDirectoryChildrenRecursively(
+                        directory = targetFile,
+                        parentId = copiedResource.id
+                    )
+                }
+            }
+        }
+    }
+
+    private fun copyDirectory(
+        source: File,
+        target: File
+    ) {
+
+        if (!target.exists()) {
+            target.mkdirs()
+        }
+
+        source.listFiles()?.forEach { child ->
+
+            val targetChild =
+                File(target, child.name)
+
+            if (child.isDirectory) {
+
+                copyDirectory(
+                    source = child,
+                    target = targetChild
+                )
+
+            } else {
+
+                child.copyTo(
+                    target = targetChild,
+                    overwrite = false
+                )
+            }
+        }
+    }
+
+    private suspend fun insertDirectoryChildrenRecursively(
+        directory: File,
+        parentId: Long
+    ) {
+
+        directory.listFiles()?.forEach { child ->
+
+            val resource =
+                child.toResource(
+                    parentId = parentId
+                )
+
+            val inserted =
+                localDataSource.insertResource(resource)
+
+            if (child.isDirectory) {
+
+                insertDirectoryChildrenRecursively(
+                    directory = child,
+                    parentId = inserted
+                )
+            }
+        }
+    }
+
+    private fun createUniqueFile(
+        parent: File,
+        originalName: String
+    ): File {
+
+        val baseName =
+            originalName.substringBeforeLast(".", originalName)
+
+        val extension =
+            originalName.substringAfterLast(".", "")
+
+        var index = 1
+
+        var candidate = File(parent, originalName)
+
+        while (candidate.exists()) {
+
+            val newName =
+                if (extension.isNotEmpty()) {
+                    "$baseName ($index).$extension"
+                } else {
+                    "$baseName ($index)"
+                }
+
+            candidate = File(parent, newName)
+
+            index++
+        }
+
+        return candidate
+    }
+
 }

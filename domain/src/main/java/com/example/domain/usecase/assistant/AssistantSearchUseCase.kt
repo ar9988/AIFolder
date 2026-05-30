@@ -4,9 +4,9 @@ import com.example.domain.model.AssistantResult
 import com.example.domain.model.SearchSensitivity
 import com.example.domain.model.Tag
 import com.example.domain.repository.ResourceRepository
-import com.example.domain.repository.SettingsRepository
 import com.example.domain.repository.TagRepository
 import com.example.domain.service.EmbeddingModel
+import com.example.domain.usecase.common.SettingsUseCase
 import com.example.domain.util.AssistantQueryCleaner
 import com.example.domain.util.DateParser
 import kotlinx.coroutines.flow.first
@@ -17,7 +17,7 @@ import kotlin.math.sqrt
 class AssistantSearchUseCase @Inject constructor(
     private val tagRepository: TagRepository,
     private val resourceRepository: ResourceRepository,
-    private val settingsRepository: SettingsRepository,
+    private val settingsUseCase: SettingsUseCase,
     private val embeddingModel: EmbeddingModel
 ) {
 
@@ -35,16 +35,14 @@ class AssistantSearchUseCase @Inject constructor(
 
         // 3. 현재 검색 민감도 설정값 로드
         val setting =
-            settingsRepository
-                .searchSensitivityFlow
-                .first()
+            settingsUseCase().first()
 
         // 4. 태그 시맨틱 매칭
         val matchedTags =
             if (cleanTokens.isNotEmpty()) {
                 findSimilarTags(
                     tokens = cleanTokens,
-                    setting = setting
+                    setting = setting.searchSensitivity
                 )
             } else {
                 emptyList()

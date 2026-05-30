@@ -13,6 +13,7 @@ interface ResourceRepository {
     fun getResourcesByTag(tagId: Long): Flow<List<Resource>>
     fun getResourcesByCategory(category: FileCategory): Flow<List<Resource>>
     suspend fun deleteResources(resources: List<Pair<Long,String>>) : Result<Unit>
+    suspend fun excludeResource(paths: List<String>): Result<Unit>
 
     suspend fun addTagToResource(resourceId: Long, tagId: Long)
 
@@ -34,4 +35,10 @@ interface ResourceRepository {
         tagIds: List<Long>,
         dateRange: DateRange?,
     ): List<Resource>
+
+    suspend fun copyResource(
+        targets: List<Triple<Long, String, String>>,
+        targetParentId: Long?,
+        targetParentPath: String
+    ): Result<Unit>
 }

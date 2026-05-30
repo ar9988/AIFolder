@@ -11,11 +11,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.domain.model.Tag
 
 @Composable
 fun TagChip(
-    tag: Tag,
+    tag: TagUiModel,
 ) {
     val background = Color(tag.color)
     val textColor = if (background.luminance() > 0.5f) {

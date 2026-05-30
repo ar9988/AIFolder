@@ -1,17 +1,15 @@
 package com.example.myfilemanager.feature.file
 
 import com.example.domain.model.FileCategory
-import com.example.domain.model.Tag
 import com.example.myfilemanager.feature.common.model.FileItemUiModel
+import com.example.myfilemanager.feature.common.model.TagUiModel
 import com.example.myfilemanager.feature.file.model.SelectionState
 
 sealed class FilesIntent {
-    object ClickScan : FilesIntent()
-
+    object TriggerScan : FilesIntent()
     object Back : FilesIntent()
     data class NavigateTo(val path: String) : FilesIntent()
     data class FilterByCategory(val category: FileCategory) : FilesIntent()
-
     object ClearFilter : FilesIntent()
     data class ClickResource(val resource: FileItemUiModel): FilesIntent()
     data class LongClickResource(val resource: FileItemUiModel) : FilesIntent()
@@ -19,15 +17,17 @@ sealed class FilesIntent {
     data class ShowFileDetail(val resource: FileItemUiModel): FilesIntent()
     object ShowTagActionSheet : FilesIntent()
     object HideTagActionSheet : FilesIntent()
-    object ShowBottomSheet: FilesIntent()
     object ClearBottomSheet: FilesIntent()
     object ShowDeleteConfirmDialog : FilesIntent()
     object ConfirmDelete : FilesIntent()
     object ShowRenameDialog : FilesIntent()
     object DismissDialog : FilesIntent()
+    object ShowExcludeDialog : FilesIntent()
     data class ConfirmRename(val name: String,val resource: FileItemUiModel?): FilesIntent()
-    object StartMove : FilesIntent()
+    object StartMoveOrCopy : FilesIntent()
     object ConfirmMove : FilesIntent()
+    object ConfirmCopy : FilesIntent()
+    object CancelMove : FilesIntent()
     object ShowAddButton : FilesIntent()
     data class NavigateToParent(val parentPath: String) : FilesIntent()
     object ShowMoveDialog : FilesIntent()
@@ -37,9 +37,12 @@ sealed class FilesIntent {
     data class ConfirmAdd(val name: String,val parentPath:String) : FilesIntent()
     data class FileOpen(val resource: FileItemUiModel): FilesIntent()
     data class CreateAndAddTag(val tagName: String): FilesIntent()
-    data class ToggleTagSelection(val tag: Tag,val nextState: SelectionState): FilesIntent()
-    data class AddTag(val tag: Tag): FilesIntent()
+    data class ToggleTagSelection(val tag: TagUiModel,val nextState: SelectionState): FilesIntent()
+    data class AddTag(val tag: TagUiModel): FilesIntent()
     object ApplyTagChanges: FilesIntent()
-    data class RemoveActiveTag(val tag: Tag): FilesIntent()
-    data class AddActiveTag(val tag: Tag): FilesIntent()
+    data class RemoveActiveTag(val tag: TagUiModel): FilesIntent()
+    data class AddActiveTag(val tag: TagUiModel): FilesIntent()
+    data class UpdateSearchTag(val tagId: Long): FilesIntent()
+    data class OpenContainingFolder(val file: FileItemUiModel): FilesIntent()
+    object ConfirmExclude: FilesIntent()
 }

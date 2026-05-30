@@ -18,14 +18,31 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.myfilemanager.feature.file.model.QuickAccessVariant
 
 @Composable
 fun QuickAccessItem(
     label: String,
-    baseIcon: Int,   // R.drawable.outline_folder_24
-    innerIcon: Int? = null,  // R.drawable.outline_image_24
+    baseIcon: Int,
+    innerIcon: Int? = null,
+    variant: QuickAccessVariant,
     onClick: () -> Unit
 ) {
+    val (bgColor, iconTint, showFolderStyle) = when (variant) {
+
+        QuickAccessVariant.Category -> Triple(
+            Color(0xFFE3F2FD),
+            Color(0xFF1E88E5),
+            false
+        )
+
+        QuickAccessVariant.Folder -> Triple(
+            Color(0xFFE3F2FD),
+            Color(0xFF616161),
+            true
+        )
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable { onClick() }
@@ -34,25 +51,30 @@ fun QuickAccessItem(
             modifier = Modifier
                 .size(64.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color.White.copy(alpha = 0.6f)),
+                .background(bgColor),
             contentAlignment = Alignment.Center
         ) {
-            // 1. 배경 폴더 아이콘
+
             Icon(
                 imageVector = ImageVector.vectorResource(baseIcon),
                 contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = Color(0xFF2196F3)
+                modifier = Modifier.size(if (showFolderStyle) 48.dp else 36.dp),
+                tint = iconTint
             )
-            // 2. 내부 작은 아이콘 (이미지, 문서 등)
-            if(innerIcon != null)
-            Icon(
-                imageVector = ImageVector.vectorResource(innerIcon),
-                contentDescription = null,
-                modifier = Modifier.size(20.dp).padding(top = 4.dp), // 위치 살짝 조정
-                tint = Color(0xFF2196F3)
-            )
+
+            innerIcon?.let {
+                Icon(
+                    imageVector = ImageVector.vectorResource(it),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .align(Alignment.Center)
+                        .padding(4.dp),
+                    tint = iconTint
+                )
+            }
         }
+
         Text(label, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
     }
 }

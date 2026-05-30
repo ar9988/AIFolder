@@ -2,9 +2,11 @@ package com.example.myfilemanager.feature.file
 
 import android.app.Application
 import android.content.Intent
-import android.os.Build
+import android.os.Environment
+import android.os.StatFs
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.example.domain.model.Resource
 import com.example.domain.usecase.files.AddResourceUseCase
@@ -12,6 +14,9 @@ import com.example.domain.usecase.files.AddTagToResourceUseCase
 import com.example.domain.usecase.common.CreateTagUseCase
 import com.example.domain.usecase.files.DeleteResourceUseCase
 import com.example.domain.usecase.common.GetAllTagsUseCase
+import com.example.domain.usecase.common.SettingsUseCase
+import com.example.domain.usecase.files.AddExcludeFileUseCase
+import com.example.domain.usecase.files.CopyResourceUseCase
 import com.example.domain.usecase.files.GetFilteredResourcesUseCase
 import com.example.domain.usecase.files.GetResourceByPathUseCase
 import com.example.domain.usecase.files.GetResourcesByCategoryUseCase
@@ -20,19 +25,20 @@ import com.example.domain.usecase.files.MoveResourceUseCase
 import com.example.domain.usecase.files.OpenFileUseCase
 import com.example.domain.usecase.files.RemoveTagFromResourceUseCase
 import com.example.domain.usecase.files.RenameResourceUseCase
-import com.example.local_db.util.FileConstants
 import com.example.myfilemanager.feature.common.model.FileItemUiModel
 import com.example.myfilemanager.feature.file.model.FileMode
 import com.example.myfilemanager.feature.file.model.SelectionState
 import com.example.myfilemanager.feature.common.model.toUiModel
+import com.example.myfilemanager.feature.file.model.StorageUiModel
 import com.example.myfilemanager.service.SyncService
+import com.example.myfilemanager.service.SyncStateHolder
 import com.example.myfilemanager.ui.theme.getRandomColor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.util.stream.Collectors
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -45,12 +51,16 @@ class FilesViewModel @Inject constructor(
     private val createTagUseCase: CreateTagUseCase,
     private val addTagToResourceUseCase: AddTagToResourceUseCase,
     private val removeTagFromResourceUseCase: RemoveTagFromResourceUseCase,
+    private val addExcludeFileUseCase: AddExcludeFileUseCase,
     private val deleteResourceUseCase: DeleteResourceUseCase,
     private val renameResourceUseCase: RenameResourceUseCase,
     private val addResourceUseCase: AddResourceUseCase,
     private val moveResourceUseCase: MoveResourceUseCase,
+    private val copyResourceUseCase: CopyResourceUseCase,
     private val getAllTagsUseCase: GetAllTagsUseCase,
-    private val openFileUseCase: OpenFileUseCase
+    private val openFileUseCase: OpenFileUseCase,
+    private val syncStateHolder: SyncStateHolder,
+    private val settingsUseCase: SettingsUseCase,
 ) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(FilesState())
@@ -62,101 +72,227 @@ class FilesViewModel @Inject constructor(
     init {
         observeTags()
         observeFiles()
-        startScan(FileConstants.ROOT_PATH)
+        viewModelScope.launch {
+            syncStateHolder.isScanning.collect { isScanning->
+                _state.update {
+                    FilesReducer.reduceObserveScan(it,isScanning)
+                }
+            }
+        }
+        val storageList = loadStorageInfo()
+
+        viewModelScope.launch {
+            val settings = settingsUseCase().first()
+
+            if (settings.autoScanOnLaunch) {
+                storageList.forEach { storage ->
+                    startScan(storage.path)
+                }
+            }
+        }
+        viewModelScope.launch {
+            settingsUseCase().collect { settings ->
+                _state.update {
+                    it.copy(
+                        dragDownScanEnabled = settings.dragDownScan
+                    )
+                }
+            }
+        }
     }
 
     fun handleIntent(intent: FilesIntent) {
         when (intent) {
-            is FilesIntent.FileOpen -> {
-                if(intent.resource.isDirectory) {
-                    _state.update { FilesReducer.reduceOpenFolder(it) }
-                    navigateToPath(intent.resource.path)
-                }
-                else {
-                    openFileUseCase(intent.resource.path)
-                    _state.update { FilesReducer.reduceOpenFile(it) }
-                }
 
+            is FilesIntent.FileOpen -> {
+
+                if (intent.resource.isDirectory) {
+                    _state.update {
+                        FilesReducer.reduceOpenFolder(it)
+                    }
+
+                    navigateToPath(
+                        path = intent.resource.path
+                    )
+
+                } else {
+
+                    openFileUseCase(intent.resource.path)
+
+                    _state.update {
+                        FilesReducer.reduceOpenFile(it)
+                    }
+                }
             }
-            is FilesIntent.NavigateTo -> navigateToPath(intent.path)
+
+            is FilesIntent.NavigateTo -> {
+                navigateToPath(intent.path)
+            }
 
             is FilesIntent.Back -> {
-                _state.update { FilesReducer.reduceBack(it) }
+                _state.update {
+                    FilesReducer.reduceBack(it)
+                }
             }
 
             is FilesIntent.FilterByCategory -> {
-                _state.update { FilesReducer.reduceCategoryFilter(it, intent.category) }
+                _state.update {
+                    FilesReducer.reduceCategoryFilter(
+                        it,
+                        intent.category
+                    )
+                }
             }
 
             is FilesIntent.ClearFilter -> {
-                _state.update { FilesReducer.reduceClearFilter(it) }
+                _state.update {
+                    FilesReducer.reduceClearFilter(it)
+                }
             }
 
-            is FilesIntent.ClickScan -> startScan(FileConstants.ROOT_PATH)
+            is FilesIntent.TriggerScan -> {
+                val currentState = state.value
+                startScan(currentState.currentPath)
+            }
 
             is FilesIntent.ClickResource -> {
-                if (state.value.fileMode == FileMode.Selection) {
-                    _state.update { FilesReducer.reduceToggleSelection(it, intent.resource) }
-                } else {
-                    navigateToPath(intent.resource.path)
+                when {
+
+                    state.value.fileMode == FileMode.Move -> {
+
+                        if (intent.resource.isDirectory) {
+
+                            navigateToPath(
+                                path = intent.resource.path
+                            )
+                        }
+                    }
+
+                    state.value.isSelectionMode -> {
+
+                        _state.update {
+                            FilesReducer.reduceToggleSelection(
+                                it,
+                                intent.resource
+                            )
+                        }
+                    }
+
+                    else -> {
+
+                        if (intent.resource.isDirectory) {
+
+                            navigateToPath(
+                                path = intent.resource.path
+                            )
+
+                        } else {
+
+                            openFileUseCase(intent.resource.path)
+                        }
+                    }
                 }
             }
 
             is FilesIntent.LongClickResource -> {
-                _state.update { FilesReducer.reduceLongClickResource(it, intent.resource) }
+                _state.update {
+                    FilesReducer.reduceLongClickResource(
+                        it,
+                        intent.resource
+                    )
+                }
             }
 
             is FilesIntent.ShowFileDetail -> {
-                _state.update { FilesReducer.reduceShowFileDetail(it,intent.resource) }
+                _state.update {
+                    FilesReducer.reduceShowFileDetail(
+                        it,
+                        intent.resource
+                    )
+                }
             }
 
-            is FilesIntent.ShowBottomSheet ->{
-                _state.update { FilesReducer.reduceShowBottomSheet(it) }
+            is FilesIntent.ClearBottomSheet -> {
+                _state.update {
+                    FilesReducer.reduceClearBottomSheet(it)
+                }
             }
 
-            is FilesIntent.ClearBottomSheet ->{
-                _state.update { FilesReducer.reduceClearBottomSheet(it) }
-            }
             is FilesIntent.ToggleSelection -> {
-                _state.update { FilesReducer.reduceToggleSelection(it, intent.resource) }
+                _state.update {
+                    FilesReducer.reduceToggleSelection(
+                        it,
+                        intent.resource
+                    )
+                }
             }
 
             is FilesIntent.ConfirmDelete -> {
+
                 handleConfirmDelete()
-                _state.update { FilesReducer.reduceConfirmDelete(it) }
-            }
-            is FilesIntent.ShowDeleteConfirmDialog -> {
-                _state.update { FilesReducer.reduceShowDeleteConfirmDialog(it) }
-            }
-            is FilesIntent.ShowRenameDialog -> {
-                _state.update { FilesReducer.reduceShowRenameDialog(it) }
-            }
-            is FilesIntent.ConfirmRename -> {
-                handleConfirmRename(intent.name,intent.resource)
-                _state.update { FilesReducer.reduceClearRenameDialog(it) }
+
+                _state.update {
+                    FilesReducer.reduceConfirmDelete(it)
+                }
             }
 
-            is FilesIntent.ShowMoveDialog ->{
-                _state.update { FilesReducer.reduceShowMoveDialog(it) }
+            is FilesIntent.ShowDeleteConfirmDialog -> {
+                _state.update {
+                    FilesReducer.reduceShowDeleteConfirmDialog(it)
+                }
+            }
+
+            is FilesIntent.ShowRenameDialog -> {
+                _state.update {
+                    FilesReducer.reduceShowRenameDialog(it)
+                }
+            }
+
+            is FilesIntent.ConfirmRename -> {
+
+                handleConfirmRename(
+                    intent.name,
+                    state.value.selectedFileOrNull()
+                )
+
+                _state.update {
+                    FilesReducer.reduceClearRenameDialog(it)
+                }
+            }
+
+            is FilesIntent.ShowMoveDialog -> {
+                _state.update {
+                    FilesReducer.reduceShowMoveDialog(it)
+                }
             }
 
             is FilesIntent.ConfirmMove -> {
                 handleConfirmMove()
             }
-            is FilesIntent.StartMove -> {
-                _state.update { FilesReducer.reduceStartMove(it) }
+
+            is FilesIntent.StartMoveOrCopy -> {
+                _state.update {
+                    FilesReducer.reduceStartMove(it)
+                }
             }
 
             is FilesIntent.ShowAddButton -> {
-                _state.update { FilesReducer.reduceShowAddButton(it) }
+                _state.update {
+                    FilesReducer.reduceShowAddButton(it)
+                }
             }
 
             is FilesIntent.DismissDialog -> {
-                _state.update { FilesReducer.reduceDismissDialog(it) }
+                _state.update {
+                    FilesReducer.reduceDismissDialog(it)
+                }
             }
 
             is FilesIntent.ConfirmAdd -> {
-                handleConfirmAdd(intent.name,intent.parentPath)
+                handleConfirmAdd(
+                    intent.name,
+                    intent.parentPath
+                )
             }
 
             is FilesIntent.NavigateToParent -> {
@@ -164,64 +300,207 @@ class FilesViewModel @Inject constructor(
             }
 
             is FilesIntent.ConfirmSearch -> {
-                _state.update { FilesReducer.reduceConfirmSearch(it) }
+                _state.update {
+                    FilesReducer.reduceConfirmSearch(it)
+                }
             }
+
             is FilesIntent.UpdateSearchQuery -> {
-                _state.update { FilesReducer.reduceUpdateQuery(it,intent.query) }
+                _state.update {
+                    FilesReducer.reduceUpdateQuery(
+                        it,
+                        intent.query
+                    )
+                }
             }
+
             is FilesIntent.OpenSearch -> {
-                _state.update { FilesReducer.reduceOpenSearch(it) }
+                _state.update {
+                    FilesReducer.reduceOpenSearch(it)
+                }
             }
 
             is FilesIntent.AddTag -> {
-                _state.update { FilesReducer.reduceCreateAndAddTag(it,intent.tag) }
+                _state.update {
+                    FilesReducer.reduceCreateAndAddTag(
+                        it,
+                        intent.tag
+                    )
+                }
             }
+
             is FilesIntent.ShowTagActionSheet -> {
-                _state.update { FilesReducer.reduceShowTagActionSheet(it) }
+                _state.update {
+                    FilesReducer.reduceShowTagActionSheet(it)
+                }
             }
+
             is FilesIntent.ApplyTagChanges -> {
+
                 handleApplyTagChanges()
-                _state.update { FilesReducer.reduceHideTagActionSheet(it) }
+
+                _state.update {
+                    FilesReducer.reduceHideTagActionSheet(it)
+                }
             }
+
             is FilesIntent.CreateAndAddTag -> {
                 handleCreateAndAddTag(intent.tagName)
             }
+
             is FilesIntent.ToggleTagSelection -> {
-                _state.update { FilesReducer.reduceToggleTag(it,intent.tag, intent.nextState) }
+                _state.update {
+                    FilesReducer.reduceToggleTag(
+                        it,
+                        intent.tag,
+                        intent.nextState
+                    )
+                }
             }
+
             is FilesIntent.HideTagActionSheet -> {
-                _state.update { FilesReducer.reduceHideTagActionSheet(it) }
+                _state.update {
+                    FilesReducer.reduceHideTagActionSheet(it)
+                }
             }
 
             is FilesIntent.AddActiveTag -> {
-                _state.update { FilesReducer.reduceAddActiveTag(it,intent.tag) }
+                _state.update {
+                    FilesReducer.reduceAddActiveTag(
+                        it,
+                        intent.tag
+                    )
+                }
             }
-            is FilesIntent.RemoveActiveTag ->
-                _state.update { FilesReducer.reduceRemoveActiveTag(it,intent.tag) }
+
+            is FilesIntent.RemoveActiveTag -> {
+                _state.update {
+                    FilesReducer.reduceRemoveActiveTag(
+                        it,
+                        intent.tag
+                    )
+                }
+            }
+
+            is FilesIntent.CancelMove -> {
+                _state.update {
+                    FilesReducer.reduceCancelMove(it)
+                }
+            }
+            is FilesIntent.ConfirmCopy -> {
+                handleConfirmCopy()
+            }
+            is FilesIntent.UpdateSearchTag ->{
+                _state.update {
+                    FilesReducer.reduceUpdateSearchTag(it,intent.tagId)
+                }
+            }
+
+            is FilesIntent.OpenContainingFolder -> {
+
+                val parentPath =
+                    File(intent.file.path)
+                        .parentFile
+                        ?.path
+                        ?: return
+
+                _state.update {
+                    FilesReducer.reduceOpenFolder(it)
+                }
+
+                navigateToPath(
+                    path = parentPath,
+                    preserveCurrentState = false
+                )
+            }
+
+            is FilesIntent.ConfirmExclude -> {
+                handleExcludeFile()
+            }
+
+            is FilesIntent.ShowExcludeDialog -> {
+                _state.update {
+                    FilesReducer.reduceShowExcludeDialog(it)
+                }
+            }
+        }
+    }
+
+    private fun handleConfirmCopy() {
+
+        val currentState = state.value
+
+        val targets =
+            currentState.moveTargets.map {
+                Triple(
+                    it.id,
+                    it.path,
+                    it.name
+                )
+            }
+
+        viewModelScope.launch {
+
+            val result = copyResourceUseCase(
+                targets,
+                currentState.currentFolderId,
+                currentState.currentPath
+            )
+
+            result.onSuccess {
+
+                _sideEffect.send(
+                    FilesSideEffect.ShowToast(
+                        "${targets.size}개의 항목이 복사되었습니다."
+                    )
+                )
+
+                _state.update {
+                    FilesReducer.reduceConfirmCopy(it)
+                }
+            }
+
+            result.onFailure { exception ->
+
+                _sideEffect.send(
+                    FilesSideEffect.ShowToast(
+                        "복사 실패: ${exception.message ?: "알 수 없는 오류"}"
+                    )
+                )
+            }
         }
     }
 
     private fun handleApplyTagChanges() {
+
         val currentState = _state.value
-        val targets = if (currentState.selectedFile != null) {
-            listOf(currentState.selectedFile.id)
-        } else {
+
+        val targets =
             currentState.selectedFileIds.toList()
-        }
 
         if (targets.isEmpty()) return
 
         viewModelScope.launch {
+
             currentState.tagStatusMap.forEach { (tagId, selectionState) ->
+
                 when (selectionState) {
+
                     SelectionState.ALL -> {
-                        addTagToResourceUseCase(targets, tagId)
+                        addTagToResourceUseCase(
+                            targets,
+                            tagId
+                        )
                     }
+
                     SelectionState.NONE -> {
-                        removeTagFromResourceUseCase(targets, tagId)
+                        removeTagFromResourceUseCase(
+                            targets,
+                            tagId
+                        )
                     }
-                    SelectionState.SOME -> {
-                    }
+
+                    SelectionState.SOME -> Unit
                 }
             }
         }
@@ -232,7 +511,7 @@ class FilesViewModel @Inject constructor(
             val result = createTagUseCase(newTagName, getRandomColor())
             result.onSuccess { tag->
                 _sideEffect.send(FilesSideEffect.ShowToast("태그가 생성 되었습니다"))
-                _state.update { FilesReducer.reduceCreateAndAddTag(it,tag)}
+                _state.update { FilesReducer.reduceCreateAndAddTag(it,tag.toUiModel())}
             }.onFailure { e->
                 Log.d("error ",e.message.toString())
                 _sideEffect.send(FilesSideEffect.ShowToast(e.message.toString()))
@@ -240,26 +519,46 @@ class FilesViewModel @Inject constructor(
         }
     }
 
-    private fun handleConfirmMove(){
+    private fun handleConfirmMove() {
         val currentState = state.value
 
-        val targets = if (currentState.selectedFile != null) {
-            listOf(Triple(currentState.selectedFile.id,currentState.selectedFile.path,currentState.selectedFile.name))
-        } else {
-            val temp = currentState.files.filter{ it.id in currentState.selectedFileIds }
-            temp.stream().map { it -> Triple(it.id,it.path, it.name) }.collect(Collectors.toList())
-        }
+        val targets =
+            currentState.moveTargets.map {
+                Triple(
+                    it.id,
+                    it.path,
+                    it.name
+                )
+            }
+
         viewModelScope.launch {
-            val result = moveResourceUseCase(targets,currentState.currentFolderId,currentState.currentPath)
+            val result = moveResourceUseCase(
+                targets,
+                currentState.currentFolderId,
+                currentState.currentPath
+            )
+
             result.onSuccess {
-                _sideEffect.send(FilesSideEffect.ShowToast("${targets.size}개의 항목이 이동되었습니다."))
+                _sideEffect.send(
+                    FilesSideEffect.ShowToast(
+                        "${targets.size}개의 항목이 이동되었습니다."
+                    )
+                )
+
             }.onFailure { exception ->
-                _sideEffect.send(FilesSideEffect.ShowToast("이동 실패: ${exception.message ?: "알 수 없는 오류"}"))
+
+                _sideEffect.send(
+                    FilesSideEffect.ShowToast(
+                        "이동 실패: ${exception.message ?: "알 수 없는 오류"}"
+                    )
+                )
             }
         }
-        _state.update { FilesReducer.reduceConfirmMove(it) }
-    }
 
+        _state.update {
+            FilesReducer.reduceConfirmMove(it)
+        }
+    }
     private fun handleConfirmAdd(name: String,parentPath: String){
         viewModelScope.launch {
             val result = addResourceUseCase(parentPath, name)
@@ -288,37 +587,65 @@ class FilesViewModel @Inject constructor(
         }
     }
 
-    private fun handleConfirmDelete(){
+    private fun handleConfirmDelete() {
+
         val currentState = state.value
 
-        val targets = if (currentState.selectedFile != null) {
-            listOf(Pair(currentState.selectedFile.id,currentState.selectedFile.path))
-        } else {
-            val temp = currentState.files.filter { it.id in currentState.selectedFileIds }
-            temp.stream().map { it -> Pair(it.id,it.path) }.collect(Collectors.toList())
-        }
+        val targets =
+            currentState.selectedFiles()
+                .map {
+                    Pair(
+                        it.id,
+                        it.path
+                    )
+                }
+
         viewModelScope.launch {
-            val result = deleteResourceUseCase(targets)
+
+            val result =
+                deleteResourceUseCase(targets)
+
             result.onSuccess {
-                _state.update { FilesReducer.reduceConfirmDelete(it) }
-                _sideEffect.send(FilesSideEffect.ShowToast("${targets.size}개의 항목이 삭제되었습니다."))
+
+                _state.update {
+                    FilesReducer.reduceConfirmDelete(it)
+                }
+
+                _sideEffect.send(
+                    FilesSideEffect.ShowToast(
+                        "${targets.size}개의 항목이 삭제되었습니다."
+                    )
+                )
+
             }.onFailure { exception ->
-                _sideEffect.send(FilesSideEffect.ShowToast("삭제 실패: ${exception.message ?: "알 수 없는 오류"}"))
+
+                _sideEffect.send(
+                    FilesSideEffect.ShowToast(
+                        "삭제 실패: ${exception.message ?: "알 수 없는 오류"}"
+                    )
+                )
             }
         }
     }
 
-    private fun navigateToPath(path: String) {
+    private fun navigateToPath(
+        path: String,
+        preserveCurrentState: Boolean = true
+    ) {
         viewModelScope.launch {
+
             _state.update { it.copy(isLoading = true) }
-            val resource = getResourceByPathUseCase(path)
+
+            val resource =
+                getResourceByPathUseCase(path)
 
             _state.update { currentState ->
-                FilesReducer.reduceNavigate(currentState, path, resource)
-            }
-
-            if (resource == null) {
-                _sideEffect.send(FilesSideEffect.ShowToast("폴더 분석 중입니다..."))
+                FilesReducer.reduceNavigate(
+                    currentState = currentState,
+                    path = path,
+                    resource = resource,
+                    preserveCurrentState = preserveCurrentState
+                )
             }
         }
     }
@@ -333,7 +660,7 @@ class FilesViewModel @Inject constructor(
                     category != null -> getResourcesByCategoryUseCase(category)
                     mode == FileMode.SearchResult -> getFilteredResourcesUseCase(state.value.searchQuery,state.value.activeTags.mapNotNull { id ->
                         state.value.allTags[id]
-                    })
+                    }.map { it.id })
                     folderId != null -> getResourcesByParentIdUseCase(folderId)
                     else -> emptyFlow()
                 }
@@ -344,7 +671,7 @@ class FilesViewModel @Inject constructor(
                 val parentPointer = if (
                     currentState.selectedCategory == null &&
                     currentState.fileMode != FileMode.SearchResult &&
-                    currentPath != FileConstants.ROOT_PATH
+                    currentPath !in currentState.storageRootPaths
                 ) {
                     val parentPath = currentPath.substringBeforeLast("/", "Root")
                     Resource.createParentPointer(
@@ -359,23 +686,110 @@ class FilesViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
+    private fun handleExcludeFile(){
+        val currentState = state.value
+
+        val targets =
+            currentState.selectedFiles()
+                .map {
+                    it.path
+                }
+
+        viewModelScope.launch {
+            val result =
+                addExcludeFileUseCase(targets)
+
+            result.onSuccess {
+                _state.update {
+                    FilesReducer.reduceConfirmExclude(it)
+                }
+
+                _sideEffect.send(
+                    FilesSideEffect.ShowToast(
+                        "${targets.size}개의 항목이 제외되었습니다."
+                    )
+                )
+
+            }.onFailure { exception ->
+                _sideEffect.send(
+                    FilesSideEffect.ShowToast(
+                        "제외 실패: ${exception.message ?: "알 수 없는 오류"}"
+                    )
+                )
+            }
+        }
+    }
+
     private fun startScan(path: String) {
+        if (syncStateHolder.isScanning.value) {
+            return
+        }
+
         val intent = Intent(getApplication(), SyncService::class.java).apply {
             putExtra("TARGET", path)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            getApplication<Application>().startForegroundService(intent)
-        } else {
-            getApplication<Application>().startService(intent)
-        }
+
+        getApplication<Application>().startForegroundService(intent)
     }
 
     private fun observeTags() {
         getAllTagsUseCase()
             .onEach { tags ->
-                _state.update { FilesReducer.reduceObserveTags(it,tags) }
+                _state.update { FilesReducer.reduceObserveTags(it,tags.map {tag-> tag.toUiModel() }) }
             }
             .launchIn(viewModelScope)
     }
 
+    private fun loadStorageInfo(): List<StorageUiModel> {
+
+        val storageList = mutableListOf<StorageUiModel>()
+
+        val internalDir =
+            Environment.getExternalStorageDirectory()
+
+        val internalStat =
+            StatFs(internalDir.path)
+
+        storageList.add(
+            StorageUiModel(
+                title = "내부 저장소",
+                totalBytes = internalStat.totalBytes,
+                usedBytes = internalStat.totalBytes - internalStat.availableBytes,
+                isRemovable = false,
+                path = internalDir.path
+            )
+        )
+
+        application.getExternalFilesDirs(null)
+            .drop(1)
+            .forEach { dir ->
+
+                if (dir == null) return@forEach
+
+                val root = dir.parentFile
+                    ?.parentFile
+                    ?.parentFile
+                    ?.parentFile
+
+                root?.let {
+
+                    val statFs = StatFs(it.path)
+
+                    storageList.add(
+                        StorageUiModel(
+                            title = "SD 카드",
+                            totalBytes = statFs.totalBytes,
+                            usedBytes = statFs.totalBytes - statFs.availableBytes,
+                            isRemovable = true,
+                            path = it.path
+                        )
+                    )
+                }
+            }
+
+        _state.update {
+            FilesReducer.reduceUpdateStorageInfo(it,storageList)
+        }
+        return storageList
+    }
 }

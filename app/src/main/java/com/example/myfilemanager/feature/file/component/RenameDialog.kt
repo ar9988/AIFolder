@@ -23,8 +23,7 @@ fun RenameDialog(
     state: FilesState,
     onIntent: (FilesIntent) -> Unit
 ) {
-    val targetResource = state.selectedFile
-        ?: state.files.firstOrNull { it.id in state.selectedFileIds }
+    val targetResource = state.selectedFileOrNull()
 
     val originalNameOnly = remember(targetResource) {
         if (targetResource?.isDirectory == true) {
@@ -71,7 +70,6 @@ fun RenameDialog(
                 TextButton(
                     onClick = {
                         if (nameInput.isNotBlank()) {
-                            // 3. 이름과 고정된 확장자를 합쳐서 전송
                             val finalFullName = "$nameInput$extension"
                             onIntent(FilesIntent.ConfirmRename(finalFullName, targetResource))
                         }

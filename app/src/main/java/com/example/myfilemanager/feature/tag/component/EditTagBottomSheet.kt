@@ -32,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.example.myfilemanager.feature.tag.TagsIntent
-import com.example.myfilemanager.feature.tag.model.TagsState
+import com.example.myfilemanager.feature.tag.TagsState
 
 @Composable
 fun EditTagBottomSheet(

@@ -20,7 +20,6 @@ interface LocalDataSource {
     suspend fun deleteAllByIds(resources: List<Long>)
     suspend fun deleteAll(resources: List<Resource>)
     suspend fun deleteResource(resource: Resource)
-    suspend fun deleteByPaths(deleted: Set<String>)
     suspend fun updateResource(resource: Resource)
     suspend fun updateAllByIds(updated: List<Triple<Long,String,Long?>>)
     suspend fun updateSubtreePath(oldPath: String, newPath: String)
@@ -36,7 +35,7 @@ interface LocalDataSource {
     suspend fun renameResource(id: Long, newName: String, newPath: String)
     suspend fun updateAll(updated: List<Resource>)
     fun getTagsWithCount(): Flow<List<TagWithCount>>
-    fun getResourcesByTags(selectedTags: kotlin.collections.List<Long>): kotlinx.coroutines.flow.Flow<kotlin.collections.List<com.example.domain.model.Resource>>
+    fun getResourcesByTags(selectedTags: List<Long>): Flow<List<Resource>>
     fun deleteTag(tagId: Long): Int
     fun updateTag(tag: Tag): Int
     suspend fun searchByTagsAndDate(
@@ -51,4 +50,5 @@ interface LocalDataSource {
     suspend fun getResourceById(id: Long): Resource?
     suspend fun getTagName(tagId: Long): String
     suspend fun getTag(tagId: Long): Tag
+    suspend fun deleteByFolderPath(path: String)
 }

@@ -21,12 +21,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
-import com.example.domain.model.Tag
+import com.example.myfilemanager.feature.common.model.TagUiModel
 import com.example.myfilemanager.feature.file.model.SelectionState
 
 @Composable
 fun TagSelectionItem(
-    tag: Tag,
+    tag: TagUiModel,
     selectionState: SelectionState,
     onToggle: () -> Unit
 ) {
