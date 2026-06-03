@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.lifecycle.process)
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.hilt.android)
