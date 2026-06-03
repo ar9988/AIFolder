@@ -6,9 +6,9 @@ import javax.inject.Inject
 class DeleteTagUseCase @Inject constructor(
     private val tagRepository: TagRepository
 ) {
-    operator fun invoke(tagId: Long) : Result<Unit>{
+    operator fun invoke(tagIds: List<Long>): Result<Unit> {
         return runCatching {
-            tagRepository.deleteTag(tagId)
+            tagRepository.deleteTags(tagIds)
         }
     }
 }

@@ -210,4 +210,8 @@ class LocalDataSourceImpl(
     override suspend fun getTag(tagId: Long) : Tag{
         return tagDao.getTag(tagId).toDomain()
     }
+
+    override fun deleteTags(tagIds: List<Long>) {
+        tagDao.deleteTags(tagIds)
+    }
 }

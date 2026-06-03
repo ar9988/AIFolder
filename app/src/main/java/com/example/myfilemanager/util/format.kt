@@ -1,7 +1,6 @@
 package com.example.myfilemanager.util
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+import java.text.Normalizer
 
 fun formatFileSize(size: Long): String {
     if (size <= 0) return ""
@@ -39,3 +38,9 @@ fun getCurrentTime(): String {
     val now = java.time.LocalTime.now()
     return String.format("%02d:%02d", now.hour, now.minute)
 }
+
+fun String.nfc(): String =
+    Normalizer.normalize(
+        this,
+        Normalizer.Form.NFC
+    )

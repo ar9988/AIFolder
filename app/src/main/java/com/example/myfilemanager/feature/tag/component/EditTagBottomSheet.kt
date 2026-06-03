@@ -1,5 +1,6 @@
 package com.example.myfilemanager.feature.tag.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,8 +16,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +43,6 @@ fun EditTagBottomSheet(
     onIntent: (TagsIntent) -> Unit
 ) {
     if (state.selectedTagId == null) return
-
     val focusManager = LocalFocusManager.current
 
     Column(
@@ -122,6 +124,19 @@ fun EditTagBottomSheet(
                 Spacer(Modifier.width(8.dp))
                 Text("저장")
             }
+        }
+    }
+    if (state.isTagSaving) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .background(Color.White.copy(alpha = 0.7f)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }

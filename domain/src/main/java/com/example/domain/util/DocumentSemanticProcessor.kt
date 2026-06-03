@@ -52,9 +52,9 @@ object DocumentSemanticProcessor {
         text: String,
         maxKeywords: Int = 20,
         maxChars: Int = 2000
-    ): String {
+    ): List<String> {
 
-        if (text.isBlank()) return ""
+        if (text.isBlank()) return emptyList()
 
         val tokens = text
             .take(maxChars)
@@ -108,6 +108,5 @@ object DocumentSemanticProcessor {
             .map { it.key }
             .distinct()
             .take(maxKeywords)
-            .joinToString(" ")
     }
 }

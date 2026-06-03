@@ -2,7 +2,6 @@ package com.example.myfilemanager.feature.setting
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.domain.model.Settings
 import com.example.domain.usecase.common.SettingsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,53 +36,32 @@ class SettingsViewModel @Inject constructor(
 
     fun onIntent(intent: SettingsIntent) {
         viewModelScope.launch {
-            val updated = when (intent) {
-                is SettingsIntent.ToggleAutoScan ->
-                    _state.value.copy(autoScanOnLaunch = intent.enabled)
-                is SettingsIntent.ToggleDragDownScan ->
-                    _state.value.copy(dragDownScan = intent.enabled)
-                is SettingsIntent.AddExcludedExtension -> {
-                    val normalizedExt =
-                        intent.ext
-                            .trim()
-                            .removePrefix(".")
-                            .lowercase()
-
-                    if (normalizedExt.isBlank()) {
-                        _state.value
-                    } else {
-                        _state.value.copy(
-                            excludedExtensions =
-                                (_state.value.excludedExtensions + normalizedExt)
-                                    .distinct()
-                        )
+            _state.update { currentState ->
+                when (intent) {
+                    is SettingsIntent.ToggleAutoScan -> currentState.copy(autoScanOnLaunch = intent.enabled)
+                    is SettingsIntent.ToggleDragDownScan -> currentState.copy(dragDownScan = intent.enabled)
+                    is SettingsIntent.AddExcludedExtension -> {
+                        val ext = intent.ext.trim().removePrefix(".").lowercase()
+                        if (ext.isBlank()) currentState
+                        else currentState.copy(excludedExtensions = (currentState.excludedExtensions + ext).distinct())
                     }
+                    is SettingsIntent.RemoveExcludedExtension -> currentState.copy(excludedExtensions = currentState.excludedExtensions - intent.ext)
+                    is SettingsIntent.AddExcludedFolder -> currentState.copy(excludedFiles = currentState.excludedFiles + intent.folder)
+                    is SettingsIntent.RemoveExcludedFolder -> currentState.copy(excludedFiles = currentState.excludedFiles - intent.folder)
+                    is SettingsIntent.SetSearchSensitivity -> currentState.copy(searchSensitivity = intent.sensitivity)
                 }
-                is SettingsIntent.RemoveExcludedExtension ->
-                    _state.value.copy(
-                        excludedExtensions = _state.value.excludedExtensions - intent.ext
-                    )
-                is SettingsIntent.AddExcludedFolder ->
-                    _state.value.copy(
-                        excludedFiles = _state.value.excludedFiles + intent.folder
-                    )
-                is SettingsIntent.RemoveExcludedFolder ->
-                    _state.value.copy(
-                        excludedFiles = _state.value.excludedFiles - intent.folder
-                    )
-                is SettingsIntent.SetSearchSensitivity ->
-                    _state.value.copy(searchSensitivity = intent.sensitivity)
             }
-            _state.update { updated }
-            settingsUseCase.updateSettings(
-                Settings(
-                    autoScanOnLaunch = updated.autoScanOnLaunch,
-                    dragDownScan = updated.dragDownScan,
-                    excludedExtensions = updated.excludedExtensions,
-                    excludedFolders = updated.excludedFiles,
-                    searchSensitivity = updated.searchSensitivity
+
+            settingsUseCase.updateSettings { currentSettings ->
+                val state = _state.value
+                currentSettings.copy(
+                    autoScanOnLaunch = state.autoScanOnLaunch,
+                    dragDownScan = state.dragDownScan,
+                    excludedExtensions = state.excludedExtensions,
+                    excludedFolders = state.excludedFiles,
+                    searchSensitivity = state.searchSensitivity
                 )
-            )
+            }
         }
     }
 }

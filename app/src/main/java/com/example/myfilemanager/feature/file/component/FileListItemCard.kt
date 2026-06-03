@@ -1,6 +1,7 @@
 package com.example.myfilemanager.feature.file.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,9 +88,7 @@ fun FileListItemCard(
                         }
                     }
                 },
-                onLongClick = if (fileMode == FileMode.Move ||
-                    fileMode == FileMode.Search ||
-                    fileMode == FileMode.SearchResult) null else {
+                onLongClick = if (fileMode == FileMode.Move) null else {
                     { onIntent(FilesIntent.ToggleSelection(resource)) }
                 }
             )
@@ -118,7 +117,7 @@ fun FileListItemCard(
                     tint = if (isMoving) Color.Gray else iconTint
                 )
             } else {
-                FileExtensionIcon(resource.extension)
+                FileExtensionIcon(modifier = Modifier,resource.extension,resource.path)
             }
         }
 
@@ -152,34 +151,17 @@ fun FileListItemCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (resource.tags.isNotEmpty()) {
-                        val visibleTags = resource.tags.take(3)
-                        val remainingCount = resource.tags.size - visibleTags.size
-
                         Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .basicMarquee(iterations = Int.MAX_VALUE),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            visibleTags.forEach { tag ->
-                                TagChip(tag)
-                            }
-
-                            if (remainingCount > 0) {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(end = 4.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color.LightGray)
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "+$remainingCount",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Color.DarkGray
-                                    )
-                                }
+                            resource.tags.forEach { tag ->
+                                TagChip(tag,)
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.weight(1f))
 
                     if (resource.metaText.isNotEmpty()) {
                         Text(

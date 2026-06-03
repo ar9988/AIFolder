@@ -186,7 +186,7 @@ fun FileResultBubble(
                 }
             } else {
                 Text(
-                    text = "선택한 태그에 해당하는 파일이 없어요",
+                    text = "해당하는 파일이 없어요",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

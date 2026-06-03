@@ -51,4 +51,8 @@ class TagRepositoryImpl  @Inject constructor(
     override suspend fun getTag(tagId: Long): Tag {
         return localDataSource.getTag(tagId)
     }
+
+    override fun deleteTags(tagIds: List<Long>) {
+        localDataSource.deleteTags(tagIds)
+    }
 }

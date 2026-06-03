@@ -30,6 +30,7 @@ import com.example.myfilemanager.feature.tag.component.DeleteTagConfirmDialog
 import com.example.myfilemanager.feature.tag.component.EditTagBottomSheet
 import com.example.myfilemanager.feature.tag.component.FilterChips
 import com.example.myfilemanager.feature.tag.component.SearchBar
+import com.example.myfilemanager.feature.tag.component.TagsBottomActionBar
 import com.example.myfilemanager.feature.tag.component.TagsHeader
 import com.example.myfilemanager.feature.tag.component.TagsList
 
@@ -50,8 +51,10 @@ fun TagsDashboardScreen(
         }
     }
 
-    if(state.showDeleteDialog&&state.selectedTagId!=null){
-        DeleteTagConfirmDialog(state,viewModel::handleIntent)
+    if(state.showDeleteDialog){
+        DeleteTagConfirmDialog(
+            state, viewModel::handleIntent,
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()){
@@ -95,24 +98,45 @@ fun TagsDashboardScreen(
                 } else {
                     TagsList(
                         tags = state.filteredTags,
+                        selectedTagIds = state.selectedTagIds,
+                        isSelectionMode = state.isSelectionMode,
                         onTagClick = {
-                            viewModel.handleIntent(TagsIntent.SelectTag(it))
+                            if (state.isSelectionMode) {
+                                viewModel.handleIntent(TagsIntent.ToggleSelection(it))
+                            } else {
+                                viewModel.handleIntent(TagsIntent.SelectTag(it))
+                            }
+                        },
+                        onTagLongClick = {
+                            viewModel.handleIntent(TagsIntent.LongClickTag(it))
                         }
                     )
                 }
             }
         }
 
-        FloatingActionButton(
-            onClick = {
-                viewModel.handleIntent(TagsIntent.CreateTag)
-            },
-            containerColor = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = null)
+
+        if (state.isSelectionMode) {
+            TagsBottomActionBar(
+                state = state,
+                onIntent = viewModel::handleIntent,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
+
+
+        if (!state.isSelectionMode) {
+            FloatingActionButton(
+                onClick = {
+                    viewModel.handleIntent(TagsIntent.CreateTag)
+                },
+                containerColor = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+            }
         }
     }
 

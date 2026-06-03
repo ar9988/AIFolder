@@ -15,7 +15,6 @@ class AndroidTextExtractor @Inject constructor(
     @ApplicationContext private val context: Context,
     private val imageProcessor: ImageTextProcessor
 ) : TextExtractor {
-
     override suspend fun extract(
         uriString: String,
         mimeType: String?

@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
+import com.example.myfilemanager.feature.common.model.ActionItem
 import com.example.myfilemanager.feature.file.FilesIntent
 import com.example.myfilemanager.feature.file.FilesState
 import com.example.myfilemanager.feature.file.model.FileMode
@@ -36,7 +37,6 @@ fun FilesBottomActionBar(
     val isVirtualView =
         isCategory || state.fileMode == FileMode.SearchResult
     val selectedCount = state.selectedFileIds.size
-
     if (!state.hasSelection) return
 
     val isSingleItem = state.isSingleSelection
@@ -105,7 +105,11 @@ fun FilesBottomActionBar(
                     } else {
                         "복사/이동"
                     },
-                    enabled = state.hasSelection,
+                    enabled = if (isVirtualView) {
+                        state.isSingleSelection
+                    } else {
+                        state.hasSelection
+                    },
                     onClick = {
                         if (isVirtualView) {
                             singleItem?.let {

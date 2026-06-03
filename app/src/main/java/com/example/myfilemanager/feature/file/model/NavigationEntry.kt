@@ -1,5 +1,6 @@
 package com.example.myfilemanager.feature.file.model
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.example.domain.model.FileCategory
 
 data class NavigationEntry(
@@ -8,5 +9,5 @@ data class NavigationEntry(
     val category: FileCategory?,
     val fileMode: FileMode = FileMode.Normal,
     val activeTags: Set<Long> = emptySet(),
-    val searchQuery: String = "",
+    val searchQuery: TextFieldValue = TextFieldValue(""),
 )

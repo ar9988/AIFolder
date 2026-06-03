@@ -7,7 +7,7 @@ import javax.inject.Inject
 class UpdateTagUseCase @Inject constructor(
     private val tagRepository: TagRepository,
     private val embeddingModel: EmbeddingModel
-){
+) {
     suspend operator fun invoke(tagId: Long, tagName: String, tagColor: Long): Result<Unit> {
         return runCatching {
             val normalizedName = tagName.trim()
@@ -16,15 +16,22 @@ class UpdateTagUseCase @Inject constructor(
                 "태그 이름은 최소 2자 이상이어야 합니다."
             }
 
-            val embedding = embeddingModel.encode(normalizedName)
+            val existing = tagRepository.getTag(tagId)
+            val isNameChanged = existing.name != normalizedName
 
-            val tag = tagRepository.getTag(tagId).copy(
+            val embedding = if (isNameChanged) {
+                embeddingModel.encode(normalizedName)
+            } else {
+                existing.embedding
+            }
+
+            val updated = existing.copy(
                 name = normalizedName,
                 color = tagColor,
                 embedding = embedding
             )
 
-            tagRepository.updateTag(tag)
+            tagRepository.updateTag(updated)
         }
     }
 }

@@ -9,10 +9,10 @@ import com.example.domain.service.EmbeddingModel
 import com.example.domain.usecase.common.SettingsUseCase
 import com.example.domain.util.AssistantQueryCleaner
 import com.example.domain.util.DateParser
+import com.example.domain.util.cosineSimilarity
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import kotlin.math.min
-import kotlin.math.sqrt
 
 class AssistantSearchUseCase @Inject constructor(
     private val tagRepository: TagRepository,
@@ -149,30 +149,5 @@ class AssistantSearchUseCase @Inject constructor(
                 score >= referenceScore * setting.scoreRatio
             }
             .map { it.first }
-    }
-
-    private fun cosineSimilarity(
-        a: FloatArray,
-        b: FloatArray
-    ): Float {
-
-        var dot = 0f
-        var normA = 0f
-        var normB = 0f
-
-        for (i in a.indices) {
-            dot += a[i] * b[i]
-            normA += a[i] * a[i]
-            normB += b[i] * b[i]
-        }
-
-        val denominator =
-            sqrt(normA) * sqrt(normB)
-
-        if (denominator == 0f) {
-            return 0f
-        }
-
-        return dot / denominator
     }
 }

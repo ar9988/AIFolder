@@ -12,7 +12,7 @@ class SettingsUseCase @Inject constructor(
         return settingsRepository.settingsFlow
     }
 
-    suspend fun updateSettings(settings: Settings) {
-        settingsRepository.updateSettings(settings)
+    suspend fun updateSettings(transform: (Settings) -> Settings) {
+        settingsRepository.updateSettings(transform)
     }
 }

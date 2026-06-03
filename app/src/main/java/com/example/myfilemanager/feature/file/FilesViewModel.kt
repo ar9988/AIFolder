@@ -8,6 +8,8 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
+import com.example.domain.model.FileInput
+import com.example.domain.model.FileSortType
 import com.example.domain.model.Resource
 import com.example.domain.usecase.files.AddResourceUseCase
 import com.example.domain.usecase.files.AddTagToResourceUseCase
@@ -17,6 +19,7 @@ import com.example.domain.usecase.common.GetAllTagsUseCase
 import com.example.domain.usecase.common.SettingsUseCase
 import com.example.domain.usecase.files.AddExcludeFileUseCase
 import com.example.domain.usecase.files.CopyResourceUseCase
+import com.example.domain.usecase.files.CreateRecommendTagUseCase
 import com.example.domain.usecase.files.GetFilteredResourcesUseCase
 import com.example.domain.usecase.files.GetResourceByPathUseCase
 import com.example.domain.usecase.files.GetResourcesByCategoryUseCase
@@ -33,6 +36,7 @@ import com.example.myfilemanager.feature.file.model.StorageUiModel
 import com.example.myfilemanager.service.SyncService
 import com.example.myfilemanager.service.SyncStateHolder
 import com.example.myfilemanager.ui.theme.getRandomColor
+import com.example.myfilemanager.util.nfc
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -61,6 +65,7 @@ class FilesViewModel @Inject constructor(
     private val openFileUseCase: OpenFileUseCase,
     private val syncStateHolder: SyncStateHolder,
     private val settingsUseCase: SettingsUseCase,
+    private val createRecommendTagUseCase: CreateRecommendTagUseCase,
 ) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(FilesState())
@@ -73,9 +78,9 @@ class FilesViewModel @Inject constructor(
         observeTags()
         observeFiles()
         viewModelScope.launch {
-            syncStateHolder.isScanning.collect { isScanning->
+            syncStateHolder.isScanning.collect { isScanning ->
                 _state.update {
-                    FilesReducer.reduceObserveScan(it,isScanning)
+                    FilesReducer.reduceObserveScan(it, isScanning)
                 }
             }
         }
@@ -94,6 +99,8 @@ class FilesViewModel @Inject constructor(
             settingsUseCase().collect { settings ->
                 _state.update {
                     it.copy(
+                        fileSortType = settings.fileSortType,
+                        isAscending = settings.isFileSortAscending,
                         dragDownScanEnabled = settings.dragDownScan
                     )
                 }
@@ -209,12 +216,6 @@ class FilesViewModel @Inject constructor(
                         it,
                         intent.resource
                     )
-                }
-            }
-
-            is FilesIntent.ClearBottomSheet -> {
-                _state.update {
-                    FilesReducer.reduceClearBottomSheet(it)
                 }
             }
 
@@ -345,6 +346,9 @@ class FilesViewModel @Inject constructor(
             }
 
             is FilesIntent.CreateAndAddTag -> {
+                _state.update {
+                    FilesReducer.reduceStartCreateTag(it)
+                }
                 handleCreateAndAddTag(intent.tagName)
             }
 
@@ -387,12 +391,14 @@ class FilesViewModel @Inject constructor(
                     FilesReducer.reduceCancelMove(it)
                 }
             }
+
             is FilesIntent.ConfirmCopy -> {
                 handleConfirmCopy()
             }
-            is FilesIntent.UpdateSearchTag ->{
+
+            is FilesIntent.UpdateSearchTag -> {
                 _state.update {
-                    FilesReducer.reduceUpdateSearchTag(it,intent.tagId)
+                    FilesReducer.reduceUpdateSearchTag(it, intent.tagId)
                 }
             }
 
@@ -410,7 +416,7 @@ class FilesViewModel @Inject constructor(
 
                 navigateToPath(
                     path = parentPath,
-                    preserveCurrentState = false
+                    preserveCurrentState = true
                 )
             }
 
@@ -422,6 +428,72 @@ class FilesViewModel @Inject constructor(
                 _state.update {
                     FilesReducer.reduceShowExcludeDialog(it)
                 }
+            }
+
+            is FilesIntent.RequestAiTagRecommend -> {
+                handleAiTagRecommend()
+            }
+
+            is FilesIntent.UpdateFileSearchQuery -> {
+                _state.update {
+                    FilesReducer.reduceFileSearchQuery(it, intent.query)
+                }
+            }
+            is FilesIntent.ToggleGridView -> {
+                _state.update {
+                    FilesReducer.reduceToggleGridView(it)
+                }
+            }
+            is FilesIntent.ToggleSortOrder -> {
+                var newState: FilesState? = null
+                _state.update {
+                    newState = FilesReducer.reduceToggleSortOrder(it)
+                    newState
+                }
+                newState?.let { updateSortSettings(isAscending = it.isAscending) }
+            }
+
+            is FilesIntent.ChangeSortType -> {
+                var newState: FilesState? = null
+                _state.update {
+                    newState = FilesReducer.reduceChangeSortType(it, intent.sortType)
+                    newState
+                }
+                newState?.let { updateSortSettings(sortType = it.fileSortType) }
+            }
+            is FilesIntent.ToggleSortDropdown -> {
+                _state.update {
+                    FilesReducer.reduceToggleDropdown(it)
+                }
+            }
+        }
+    }
+
+    private fun handleAiTagRecommend() {
+        val currentState = state.value
+        val selectedFiles = currentState.selectedFiles()
+
+        if (selectedFiles.isEmpty()) return
+
+        val fileInputs = selectedFiles.map { file ->
+            FileInput(
+                path = file.path,
+                name = file.name,
+                mimeType = file.mimeType
+            )
+        }
+
+        viewModelScope.launch {
+            _state.update {
+                FilesReducer.reduceRecommentRequest(it)
+            }
+            try {
+                val result = createRecommendTagUseCase(fileInputs)
+                _state.update {
+                    FilesReducer.reduceRecommendResult(it, result)
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(isAiTagRecommending = false) }
             }
         }
     }
@@ -499,22 +571,26 @@ class FilesViewModel @Inject constructor(
                             tagId
                         )
                     }
-
                     SelectionState.SOME -> Unit
                 }
             }
         }
     }
 
-    private fun handleCreateAndAddTag(newTagName:String){
+    private fun handleCreateAndAddTag(newTagName: String) {
         viewModelScope.launch {
             val result = createTagUseCase(newTagName, getRandomColor())
-            result.onSuccess { tag->
+            result.onSuccess { tag ->
                 _sideEffect.send(FilesSideEffect.ShowToast("태그가 생성 되었습니다"))
-                _state.update { FilesReducer.reduceCreateAndAddTag(it,tag.toUiModel())}
-            }.onFailure { e->
-                Log.d("error ",e.message.toString())
+                _state.update { FilesReducer.reduceCreateAndAddTag(it, tag.toUiModel()) }
+            }.onFailure { e ->
+                Log.d("error ", e.message.toString())
                 _sideEffect.send(FilesSideEffect.ShowToast(e.message.toString()))
+                _state.update {
+                    it.copy(
+                        isLoading = false
+                    )
+                }
             }
         }
     }
@@ -559,7 +635,8 @@ class FilesViewModel @Inject constructor(
             FilesReducer.reduceConfirmMove(it)
         }
     }
-    private fun handleConfirmAdd(name: String,parentPath: String){
+
+    private fun handleConfirmAdd(name: String, parentPath: String) {
         viewModelScope.launch {
             val result = addResourceUseCase(parentPath, name)
 
@@ -573,10 +650,11 @@ class FilesViewModel @Inject constructor(
         }
     }
 
-    private fun handleConfirmRename(newName:String,resource: FileItemUiModel?){
-        if(resource == null) return
+    private fun handleConfirmRename(newName: String, resource: FileItemUiModel?) {
+        if (resource == null) return
         viewModelScope.launch {
-            val result = renameResourceUseCase(Triple(resource.id,resource.path,resource.name), newName)
+            val result =
+                renameResourceUseCase(Triple(resource.id, resource.path, resource.name), newName)
 
             result.onSuccess {
                 _state.update { FilesReducer.reduceRenameSuccess(it) }
@@ -633,9 +711,6 @@ class FilesViewModel @Inject constructor(
         preserveCurrentState: Boolean = true
     ) {
         viewModelScope.launch {
-
-            _state.update { it.copy(isLoading = true) }
-
             val resource =
                 getResourceByPathUseCase(path)
 
@@ -650,6 +725,8 @@ class FilesViewModel @Inject constructor(
         }
     }
 
+
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeFiles() {
         state
@@ -657,10 +734,12 @@ class FilesViewModel @Inject constructor(
             .distinctUntilChanged()
             .flatMapLatest { (folderId, category, mode) ->
                 when {
+                    mode == FileMode.SearchResult -> getFilteredResourcesUseCase(
+                        state.value.searchQuery.text.nfc(),
+                        state.value.activeTags.mapNotNull { id ->
+                            state.value.allTags[id]
+                        }.map { it.id })
                     category != null -> getResourcesByCategoryUseCase(category)
-                    mode == FileMode.SearchResult -> getFilteredResourcesUseCase(state.value.searchQuery,state.value.activeTags.mapNotNull { id ->
-                        state.value.allTags[id]
-                    }.map { it.id })
                     folderId != null -> getResourcesByParentIdUseCase(folderId)
                     else -> emptyFlow()
                 }
@@ -680,13 +759,14 @@ class FilesViewModel @Inject constructor(
                     )
                 } else null
 
-                val finalList = (if (parentPointer != null) listOf(parentPointer) + resourceList else resourceList).map { it.toUiModel() }
+                val finalList =
+                    (if (parentPointer != null) listOf(parentPointer) + resourceList else resourceList).map { it.toUiModel() }
                 _state.update { FilesReducer.reduceObserveFiles(it, finalList) }
             }
             .launchIn(viewModelScope)
     }
 
-    private fun handleExcludeFile(){
+    private fun handleExcludeFile() {
         val currentState = state.value
 
         val targets =
@@ -735,9 +815,24 @@ class FilesViewModel @Inject constructor(
     private fun observeTags() {
         getAllTagsUseCase()
             .onEach { tags ->
-                _state.update { FilesReducer.reduceObserveTags(it,tags.map {tag-> tag.toUiModel() }) }
+                _state.update {
+                    FilesReducer.reduceObserveTags(
+                        it,
+                        tags.map { tag -> tag.toUiModel() })
+                }
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun updateSortSettings(sortType: FileSortType? = null, isAscending: Boolean? = null) {
+        viewModelScope.launch {
+            settingsUseCase.updateSettings { currentSettings ->
+                currentSettings.copy(
+                    fileSortType = sortType ?: currentSettings.fileSortType,
+                    isFileSortAscending = isAscending ?: currentSettings.isFileSortAscending
+                )
+            }
+        }
     }
 
     private fun loadStorageInfo(): List<StorageUiModel> {
@@ -788,7 +883,7 @@ class FilesViewModel @Inject constructor(
             }
 
         _state.update {
-            FilesReducer.reduceUpdateStorageInfo(it,storageList)
+            FilesReducer.reduceUpdateStorageInfo(it, storageList)
         }
         return storageList
     }

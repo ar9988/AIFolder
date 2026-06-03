@@ -143,12 +143,14 @@ class EmbeddingSimilarityTest {
         val simCase1 = cosineSimilarity(query, embeddingCase1)
 
         // Case 2: 중간 오염 (OCR로 추출된 영수증 내부의 온갖 잡다한 텍스트 포함)
-        val muddyText = "스타벅스 영수증 카페 결제 금액 내역 주소 서울시 강남구 대표자 홍길동 사업자번호 123-45-67890 2026-05-16 부가세 면세 물품 아이스 아메리카노 수량 1"
+        val muddyText =
+            "스타벅스 영수증 카페 결제 금액 내역 주소 서울시 강남구 대표자 홍길동 사업자번호 123-45-67890 2026-05-16 부가세 면세 물품 아이스 아메리카노 수량 1"
         val embeddingCase2 = model.encode(muddyText)
         val simCase2 = cosineSimilarity(query, embeddingCase2)
 
         // Case 3: 심각한 오염 (텍스트 추출량이 너무 많아 하단에 다른 내용까지 다 긁어온 경우)
-        val heavilyDilutedText = "스타벅스 영수증 카페 결제 금액 내역 주소 서울시 강남구 대표자 홍길동 사업자번호 123-45-67890 2026-05-16 부가세 면세 물품 아이스 아메리카노 수량 1 교환 환불은 7일 이내 영수증 지참 후 방문 바랍니다 무료 주차 등록은 파트너에게 말씀해주세요 와이파이 비밀번호 스벅1234 스타벅스 앱 카드를 이용하시면 별이 적립됩니다"
+        val heavilyDilutedText =
+            "스타벅스 영수증 카페 결제 금액 내역 주소 서울시 강남구 대표자 홍길동 사업자번호 123-45-67890 2026-05-16 부가세 면세 물품 아이스 아메리카노 수량 1 교환 환불은 7일 이내 영수증 지참 후 방문 바랍니다 무료 주차 등록은 파트너에게 말씀해주세요 와이파이 비밀번호 스벅1234 스타벅스 앱 카드를 이용하시면 별이 적립됩니다"
         val embeddingCase3 = model.encode(heavilyDilutedText)
         val simCase3 = cosineSimilarity(query, embeddingCase3)
 

@@ -1,8 +1,10 @@
 package com.example.myfilemanager.feature.file
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.example.domain.model.FileCategory
 import com.example.myfilemanager.feature.common.model.FileItemUiModel
 import com.example.myfilemanager.feature.common.model.TagUiModel
+import com.example.domain.model.FileSortType
 import com.example.myfilemanager.feature.file.model.SelectionState
 
 sealed class FilesIntent {
@@ -17,7 +19,6 @@ sealed class FilesIntent {
     data class ShowFileDetail(val resource: FileItemUiModel): FilesIntent()
     object ShowTagActionSheet : FilesIntent()
     object HideTagActionSheet : FilesIntent()
-    object ClearBottomSheet: FilesIntent()
     object ShowDeleteConfirmDialog : FilesIntent()
     object ConfirmDelete : FilesIntent()
     object ShowRenameDialog : FilesIntent()
@@ -45,4 +46,10 @@ sealed class FilesIntent {
     data class UpdateSearchTag(val tagId: Long): FilesIntent()
     data class OpenContainingFolder(val file: FileItemUiModel): FilesIntent()
     object ConfirmExclude: FilesIntent()
+    object RequestAiTagRecommend : FilesIntent()
+    data class UpdateFileSearchQuery(val query: TextFieldValue): FilesIntent()
+    object ToggleSortDropdown : FilesIntent()
+    object ToggleSortOrder: FilesIntent()
+    object ToggleGridView: FilesIntent()
+    data class ChangeSortType(val sortType: FileSortType): FilesIntent()
 }

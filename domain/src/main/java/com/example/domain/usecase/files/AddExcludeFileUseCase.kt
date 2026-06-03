@@ -9,7 +9,6 @@ class AddExcludeFileUseCase @Inject constructor(
     private val settingsUseCase: SettingsUseCase,
     private val resourceRepository: ResourceRepository,
 ) {
-
     suspend operator fun invoke(
         paths: List<String>
     ): Result<Unit> {
@@ -24,11 +23,11 @@ class AddExcludeFileUseCase @Inject constructor(
                     .filter { it.isNotBlank() }
                     .distinct()
 
-            settingsUseCase.updateSettings(
+            settingsUseCase.updateSettings { currentSettings ->
                 currentSettings.copy(
                     excludedFolders = updatedFolders
                 )
-            )
+            }
 
             resourceRepository.excludeResource(paths)
                 .getOrThrow()

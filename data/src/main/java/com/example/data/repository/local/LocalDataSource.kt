@@ -51,4 +51,5 @@ interface LocalDataSource {
     suspend fun getTagName(tagId: Long): String
     suspend fun getTag(tagId: Long): Tag
     suspend fun deleteByFolderPath(path: String)
+    fun deleteTags(tagIds: List<Long>) 
 }

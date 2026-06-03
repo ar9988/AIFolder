@@ -1,7 +1,7 @@
 package com.example.myfilemanager.feature.tag
 
 import com.example.myfilemanager.feature.common.model.SortOrder
-import com.example.myfilemanager.feature.tag.model.SortType
+import com.example.domain.model.TagSortType
 
 object TagsReducer {
 
@@ -34,7 +34,7 @@ object TagsReducer {
         return state.copy(searchQuery = query)
     }
 
-    fun reduceChangeSortType(state: TagsState, type: SortType): TagsState {
+    fun reduceChangeSortType(state: TagsState, type: TagSortType): TagsState {
         return state.copy(sortType = type)
     }
 
@@ -55,6 +55,8 @@ object TagsReducer {
             selectedTagId = null,
             tempEditName = "",
             tempEditColor = 0xFF000000,
+            selectedTagIds = emptySet(),
+            showDeleteDialog = false,
         )
     }
 
@@ -77,4 +79,25 @@ object TagsReducer {
             showDeleteDialog = true
         )
     }
+
+    fun reduceToggleSelection(state: TagsState, id: Long): TagsState {
+        val updated = if (id in state.selectedTagIds) {
+            state.selectedTagIds - id
+        } else {
+            state.selectedTagIds + id
+        }
+        return state.copy(selectedTagIds = updated)
+    }
+
+    fun reduceLongClickTag(state: TagsState, id: Long): TagsState {
+        return state.copy(
+            selectedTagIds = state.selectedTagIds + id,
+            selectedTagId = null // 편집 시트 닫기
+        )
+    }
+
+    fun reduceClearSelection(state: TagsState): TagsState {
+        return state.copy(selectedTagIds = emptySet())
+    }
+
 }

@@ -10,11 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-
 @Composable
 fun TagChip(
     tag: TagUiModel,
+    maxLines: Int = 1,
 ) {
     val background = Color(tag.color)
     val textColor = if (background.luminance() > 0.5f) {
@@ -33,7 +34,9 @@ fun TagChip(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
-            color = textColor
+            color = textColor,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

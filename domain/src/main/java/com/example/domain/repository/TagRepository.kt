@@ -18,4 +18,5 @@ interface TagRepository {
     fun updateTag(tag: Tag): Int
     suspend fun getTagName(tagId: Long) : String
     suspend fun getTag(tagId: Long): Tag
+    fun deleteTags(tagIds: List<Long>)
 }

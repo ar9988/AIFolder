@@ -1,11 +1,14 @@
 package com.example.myfilemanager.feature.file
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.example.domain.model.FileCategory
 import com.example.domain.model.Resource
+import com.example.domain.model.TagRecommendResult
 import com.example.myfilemanager.feature.common.model.FileItemUiModel
 import com.example.myfilemanager.feature.common.model.TagUiModel
 import com.example.myfilemanager.feature.file.model.FileMode
 import com.example.myfilemanager.feature.file.model.FileOverlay
+import com.example.domain.model.FileSortType
 import com.example.myfilemanager.feature.file.model.NavigationEntry
 import com.example.myfilemanager.feature.file.model.SelectionState
 import com.example.myfilemanager.feature.file.model.StorageUiModel
@@ -18,14 +21,12 @@ object FilesReducer {
         resource: Resource?,
         preserveCurrentState: Boolean
     ): FilesState {
-
         val newStack =
             if (
                 preserveCurrentState &&
                 currentState.viewMode != ViewMode.DASHBOARD &&
                 currentState.fileMode != FileMode.Move
             ) {
-
                 currentState.navigationStack + NavigationEntry(
                     path = currentState.currentPath,
                     folderId = currentState.currentFolderId,
@@ -63,9 +64,7 @@ object FilesReducer {
     }
 
     fun reduceBack(currentState: FilesState): FilesState {
-
         return when {
-
             currentState.fileOverlay != null -> {
                 currentState.copy(
                     fileOverlay = null
@@ -89,13 +88,12 @@ object FilesReducer {
             currentState.fileMode == FileMode.Search -> {
                 currentState.copy(
                     fileMode = FileMode.Normal,
-                    searchQuery = "",
+                    searchQuery = TextFieldValue(""),
                     activeTags = emptySet()
                 )
             }
 
             currentState.navigationStack.isNotEmpty() -> {
-
                 val last =
                     currentState.navigationStack.last()
 
@@ -132,7 +130,7 @@ object FilesReducer {
                     currentPath = "",
                     selectedCategory = null,
                     activeTags = emptySet(),
-                    searchQuery = "",
+                    searchQuery = TextFieldValue(""),
                     fileMode = FileMode.Normal,
                     viewMode = ViewMode.DASHBOARD
                 )
@@ -195,21 +193,10 @@ object FilesReducer {
         )
     }
 
-
-    fun reduceClearBottomSheet(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileOverlay = null
-        )
-    }
-
     fun reduceShowFileDetail(
         currentState: FilesState,
         resource: FileItemUiModel
     ): FilesState {
-
         return currentState.copy(
             selectedFileIds = setOf(resource.id)
         )
@@ -268,9 +255,10 @@ object FilesReducer {
         currentState: FilesState,
         resourceList: List<FileItemUiModel>
     ): FilesState {
-
+        val tempState = currentState.copy(files = resourceList)
+        val sortedList = tempState.sortedFiles()
         return currentState.copy(
-            files = resourceList,
+            files = sortedList,
         )
     }
 
@@ -308,7 +296,6 @@ object FilesReducer {
     fun reduceDismissDialog(
         currentState: FilesState
     ): FilesState {
-
         return currentState.copy(
             fileOverlay = null
         )
@@ -356,7 +343,7 @@ object FilesReducer {
             }
 
         return currentState.copy(
-            searchQuery = query,
+            tagSearchQuery = query,
             filteredTags = filteredTags,
             isExactMatch = isExactMatch
         )
@@ -368,7 +355,7 @@ object FilesReducer {
 
         return currentState.copy(
             fileMode = FileMode.Search,
-            searchQuery = "",
+            searchQuery = TextFieldValue(""),
             activeTags = emptySet(),
             tagStatusMap = emptyMap()
         )
@@ -439,8 +426,12 @@ object FilesReducer {
 
         return currentState.copy(
             fileOverlay = FileOverlay.TagActionSheet,
+            tagRecommendResult = null,
+            isAiTagRecommending = false,
+            aiTagRecommendRequested = false,
             activeTags = activeTags.toSet(),
             tagStatusMap = tagStatusMap,
+            tagSearchQuery = ""
         )
     }
 
@@ -500,7 +491,8 @@ object FilesReducer {
         return currentState.copy(
             activeTags = newActiveTags,
             tagStatusMap = newTagStatusMap,
-            searchQuery = ""
+            tagSearchQuery = "",
+            isLoading = false
         )
     }
 
@@ -511,7 +503,7 @@ object FilesReducer {
 
         return currentState.copy(
             activeTags = currentState.activeTags + tag.id,
-            searchQuery = ""
+            searchQuery = TextFieldValue("")
         )
     }
 
@@ -607,5 +599,131 @@ object FilesReducer {
             storageList = storageList,
             storageRootPaths = storageList.map { storageUiModel -> storageUiModel.path }.toSet()
         )
+    }
+
+    fun reduceRecommendResult(it: FilesState, result: TagRecommendResult): FilesState {
+        return it.copy(
+            isAiTagRecommending = false,
+            tagRecommendResult = result,
+        )
+    }
+
+    fun reduceRecommentRequest(it: FilesState): FilesState {
+        return it.copy(
+            aiTagRecommendRequested = true,
+            isAiTagRecommending = true
+        )
+    }
+
+    fun reduceStartCreateTag(it: FilesState): FilesState {
+        return it.copy(
+            isLoading = true,
+            tagSearchQuery = "",
+        )
+    }
+
+    fun reduceFileSearchQuery(currentState: FilesState, query: TextFieldValue): FilesState {
+        val allTagsList =
+            currentState.allTags.values
+
+        val filteredTags =
+            if (query.text.isEmpty()) {
+                emptyList()
+            } else {
+                allTagsList
+                    .filter {
+                        it.name.contains(
+                            query.text,
+                            ignoreCase = true
+                        )
+                    }
+                    .filterNot {
+                        it.id in currentState.activeTags
+                    }
+            }
+
+        val isExactMatch =
+            allTagsList.any {
+                it.name.equals(
+                    query.text,
+                    ignoreCase = true
+                )
+            }
+
+        return currentState.copy(
+            searchQuery = query,
+            filteredTags = filteredTags,
+            isExactMatch = isExactMatch
+        )
+    }
+
+    fun reduceToggleGridView(it: FilesState): FilesState {
+        return it.copy(
+            isGridView = !it.isGridView
+        )
+    }
+
+    fun reduceToggleSortOrder(
+        state: FilesState
+    ): FilesState {
+        val ascending =
+            !state.isAscending
+
+        return state.copy(
+            isAscending = ascending,
+            files = state.sortedFiles(
+                ascending = ascending
+            )
+        )
+    }
+
+
+    fun reduceChangeSortType(
+        state: FilesState,
+        sortType: FileSortType
+    ): FilesState {
+        return state.copy(
+            fileSortType = sortType,
+            files = state.sortedFiles(
+                sortType = sortType
+            )
+        )
+    }
+
+    fun reduceToggleDropdown(it: FilesState): FilesState {
+        return it.copy(
+            isSortDropdownVisible = !it.isSortDropdownVisible
+        )
+    }
+
+
+    private fun FilesState.sortedFiles(
+        sortType: FileSortType = fileSortType,
+        ascending: Boolean = isAscending
+    ): List<FileItemUiModel> {
+
+        val parentPointer =
+            files.filter { it.isParent }
+
+        val resources =
+            files.filterNot { it.isParent }
+
+        val sorted =
+            when (sortType) {
+                FileSortType.Name ->
+                    resources.sortedBy { it.name.lowercase() }
+
+                FileSortType.Size ->
+                    resources.sortedBy { it.size }
+
+                FileSortType.Recent ->
+                    resources.sortedBy { it.lastModified }
+            }
+
+        val result =
+            if (ascending) sorted
+            else sorted.reversed()
+
+        return parentPointer + result
     }
 }

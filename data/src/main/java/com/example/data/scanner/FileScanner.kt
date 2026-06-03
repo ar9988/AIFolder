@@ -14,6 +14,7 @@ import com.example.data.scanner.model.ScanResult
 import com.example.data.scanner.model.ScanType
 import com.example.domain.usecase.common.SettingsUseCase
 import kotlinx.coroutines.flow.first
+import java.text.Normalizer
 
 class FileScanner @Inject constructor(
     private val localDataSource: LocalDataSource,
@@ -29,7 +30,7 @@ class FileScanner @Inject constructor(
 
     private val dispatcher = Dispatchers.IO.limitedParallelism(4)
 
-    fun scanDirectory(startFile: File, startFileId: Long?) : Flow<ScanEvent> = channelFlow {
+    fun scanDirectory(startFile: File, startFileId: Long?): Flow<ScanEvent> = channelFlow {
         val settings = settingsUseCase().first()
 
         val excludedFolders =
@@ -63,10 +64,22 @@ class FileScanner @Inject constructor(
                     val extension =
                         file.extension.lowercase()
 
+                    val normalizedPath =
+                        Normalizer.normalize(
+                            path,
+                            Normalizer.Form.NFC
+                        )
+
                     val excludedByFolder =
-                        excludedFolders.any {
-                            path == it ||
-                                    path.startsWith("$it/")
+                        excludedFolders.any { folder ->
+                            val normalizedFolder =
+                                Normalizer.normalize(
+                                    folder,
+                                    Normalizer.Form.NFC
+                                )
+
+                            normalizedPath == normalizedFolder ||
+                                    normalizedPath.startsWith("$normalizedFolder/")
                         }
 
                     val excludedByExtension =
@@ -78,7 +91,12 @@ class FileScanner @Inject constructor(
 
             val existingResources = getCached(parentId)
 
-            val actualPaths = filteredFiles.map { it.absolutePath }.toSet()
+            val actualPaths = filteredFiles.map {
+                Normalizer.normalize(
+                    it.absolutePath,
+                    Normalizer.Form.NFC
+                )
+            }.toSet()
             val deletedPaths = existingResources.keys - actualPaths
 
             val deletedResources = existingResources
@@ -127,8 +145,18 @@ class FileScanner @Inject constructor(
                                 old.replace("$oldPath/", "$newPath/")
                             }
 
+                            val normalizedChildPath =
+                                Normalizer.normalize(
+                                    newChildPath,
+                                    Normalizer.Form.NFC
+                                )
+
                             existingResources.remove(old)
-                            existingResources[newChildPath] = res.copy(path = newChildPath)
+
+                            existingResources[normalizedChildPath] =
+                                res.copy(
+                                    path = normalizedChildPath
+                                )
                         }
 
                         updateBuffer.add(result.resource)
@@ -205,8 +233,19 @@ class FileScanner @Inject constructor(
     ): ScanResult? {
 
         val isDirectory = file.isDirectory
-        val path = file.absolutePath
-        val existing = existingResources[path]
+
+        val normalizedName =
+            Normalizer.normalize(
+                file.name,
+                Normalizer.Form.NFC
+            )
+
+        val normalizedPath =
+            Normalizer.normalize(
+                file.absolutePath,
+                Normalizer.Form.NFC
+            )
+        val existing = existingResources[normalizedPath]
 
         val lastModified = file.lastModified()
         val size = if (isDirectory) 0L else file.length()
@@ -233,8 +272,8 @@ class FileScanner @Inject constructor(
         if (dirMatched != null) {
             return ScanResult(
                 resource = dirMatched.copy(
-                    path = path,
-                    name = file.name,
+                    path = normalizedPath,
+                    name = normalizedName,
                     lastModified = lastModified,
                     extension = null,
                     mimeType = null
@@ -254,12 +293,11 @@ class FileScanner @Inject constructor(
         } else null
 
         val matched = hash?.let { deletedByHash[it] }
-
         if (matched != null) {
             return ScanResult(
                 resource = matched.copy(
-                    path = path,
-                    name = file.name,
+                    path = normalizedPath,
+                    name = normalizedName,
                     lastModified = lastModified
                 ),
                 parentId = parentId,
@@ -273,8 +311,8 @@ class FileScanner @Inject constructor(
         // 3. 공통 Resource 생성
         // ----------------------------------------
         val newResource = Resource(
-            name = file.name,
-            path = path,
+            name = normalizedName,
+            path = normalizedPath,
             isDirectory = isDirectory,
             size = size,
             fileHash = hash,
@@ -358,10 +396,10 @@ class FileScanner @Inject constructor(
         deletedDirs: List<Resource>
     ): Resource? {
         if (!file.isDirectory) return null
-
+        val normalizedFileName = Normalizer.normalize(file.name, Normalizer.Form.NFC)
         return deletedDirs.firstOrNull {
             it.isDirectory &&
-                    it.name == file.name &&
+                    Normalizer.normalize(it.name, Normalizer.Form.NFC) == normalizedFileName &&
                     abs(it.lastModified - file.lastModified()) < 2000
         }
     }

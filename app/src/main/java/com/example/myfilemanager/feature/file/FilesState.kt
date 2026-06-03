@@ -1,10 +1,13 @@
 package com.example.myfilemanager.feature.file
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.example.domain.model.FileCategory
+import com.example.domain.model.TagRecommendResult
 import com.example.myfilemanager.feature.common.model.FileItemUiModel
 import com.example.myfilemanager.feature.common.model.TagUiModel
 import com.example.myfilemanager.feature.file.model.FileMode
 import com.example.myfilemanager.feature.file.model.FileOverlay
+import com.example.domain.model.FileSortType
 import com.example.myfilemanager.feature.file.model.NavigationEntry
 import com.example.myfilemanager.feature.file.model.SelectionState
 import com.example.myfilemanager.feature.file.model.StorageUiModel
@@ -24,7 +27,8 @@ data class FilesState(
     val activeTags: Set<Long> = emptySet(),
     val files: List<FileItemUiModel> = emptyList(),
     val currentPath: String = "",
-    val searchQuery: String = "",
+    val searchQuery: TextFieldValue = TextFieldValue(""),
+    val tagSearchQuery: String = "",
     val filteredTags: List<TagUiModel> = emptyList(),
     val isExactMatch: Boolean = false,
     val allTags: Map<Long,TagUiModel> = emptyMap(),
@@ -32,7 +36,14 @@ data class FilesState(
     val tagStatusMap: Map<Long, SelectionState> = emptyMap(),
     val isScanning: Boolean = false,
     val dragDownScanEnabled: Boolean = false,
-    val storageRootPaths: Set<String> = emptySet()
+    val storageRootPaths: Set<String> = emptySet(),
+    val aiTagRecommendRequested: Boolean = false,
+    val isAiTagRecommending: Boolean = false,
+    val tagRecommendResult: TagRecommendResult? = null,
+    val fileSortType: FileSortType = FileSortType.Recent,
+    val isAscending: Boolean = false,
+    val isSortDropdownVisible: Boolean = false,
+    val isGridView: Boolean = false,
 ){
 
     val hasSelection: Boolean

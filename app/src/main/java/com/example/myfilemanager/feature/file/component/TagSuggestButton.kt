@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,16 +37,14 @@ fun TagSuggestButton(
         Spacer(modifier = Modifier.width(8.dp))
 
         if (tag != null) {
-            TagChip(tag = tag)
+            TagChip(tag = tag,)
             Text(
                 text = " $label",
-                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
         } else {
             Text(
                 text = "\"$tagName\" $label",
-                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
         }

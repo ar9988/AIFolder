@@ -7,7 +7,8 @@ import com.example.domain.usecase.tag.DeleteTagUseCase
 import com.example.domain.usecase.tag.GetTagsWithCountUseCase
 import com.example.domain.usecase.tag.UpdateTagUseCase
 import com.example.myfilemanager.feature.common.model.SortOrder
-import com.example.myfilemanager.feature.tag.model.SortType
+import com.example.domain.model.TagSortType
+import com.example.domain.usecase.common.SettingsUseCase
 import com.example.myfilemanager.feature.tag.model.TagWithCountUiModel
 import com.example.myfilemanager.feature.tag.model.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -28,7 +30,8 @@ class TagsViewModel @Inject constructor(
     getTagsWithCountUseCase: GetTagsWithCountUseCase,
     private val deleteTagUseCase: DeleteTagUseCase,
     private val updateTagUseCase: UpdateTagUseCase,
-    private val createTagUseCase: CreateTagUseCase
+    private val createTagUseCase: CreateTagUseCase,
+    private val settingsUseCase: SettingsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TagsState())
@@ -36,12 +39,18 @@ class TagsViewModel @Inject constructor(
     private val _sideEffect = MutableSharedFlow<TagsSideEffect>()
     val sideEffect = _sideEffect.asSharedFlow()
     private val searchQuery = MutableStateFlow("")
-    private val sortType = MutableStateFlow(SortType.Name)
+    private val sortType = MutableStateFlow(TagSortType.Name)
     private val sortOrder = MutableStateFlow(SortOrder.ASC)
     private val tagsFlow = getTagsWithCountUseCase()
         .map { tags -> tags.map { it.toUiModel() } }
 
     init {
+        viewModelScope.launch {
+            val settings = settingsUseCase().first()
+            sortType.value = settings.tagSortType
+            sortOrder.value = if (settings.isTagSortAscending) SortOrder.ASC else SortOrder.DESC
+        }
+
         viewModelScope.launch {
             combine(
                 tagsFlow,
@@ -101,14 +110,17 @@ class TagsViewModel @Inject constructor(
             is TagsIntent.ChangeSortType -> {
                 sortType.value = intent.sortType
                 _uiState.update { TagsReducer.reduceChangeSortType(it, intent.sortType) }
+                updateTagSortSettings(newType = intent.sortType)
             }
 
             is TagsIntent.ChangeSortOrder -> {
                 sortOrder.value = intent.sortOrder
                 _uiState.update { TagsReducer.reduceChangeSortOrder(it, intent.sortOrder) }
+                updateTagSortSettings(newOrder = intent.sortOrder)
             }
 
             is TagsIntent.SaveTag -> {
+                _uiState.update { it.copy(isTagSaving = true) }
                 handleSaveTag()
             }
             is TagsIntent.ConfirmDelete -> {
@@ -120,13 +132,28 @@ class TagsViewModel @Inject constructor(
             is TagsIntent.ShowDeleteDialog -> {
                 _uiState.update { TagsReducer.reduceShowDialog(it) }
             }
+            is TagsIntent.LongClickTag -> {
+                _uiState.update { TagsReducer.reduceLongClickTag(it, intent.id) }
+            }
+            is TagsIntent.ToggleSelection -> {
+                _uiState.update {
+                    val updated = TagsReducer.reduceToggleSelection(it, intent.id)
+                    if (updated.selectedTagIds.isEmpty()) {
+                        TagsReducer.reduceClearSelection(updated)
+                    } else {
+                        updated
+                    }
+                }
+            }
+            is TagsIntent.ClearSelection -> {
+                _uiState.update { TagsReducer.reduceClearSelection(it) }
+            }
         }
     }
 
     private fun handleSaveTag() {
         viewModelScope.launch(Dispatchers.IO){
             val current = _uiState.value
-
             current.selectedTagId ?: return@launch
 
             val result = if (current.selectedTagId == -1L) {
@@ -146,14 +173,12 @@ class TagsViewModel @Inject constructor(
                 .onSuccess {
                     _sideEffect.emit(TagsSideEffect.ShowToast("태그 저장 성공"))
                     _uiState.update {
-                        TagsReducer.reduceSaveSuccess(it)
+                        TagsReducer.reduceSaveSuccess(it).copy(isTagSaving = false)
                     }
                 }
                 .onFailure {e->
-                    if(e.message!=null)
-                        _sideEffect.emit(TagsSideEffect.ShowToast(e.message!!))
-                    else
-                        _sideEffect.emit(TagsSideEffect.ShowToast("태그 저장 실패"))
+                    _sideEffect.emit(TagsSideEffect.ShowToast(e.message ?: "태그 저장 실패"))
+                    _uiState.update { it.copy(isTagSaving = false) }
                 }
         }
     }
@@ -162,17 +187,22 @@ class TagsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val current = _uiState.value
 
-            current.selectedTagId ?: return@launch
-            val result = deleteTagUseCase(current.selectedTagId)
+            val tagIds = if (current.selectedTagIds.isNotEmpty()) {
+                current.selectedTagIds.toList()
+            } else {
+                current.selectedTagId?.let { listOf(it) } ?: return@launch
+            }
+
+            val result = deleteTagUseCase(tagIds)
 
             result
                 .onSuccess {
-                    _sideEffect.emit(TagsSideEffect.ShowToast("태그 삭제 성공"))
+                    _sideEffect.emit(TagsSideEffect.ShowToast("태그 ${tagIds.size}개 삭제 성공"))
                     _uiState.update {
                         TagsReducer.reduceDeleteSuccess(it)
                     }
                 }
-                .onFailure { e->
+                .onFailure {
                     _sideEffect.emit(TagsSideEffect.ShowToast("태그 삭제 실패"))
                 }
         }
@@ -186,15 +216,29 @@ class TagsViewModel @Inject constructor(
         }
 
         val sorted = when (state.sortType) {
-            SortType.Name -> filtered.sortedBy { it.name }
-            SortType.Count -> filtered.sortedBy { it.count }
-            SortType.Recent -> filtered.sortedBy { it.usedAt }
+            TagSortType.Name -> filtered.sortedBy { it.name }
+            TagSortType.Count -> filtered.sortedBy { it.count }
+            TagSortType.Recent -> filtered.sortedBy { it.usedAt }
         }
 
         return if (state.sortOrder == SortOrder.ASC) {
             sorted
         } else {
             sorted.reversed()
+        }
+    }
+
+    private fun updateTagSortSettings(newType: TagSortType? = null, newOrder: SortOrder? = null) {
+        viewModelScope.launch {
+            settingsUseCase.updateSettings { currentSettings ->
+                val updatedType = newType ?: currentSettings.tagSortType
+                val updatedOrder = newOrder ?: (if (currentSettings.isTagSortAscending) SortOrder.ASC else SortOrder.DESC)
+
+                currentSettings.copy(
+                    tagSortType = updatedType,
+                    isTagSortAscending = (updatedOrder == SortOrder.ASC)
+                )
+            }
         }
     }
 }

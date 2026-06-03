@@ -2,9 +2,7 @@ package com.example.myfilemanager.feature.file.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,38 +15,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ActionItem(
+fun SortOptionChip(
+    text: String,
     icon: ImageVector,
-    label: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    color: Color = Color.DarkGray
+    modifier: Modifier = Modifier
 ) {
-    val contentColor = if (enabled) color else Color.LightGray
-
-    Column(
+    Row(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(enabled = enabled) { onClick() }
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = label,
-            modifier = Modifier.size(24.dp),
-            tint = contentColor
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = Color.DarkGray
         )
-        Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = label,
+            text = text,
             style = MaterialTheme.typography.labelMedium,
-            color = contentColor
+            fontWeight = FontWeight.Medium,
+            color = Color.DarkGray
         )
     }
 }

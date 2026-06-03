@@ -11,14 +11,12 @@ import com.example.myfilemanager.feature.tag.TagsState
 @Composable
 fun DeleteTagConfirmDialog(
     state: TagsState,
-    onIntent: (TagsIntent) -> Unit
+    onIntent: (TagsIntent) -> Unit,
 ) {
-    val deleteTargetId = state.selectedTagId
-    val tag = state.allTags[deleteTargetId]
     AlertDialog(
         onDismissRequest = { onIntent(TagsIntent.DismissDialog) },
         title = { Text(text = "태그 삭제") },
-        text = { Text(text = "${tag!!.name} 을 삭제하시겠습니까?\n 이 작업은 취소할 수 없습니다.") },
+        text = { Text(text = "${state.selectionLabel} 을 삭제하시겠습니까?\n 이 작업은 취소할 수 없습니다.") },
         confirmButton = {
             TextButton(
                 onClick = { onIntent(TagsIntent.ConfirmDelete) }

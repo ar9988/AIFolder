@@ -9,33 +9,37 @@ data class FileItemUiModel(
     val name: String,
     val isDirectory: Boolean,
     val isParent: Boolean,
-    val sizeText: String,
-    val dateText: String,
-    val metaText: String,
+    val size: Long,
+    val lastModified: Long,
     val tags: List<TagUiModel>,
     val path: String,
-    val extension: String?
-)
+    val extension: String?,
+    val mimeType: String?,
+){
+    val sizeText: String
+        get() = if (isDirectory) "" else formatFileSize(size)
+
+    val dateText: String
+        get() = formatCreateDate(lastModified)
+
+    val metaText: String
+        get() = listOfNotNull(
+            sizeText.takeIf { it.isNotEmpty() },
+            dateText.takeIf { it.isNotEmpty() }
+        ).joinToString(" · ")
+}
 
 fun Resource.toUiModel(): FileItemUiModel {
-    val sizeText = if (this.isDirectory) "" else formatFileSize(this.size)
-    val dateText = formatCreateDate(this.lastModified)
-
-    val metaText = listOfNotNull(
-        sizeText.takeIf { it.isNotEmpty() },
-        dateText.takeIf { it.isNotEmpty() }
-    ).joinToString(" · ")
-
     return FileItemUiModel(
         id = this.id,
         name = if (this.isParentPointer) "상위 폴더로 이동" else this.name,
         isDirectory = this.isDirectory,
         isParent = this.isParentPointer,
-        sizeText = sizeText,
-        dateText = dateText,
-        metaText = metaText,
         tags = this.tags.map { it.toUiModel() },
         path = this.path,
-        extension = this.extension
+        extension = this.extension,
+        mimeType = this.mimeType,
+        size = this.size,
+        lastModified = this.lastModified
     )
 }

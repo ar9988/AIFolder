@@ -16,20 +16,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.myfilemanager.feature.common.model.SortOrder
 import com.example.myfilemanager.feature.common.model.SortOrderButton
-import com.example.myfilemanager.feature.tag.model.SortType
+import com.example.domain.model.TagSortType
 
 @Composable
 fun FilterChips(
-    tagFilter: SortType,
+    tagFilter: TagSortType,
     sortOrder: SortOrder,
-    onSortTypeChange: (SortType) -> Unit,
+    onSortTypeChange: (TagSortType) -> Unit,
     onSortOrderChange: (SortOrder) -> Unit
 ) {
 
     val typeFilters = listOf(
-        SortType.Name to "이름",
-        SortType.Recent to "최근 사용",
-        SortType.Count to "적용된 파일 수",
+        TagSortType.Name to "이름",
+        TagSortType.Recent to "최근 사용",
+        TagSortType.Count to "적용된 파일 수",
     )
 
     LazyRow(

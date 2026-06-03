@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -27,6 +28,8 @@ fun InputTagChip(
     action: TagChipAction,
     onClick: () -> Unit,
 ) {
+    val background = Color(tag.color)
+    val contentColor = if (background.luminance() > 0.5f) Color.Black else Color.White
     Surface(
         modifier = Modifier
             .padding(end = 4.dp)
@@ -42,7 +45,7 @@ fun InputTagChip(
                 text = "#${tag.name}",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = contentColor
             )
 
             Spacer(modifier = Modifier.width(4.dp))
@@ -53,7 +56,7 @@ fun InputTagChip(
                 else
                     Icons.Default.Close,
                 contentDescription = null,
-                tint = Color.Black.copy(alpha = 0.6f),
+                tint = contentColor.copy(alpha = 0.7f),
                 modifier = Modifier.size(14.dp)
             )
         }

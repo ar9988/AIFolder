@@ -1,7 +1,6 @@
 package com.example.local_db.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -62,4 +61,7 @@ interface TagDao {
 
     @Update(entity = TagEntity::class)
     fun updateTag(tag: TagEntity): Int
+
+    @Query("DELETE FROM tags WHERE tagId IN (:tagIds)")
+    fun deleteTags(tagIds: List<Long>)
 }

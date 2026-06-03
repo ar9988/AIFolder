@@ -28,7 +28,6 @@ import com.example.myfilemanager.feature.file.component.FileStackListContent
 import com.example.myfilemanager.feature.file.component.MoveDialog
 import com.example.myfilemanager.feature.file.component.RenameDialog
 import com.example.myfilemanager.feature.file.component.TagActionSheet
-import com.example.myfilemanager.feature.file.model.FileMode
 import com.example.myfilemanager.feature.file.model.FileOverlay
 import com.example.myfilemanager.feature.file.model.ViewMode
 
@@ -41,7 +40,6 @@ fun FilesDashboardScreen(
 
     BackHandler(
         enabled = state.fileOverlay != null ||
-                state.fileMode != FileMode.Normal ||
                 state.navigationStack.isNotEmpty() ||
                 state.viewMode != ViewMode.DASHBOARD
     ) {
