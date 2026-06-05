@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.di_bridge"
+    namespace = "com.ar9988.di_bridge"
     compileSdk = 36
 
     defaultConfig {

@@ -1,0 +1,32 @@
+package com.ar9988.tagfilemanager.feature.assistant
+
+import com.ar9988.domain.model.SearchStrategy
+import com.ar9988.tagfilemanager.feature.assistant.model.AssistantSortType
+
+sealed class AssistantIntent {
+    data class SuggestionClick(val query:String): AssistantIntent()
+    object OnSendMessage: AssistantIntent()
+    data class OnQueryChange(val query: String): AssistantIntent()
+    data class ToggleTagFilter(
+        val messageId: Long,
+        val tagId: Long
+    ) : AssistantIntent()
+
+    data class ChangeSortType(
+        val messageId: Long,
+        val sortType: AssistantSortType
+    ) : AssistantIntent()
+
+    data class ToggleSortOrder(
+        val messageId: Long
+    ) : AssistantIntent()
+
+    data class RetrySearch(
+        val query: String,
+        val strategy: SearchStrategy
+    ) : AssistantIntent()
+
+    object ClearMessages : AssistantIntent()
+
+    data class NavigateToFile(val path: String) : AssistantIntent()
+}

@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.myfilemanager"
+    namespace = "com.ar9988.tagfilemanager"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.myfilemanager"
+        applicationId = "com.ar9988.tagfilemanager"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

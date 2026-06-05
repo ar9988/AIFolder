@@ -1,0 +1,55 @@
+package com.ar9988.data.repository.local
+
+import com.ar9988.domain.model.DateRange
+import com.ar9988.domain.model.Resource
+import com.ar9988.domain.model.ResourceTagCrossRefModel
+import com.ar9988.domain.model.Tag
+import com.ar9988.domain.model.TagWithCount
+import kotlinx.coroutines.flow.Flow
+
+interface LocalDataSource {
+    suspend fun getResourceByPath(path: String) : Resource?
+    fun getResourcesInFolder(parentId: Long?): Flow<List<Resource>>
+    fun getResourcesByTag(tagId: Long): Flow<List<Resource>>
+    fun getResourcesByMimeType(pattern: String) : Flow<List<Resource>>
+    fun getResourcesByExtensions(extensions: List<String>) : Flow<List<Resource>>
+    suspend fun getResourcesInFolderOnce(parentId: Long?): List<Resource>
+    suspend fun insertResource(resource: Resource) : Long
+    suspend fun addTagToResource(resourceId: Long, tagId: Long)
+    suspend fun insertAll(resources: List<Resource>)
+    suspend fun deleteAllByIds(resources: List<Long>)
+    suspend fun deleteAll(resources: List<Resource>)
+    suspend fun deleteResource(resource: Resource)
+    suspend fun updateResource(resource: Resource)
+    suspend fun updateAllByIds(updated: List<Triple<Long,String,Long?>>)
+    suspend fun updateSubtreePath(oldPath: String, newPath: String)
+    fun getResourcesByQuery(query: String): Flow<List<Resource>>
+    fun getResourcesByTagsAndQuery(query: String, tagIds: List<Long>): Flow<List<Resource>>
+    suspend fun insertTag(tag: Tag): Tag
+    fun getAllTags(): Flow<List<Tag>>
+    suspend fun insertResourceTagCrossRefs(
+        resourceIds: List<Long>,
+        tagId: Long,
+    )
+    suspend fun deleteResourceTagCrossRefs(refs: List<ResourceTagCrossRefModel>)
+    suspend fun renameResource(id: Long, newName: String, newPath: String)
+    suspend fun updateAll(updated: List<Resource>)
+    fun getTagsWithCount(): Flow<List<TagWithCount>>
+    fun getResourcesByTags(selectedTags: List<Long>): Flow<List<Resource>>
+    fun deleteTag(tagId: Long): Int
+    fun updateTag(tag: Tag): Int
+    suspend fun searchByTagsAndDate(
+        tagIds: List<Long>,
+        dateRange: DateRange?,
+    ): List<Resource>
+
+    suspend fun searchByDateAndKeyword(
+        dateRange: DateRange?,
+    ): List<Resource>
+
+    suspend fun getResourceById(id: Long): Resource?
+    suspend fun getTagName(tagId: Long): String
+    suspend fun getTag(tagId: Long): Tag
+    suspend fun deleteByFolderPath(path: String)
+    fun deleteTags(tagIds: List<Long>) 
+}

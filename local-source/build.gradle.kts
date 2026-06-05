@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.local_db"
+    namespace = "com.ar9988.local_db"
     compileSdk = 36
 
     defaultConfig {
