@@ -9,7 +9,7 @@ import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 @HiltAndroidApp
-class FileManagerApp : Application(){
+class TagFileManagerApp : Application(){
 
     @Inject
     lateinit var embeddingModel: OnnxEmbeddingModel

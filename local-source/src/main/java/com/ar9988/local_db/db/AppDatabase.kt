@@ -18,7 +18,7 @@ import com.ar9988.local_db.util.EmbeddingConverter
         TagEntity::class,
         ResourceTagCrossRef::class,
     ],
-    version = 12,
+    version = 1,
     exportSchema = true
 )
 @TypeConverters(EmbeddingConverter::class)

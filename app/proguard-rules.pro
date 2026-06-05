@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# PDFBox 관련 라이브러리 난독화 방지
+-keep class com.tom_roush.pdfbox.** { *; }
+
+# Gemalto JP2Decoder 관련 경고 무시
+-dontwarn com.gemalto.jp2.**
