@@ -36,6 +36,7 @@ import com.ar9988.tagfilemanager.feature.file.FilesIntent
 import com.ar9988.tagfilemanager.feature.file.model.FileMode
 import com.ar9988.tagfilemanager.ui.theme.CardWhite
 import com.ar9988.tagfilemanager.R
+import com.ar9988.tagfilemanager.util.FileTypeUtils
 
 @Composable
 fun FileGridItemCard(
@@ -104,9 +105,8 @@ fun FileGridItemCard(
                         modifier = Modifier.size(36.dp)
                     )
                 } else {
-                    val ext = resource.extension?.lowercase() ?: ""
-                    val isImage = ext in setOf("png", "jpg", "jpeg", "gif", "webp", "bmp", "heic", "heif")
-                    val isVideo = ext in setOf("mp4", "mkv", "avi", "mov", "wmv", "3gp", "flv", "webm", "m4v")
+                    val isImage = FileTypeUtils.isImage(resource.extension)
+                    val isVideo = FileTypeUtils.isVideo(resource.extension)
 
                     if (isImage || isVideo) {
                         ThumbnailImage(
@@ -118,7 +118,6 @@ fun FileGridItemCard(
                         FileExtensionIcon(
                             modifier = Modifier.size(36.dp),
                             extension = resource.extension,
-                            path = null
                         )
                     }
                 }

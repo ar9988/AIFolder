@@ -44,3 +44,11 @@ fun String.nfc(): String =
         this,
         Normalizer.Form.NFC
     )
+
+object FileTypeUtils {
+    val imageExtensions = setOf("png", "jpg", "jpeg", "gif", "webp", "bmp", "heic", "heif")
+    val videoExtensions = setOf("mp4", "mkv", "avi", "mov", "wmv", "3gp", "flv", "webm", "m4v")
+
+    fun isImage(extension: String?) = extension?.lowercase() in imageExtensions
+    fun isVideo(extension: String?) = extension?.lowercase() in videoExtensions
+}

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,6 +34,7 @@ import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 import com.ar9988.tagfilemanager.feature.common.model.TagChip
 import com.ar9988.tagfilemanager.feature.file.model.FileMode
 import com.ar9988.tagfilemanager.ui.theme.CardWhite
+import com.ar9988.tagfilemanager.util.FileTypeUtils
 
 @Composable
 fun FileListItemCard(
@@ -117,7 +119,21 @@ fun FileListItemCard(
                     tint = if (isMoving) Color.Gray else iconTint
                 )
             } else {
-                FileExtensionIcon(modifier = Modifier,resource.extension,resource.path)
+                val isImage = FileTypeUtils.isImage(resource.extension)
+                val isVideo = FileTypeUtils.isVideo(resource.extension)
+
+                if (isImage || isVideo) {
+                    ThumbnailImage(
+                        path = resource.path,
+                        isVideo = isVideo,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    FileExtensionIcon(
+                        modifier = Modifier.size(36.dp),
+                        extension = resource.extension,
+                    )
+                }
             }
         }
 

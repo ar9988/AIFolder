@@ -1,5 +1,6 @@
 package com.ar9988.local_db.manager
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.webkit.MimeTypeMap
@@ -35,8 +36,11 @@ class AndroidFileOpener @Inject constructor(
         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         try {
+            context.startActivity(intent) // chooser 없이 바로
+        } catch (e: ActivityNotFoundException) {
+            val chooser = Intent.createChooser(intent, "파일 열기")
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(chooser)
-        } catch (e: Exception) {
         }
     }
 }
