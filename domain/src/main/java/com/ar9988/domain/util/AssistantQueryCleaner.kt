@@ -4,8 +4,8 @@ object AssistantQueryCleaner {
 
     private val stopWords = listOf(
         "찾고싶어", "찾아줘", "보여줘", "알려줘", "주세요", "해줘",
-        "파일", "검색", "관련", "볼게", "찾아", "보여", "알려",
-        "있는", "있어", "있냐", "것", "좀",
+         "볼게", "찾아", "보여", "알려",
+        "있는", "있어", "있냐", "것", "좀","관련","어디",
     )
 
     fun clean(text: String): List<String> {

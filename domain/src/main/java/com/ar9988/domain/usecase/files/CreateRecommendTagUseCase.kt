@@ -6,6 +6,7 @@ import com.ar9988.domain.repository.TagRepository
 import com.ar9988.domain.service.EmbeddingModel
 import com.ar9988.domain.service.TextExtractor
 import com.ar9988.domain.util.DocumentSemanticProcessor
+import com.ar9988.domain.util.FileNameProcessor
 import com.ar9988.domain.util.cosineSimilarity
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -18,28 +19,27 @@ class CreateRecommendTagUseCase @Inject constructor(
     private val embeddingModel: EmbeddingModel,
     private val textExtractor: TextExtractor,
 ) {
-    suspend operator fun invoke(
-        files: List<FileInput>
-    ): TagRecommendResult = coroutineScope {
-        val extractedTexts = files.map { file ->
+    suspend operator fun invoke(files: List<FileInput>): TagRecommendResult = coroutineScope {
+        val extractedData = files.map { file ->
             async {
                 if (file.isDirectory) {
-                    "" // 폴더는 텍스트 추출 없음 (이름 제외)
+                    "" to emptyList()
                 } else {
-                    val extracted = textExtractor.extract(file.path, file.mimeType)
-                    if (extracted.isNullOrBlank()) "" else "${file.name} $extracted"
+                    val content = textExtractor.extract(file.path, file.mimeType)
+                    val titleWords = FileNameProcessor.process(file.name)
+                    content to titleWords
                 }
             }
         }.awaitAll()
 
-        val combinedText = extractedTexts.joinToString(" ").trim()
-        val processedKeywords = DocumentSemanticProcessor.process(combinedText, 3)
+        val combinedText = extractedData.joinToString(" ") { it.first }
+        val allTitleWords = extractedData.flatMap { it.second }.distinct()
 
-        val finalKeywords = processedKeywords.ifEmpty {
-            files.map { it.name }
-                .filter { it.length >= 2 }
-                .take(3)
-        }
+        val finalKeywords = DocumentSemanticProcessor.process(
+            text = combinedText,
+            titleWords = allTitleWords,
+            maxKeywords = 5
+        )
 
         if (finalKeywords.isEmpty()) {
             return@coroutineScope TagRecommendResult(emptyList(), emptyList())

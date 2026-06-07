@@ -49,6 +49,7 @@ class SettingsViewModel @Inject constructor(
                     is SettingsIntent.AddExcludedFolder -> currentState.copy(excludedFiles = currentState.excludedFiles + intent.folder)
                     is SettingsIntent.RemoveExcludedFolder -> currentState.copy(excludedFiles = currentState.excludedFiles - intent.folder)
                     is SettingsIntent.SetSearchSensitivity -> currentState.copy(searchSensitivity = intent.sensitivity)
+                    is SettingsIntent.ToggleShowHiddenFiles -> currentState.copy(showHiddenFiles = intent.enabled)
                 }
             }
 
@@ -59,7 +60,8 @@ class SettingsViewModel @Inject constructor(
                     dragDownScan = state.dragDownScan,
                     excludedExtensions = state.excludedExtensions,
                     excludedFolders = state.excludedFiles,
-                    searchSensitivity = state.searchSensitivity
+                    searchSensitivity = state.searchSensitivity,
+                    showHiddenFiles = state.showHiddenFiles
                 )
             }
         }

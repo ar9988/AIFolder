@@ -50,57 +50,24 @@ object DocumentSemanticProcessor {
 
     fun process(
         text: String,
-        maxKeywords: Int = 20,
-        maxChars: Int = 2000
+        titleWords: List<String>,
+        maxKeywords: Int = 5
     ): List<String> {
+        if (text.isBlank()) return titleWords.take(maxKeywords)
 
-        if (text.isBlank()) return emptyList()
-
-        val tokens = text
-            .take(maxChars)
-            .lowercase()
-
-            // 특수문자 제거
+        val tokens = text.lowercase()
             .replace(Regex("[^가-힣a-z0-9\\s]"), " ")
-
-            // 공백 분리
             .split(Regex("\\s+"))
-
-            // 기본 필터
-            .filter { token ->
-
-                token.isNotBlank() &&
-                        token.length >= 2 &&
-                        token.length <= 30 &&
-
-                        // 숫자만 있는 토큰 제거
-                        !token.all(Char::isDigit) &&
-
-                        // 숫자 비율 높은 토큰 제거
-                        (
-                                token.count(Char::isDigit)
-                                    .toFloat() / token.length
-                                ) < 0.5f &&
-
-                        // stop word 제거
-                        token !in stopWords
-            }
+            .filter { it.length in 2..30 && it !in stopWords }
 
         val scoreMap = mutableMapOf<String, Double>()
+        val titleSet = titleWords.map { it.lowercase() }.toSet()
 
         tokens.forEachIndexed { index, word ->
+            val baseScore = if (word in titleSet) 3.0 else 1.0
+            val positionBonus = if (index < 10) 2.0 else 0.0
 
-            // 빈도 점수
-            val frequencyScore = 1.0
-
-            // 문서 앞부분 보너스
-            val positionBonus =
-                if (index < 10) 2.0 else 0.0
-
-            scoreMap[word] =
-                (scoreMap[word] ?: 0.0) +
-                        frequencyScore +
-                        positionBonus
+            scoreMap[word] = (scoreMap[word] ?: 0.0) + baseScore + positionBonus
         }
 
         return scoreMap.entries

@@ -12,6 +12,9 @@ import com.ar9988.domain.model.TagSortType
 import com.ar9988.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,6 +26,9 @@ class SettingsRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : SettingsRepository {
 
+    private val _isInitialized = MutableStateFlow(false)
+    override val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
+
     companion object {
         private val AUTO_SCAN_KEY = booleanPreferencesKey("auto_scan_on_launch")
         private val DRAG_DOWN_SCAN_KEY = booleanPreferencesKey("drag_down_scan")
@@ -33,7 +39,7 @@ class SettingsRepositoryImpl @Inject constructor(
         private val IS_FILE_SORT_ASCENDING_KEY = booleanPreferencesKey("is_file_sort_ascending")
         private val TAG_SORT_TYPE_KEY = stringPreferencesKey("tag_sort_type")
         private val IS_TAG_SORT_ASCENDING_KEY = booleanPreferencesKey("is_tag_sort_ascending")
-
+        private val SHOW_HIDDEN_FILES_KEY = booleanPreferencesKey("show_hidden_files")
         private const val LIST_SEPARATOR = "\n"
     }
 
@@ -58,6 +64,7 @@ class SettingsRepositoryImpl @Inject constructor(
             isFileSortAscending = prefs[IS_FILE_SORT_ASCENDING_KEY] ?: false,
             tagSortType = TagSortType.valueOf(prefs[TAG_SORT_TYPE_KEY] ?: TagSortType.Recent.name),
             isTagSortAscending = prefs[IS_TAG_SORT_ASCENDING_KEY] ?: false,
+            showHiddenFiles = prefs[SHOW_HIDDEN_FILES_KEY] ?: false,
         )
     }
 
@@ -72,7 +79,8 @@ class SettingsRepositoryImpl @Inject constructor(
                 fileSortType = FileSortType.valueOf(prefs[FILE_SORT_TYPE_KEY] ?: FileSortType.Recent.name),
                 isFileSortAscending = prefs[IS_FILE_SORT_ASCENDING_KEY] ?: false,
                 tagSortType = TagSortType.valueOf(prefs[TAG_SORT_TYPE_KEY] ?: TagSortType.Recent.name),
-                isTagSortAscending = prefs[IS_TAG_SORT_ASCENDING_KEY] ?: false
+                isTagSortAscending = prefs[IS_TAG_SORT_ASCENDING_KEY] ?: false,
+                showHiddenFiles = prefs[SHOW_HIDDEN_FILES_KEY] ?: false,
             )
             val updateSettings = transform(currentSettings)
 
@@ -85,6 +93,21 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs[IS_FILE_SORT_ASCENDING_KEY] = updateSettings.isFileSortAscending
             prefs[TAG_SORT_TYPE_KEY] = updateSettings.tagSortType.name
             prefs[IS_TAG_SORT_ASCENDING_KEY] = updateSettings.isTagSortAscending
+            prefs[SHOW_HIDDEN_FILES_KEY] = updateSettings.showHiddenFiles
         }
+    }
+
+    override suspend fun initializeDefaultsIfNeeded() {
+        context.settingsDataStore.edit { prefs ->
+            if (prefs[EXCLUDED_EXTENSIONS_KEY] == null) {
+                prefs[EXCLUDED_EXTENSIONS_KEY] =
+                    Settings.DEFAULT_EXCLUDED_EXTENSIONS.joinToString(LIST_SEPARATOR)
+            }
+            if (prefs[EXCLUDED_FOLDERS_KEY] == null) {
+                prefs[EXCLUDED_FOLDERS_KEY] =
+                    Settings.DEFAULT_EXCLUDED_FOLDERS.joinToString(LIST_SEPARATOR)
+            }
+        }
+        _isInitialized.value = true
     }
 }

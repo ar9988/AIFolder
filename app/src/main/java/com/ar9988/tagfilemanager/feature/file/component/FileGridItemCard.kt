@@ -200,8 +200,7 @@ fun FileGridItemCard(
                             }
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(16.dp),
+                                    .fillMaxWidth(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (resource.metaText.isNotEmpty()) {

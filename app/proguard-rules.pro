@@ -24,3 +24,6 @@
 
 # Gemalto JP2Decoder 관련 경고 무시
 -dontwarn com.gemalto.jp2.**
+-keep class ai.onnxruntime.** { *; }
+-keep class ai.onnxruntime.native.** { *; }
+-dontwarn ai.onnxruntime.**

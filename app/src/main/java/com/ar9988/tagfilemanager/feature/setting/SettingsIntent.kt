@@ -10,4 +10,5 @@ sealed class SettingsIntent {
     data class AddExcludedFolder(val folder: String) : SettingsIntent()
     data class RemoveExcludedFolder(val folder: String) : SettingsIntent()
     data class SetSearchSensitivity(val sensitivity: SearchSensitivity) : SettingsIntent()
+    data class ToggleShowHiddenFiles(val enabled: Boolean) : SettingsIntent()
 }

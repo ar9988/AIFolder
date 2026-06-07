@@ -47,20 +47,39 @@ class AssistantSearchUseCase @Inject constructor(
                     settings.searchSensitivity
             }
 
-        // 파일명 검색 루트
-        if (strategy == SearchStrategy.SEARCH_BY_FILENAME) {
+        // 파일명,태그명 검색 루트
+        if (strategy == SearchStrategy.SEARCH_BY_FILENAME_AND_TAGNAME) {
 
-            val files =
+            val filesByName =
                 resourceRepository
                     .getResourcesByQuery(query)
                     .first()
 
-            return if (files.isNotEmpty()) {
+            val allTags = tagRepository.getAllTags().first()
+            val matchedTagIds = allTags
+                .filter { tag ->
+                    cleanTokens.any { token ->
+                        tag.name.contains(token, ignoreCase = true)
+                    }
+                }
+                .map { it.id }
+
+            val filesByTag = if (matchedTagIds.isNotEmpty()) {
+                resourceRepository.searchByTagsAndDate(
+                    tagIds = matchedTagIds,
+                    dateRange = null
+                )
+            } else emptyList()
+
+            val combined = (filesByName + filesByTag)
+                .distinctBy { it.id }
+
+            return if (combined.isNotEmpty()) {
 
                 AssistantResult.Success(
                     matchedTags = emptyList(),
                     dateRange = null,
-                    files = files
+                    files = combined
                 )
 
             } else {
@@ -235,26 +254,24 @@ class AssistantSearchUseCase @Inject constructor(
             SearchFailureReason.NoMatchedTags ->
                 mutableListOf(
                     SearchStrategy.RELAX_SENSITIVITY,
-                    SearchStrategy.SEARCH_BY_FILENAME
+                    SearchStrategy.SEARCH_BY_FILENAME_AND_TAGNAME
                 )
             SearchFailureReason.NoFilesFound ->
                 mutableListOf(
                     SearchStrategy.RELAX_SENSITIVITY,
-                    SearchStrategy.SEARCH_BY_FILENAME
+                    SearchStrategy.SEARCH_BY_FILENAME_AND_TAGNAME
                 )
             is SearchFailureReason.NoFilesWithDate ->
                 mutableListOf(
                     SearchStrategy.IGNORE_DATE,
                     SearchStrategy.RELAX_SENSITIVITY,
-                    SearchStrategy.SEARCH_BY_FILENAME
+                    SearchStrategy.SEARCH_BY_FILENAME_AND_TAGNAME
                 )
         }
 
-        // 이미 시도한 전략 전부 제거
         suggestions.removeAll(triedStrategies)
 
         println(suggestions.toString())
-        // WIDE면 RELAX_SENSITIVITY 제거
         if (currentSensitivity == SearchSensitivity.WIDE) {
             suggestions.remove(SearchStrategy.RELAX_SENSITIVITY)
         }

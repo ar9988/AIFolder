@@ -5,6 +5,7 @@ import com.ar9988.domain.model.SearchSensitivity
 data class SettingsState(
     val autoScanOnLaunch: Boolean = true,
     val dragDownScan: Boolean = true,
+    val showHiddenFiles: Boolean = false,
     val excludedExtensions: List<String> = emptyList(),
     val excludedFiles: List<String> = emptyList(),
     val searchSensitivity: SearchSensitivity = SearchSensitivity.DEFAULT

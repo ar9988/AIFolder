@@ -31,6 +31,7 @@ class FileScanner @Inject constructor(
     private val dispatcher = Dispatchers.IO.limitedParallelism(4)
 
     fun scanDirectory(startFile: File, startFileId: Long?): Flow<ScanEvent> = channelFlow {
+        settingsUseCase.isInitialized.first { it }
         val settings = settingsUseCase().first()
 
         val excludedFolders =
@@ -40,6 +41,9 @@ class FileScanner @Inject constructor(
             settings.excludedExtensions
                 .map { it.lowercase() }
                 .toSet()
+
+        val excludedByHidden =
+            settings.showHiddenFiles
 
         val queue = ArrayDeque<Pair<File, Long?>>()
         queue.add(startFile to startFileId)
@@ -86,7 +90,10 @@ class FileScanner @Inject constructor(
                         !file.isDirectory &&
                                 extension in excludedExtensions
 
-                    excludedByFolder || excludedByExtension
+
+                    val excludedByPattern = !file.isDirectory && shouldExcludeFile(file,excludedByHidden)
+
+                    excludedByFolder || excludedByExtension || excludedByPattern
                 }
 
             val existingResources = getCached(parentId)
@@ -414,5 +421,20 @@ class FileScanner @Inject constructor(
     private fun getExtension(file: File): String? {
         if (file.isDirectory) return null
         return file.extension.lowercase().takeIf { it.isNotEmpty() }
+    }
+
+    private fun shouldExcludeFile(file: File, excludedByHidden: Boolean): Boolean {
+        if(!excludedByHidden) return false
+        val name = file.name
+
+        if (name.matches(Regex("\\.[0-9]+\\.[a-zA-Z]+"))) return true
+
+        if (name.startsWith(".")) return true
+
+        if (name.startsWith("~")) return true
+
+        if (name.endsWith(".tmp", ignoreCase = true)) return true
+
+        return false
     }
 }

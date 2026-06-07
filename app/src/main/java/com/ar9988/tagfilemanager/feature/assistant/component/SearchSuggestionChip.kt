@@ -22,8 +22,8 @@ fun SearchStrategyChip(
             SearchStrategy.RELAX_SENSITIVITY ->
                 "민감도 완화"
 
-            SearchStrategy.SEARCH_BY_FILENAME ->
-                "파일명 검색"
+            SearchStrategy.SEARCH_BY_FILENAME_AND_TAGNAME ->
+                "파일명/태그명 검색"
 
             SearchStrategy.IGNORE_DATE ->
                 "날짜 무시"

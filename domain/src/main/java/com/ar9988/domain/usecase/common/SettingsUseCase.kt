@@ -15,4 +15,9 @@ class SettingsUseCase @Inject constructor(
     suspend fun updateSettings(transform: (Settings) -> Settings) {
         settingsRepository.updateSettings(transform)
     }
+
+    suspend fun initializeDefaultsIfNeeded(){
+        settingsRepository.initializeDefaultsIfNeeded()
+    }
+    val isInitialized: Flow<Boolean> = settingsRepository.isInitialized
 }
