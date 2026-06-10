@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun TagsHeader(totalCount: Int) {
     Column(modifier = Modifier.padding(16.dp)) {
-        Text(text = "Tags",
+        Text(text = "태그",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = Color.DarkGray)

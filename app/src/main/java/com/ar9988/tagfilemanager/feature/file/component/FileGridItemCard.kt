@@ -149,7 +149,7 @@ fun FileGridItemCard(
                         isParent -> Color.Gray
                         else -> MaterialTheme.colorScheme.onSurface
                     },
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center
                 )
@@ -200,7 +200,8 @@ fun FileGridItemCard(
                             }
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth(),
+                                    .fillMaxWidth()
+                                    .height(20.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (resource.metaText.isNotEmpty()) {

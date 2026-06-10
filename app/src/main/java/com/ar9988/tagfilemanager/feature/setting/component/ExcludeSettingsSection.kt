@@ -8,15 +8,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FilePresent
 import androidx.compose.material.icons.outlined.FolderOff
+import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,7 +56,6 @@ fun ExcludeSettingsSection(
 
     AnimatedVisibility(visible = showExtInput) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            // 현재 제외 확장자 칩
             if (state.excludedExtensions.isNotEmpty()) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     state.excludedExtensions.forEach { ext ->
@@ -61,8 +65,22 @@ fun ExcludeSettingsSection(
                         )
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(6.dp))
+                // 초기화 버튼
             }
+            TextButton(
+                onClick = { onIntent(SettingsIntent.ResetExcludedExtensions) },
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.RestartAlt,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("기본값으로 초기화", style = MaterialTheme.typography.labelSmall,color = Color.Black)
+            }
+            Spacer(Modifier.height(4.dp))
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -90,6 +108,7 @@ fun ExcludeSettingsSection(
         }
     }
 
+
     SettingsDivider()
 
     // 제외 폴더
@@ -115,8 +134,21 @@ fun ExcludeSettingsSection(
                         )
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(6.dp))
             }
+            TextButton(
+                onClick = { onIntent(SettingsIntent.ResetExcludedFolders) },
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.RestartAlt,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("기본값으로 초기화", style = MaterialTheme.typography.labelSmall , color = Color.Black)
+            }
+            Spacer(Modifier.height(4.dp))
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically

@@ -5,7 +5,7 @@ import com.ar9988.tagfilemanager.feature.assistant.model.AssistantSortType
 
 sealed class AssistantIntent {
     data class SuggestionClick(val query:String): AssistantIntent()
-    object OnSendMessage: AssistantIntent()
+    data object OnSendMessage: AssistantIntent()
     data class OnQueryChange(val query: String): AssistantIntent()
     data class ToggleTagFilter(
         val messageId: Long,
@@ -26,7 +26,7 @@ sealed class AssistantIntent {
         val strategy: SearchStrategy
     ) : AssistantIntent()
 
-    object ClearMessages : AssistantIntent()
+    data object ClearMessages : AssistantIntent()
 
     data class NavigateToFile(val path: String) : AssistantIntent()
 }

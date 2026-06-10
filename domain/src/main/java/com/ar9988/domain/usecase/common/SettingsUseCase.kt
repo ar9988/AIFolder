@@ -16,8 +16,7 @@ class SettingsUseCase @Inject constructor(
         settingsRepository.updateSettings(transform)
     }
 
-    suspend fun initializeDefaultsIfNeeded(){
-        settingsRepository.initializeDefaultsIfNeeded()
+    fun getDefaultExcludedFolders(): List<String> {
+        return settingsRepository.getDefaultExcludedFolders()
     }
-    val isInitialized: Flow<Boolean> = settingsRepository.isInitialized
 }

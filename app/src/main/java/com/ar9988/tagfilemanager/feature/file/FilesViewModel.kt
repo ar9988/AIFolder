@@ -448,7 +448,7 @@ class FilesViewModel @Inject constructor(
                 var newState: FilesState? = null
                 _state.update {
                     newState = FilesReducer.reduceToggleSortOrder(it)
-                    newState
+                    newState!!
                 }
                 newState?.let { updateSortSettings(isAscending = it.isAscending) }
             }
@@ -457,7 +457,7 @@ class FilesViewModel @Inject constructor(
                 var newState: FilesState? = null
                 _state.update {
                     newState = FilesReducer.reduceChangeSortType(it, intent.sortType)
-                    newState
+                    newState!!
                 }
                 newState?.let { updateSortSettings(sortType = it.fileSortType) }
             }
@@ -802,14 +802,9 @@ class FilesViewModel @Inject constructor(
     }
 
     private fun startScan(path: String) {
-        if (syncStateHolder.isScanning.value) {
-            return
-        }
-
         val intent = Intent(getApplication(), SyncService::class.java).apply {
             putExtra("TARGET", path)
         }
-
         getApplication<Application>().startForegroundService(intent)
     }
 

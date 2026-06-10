@@ -25,7 +25,7 @@ fun DashboardHeader() {
     ) {
         Column {
             Text(
-                text = "My Files",
+                text = "파일",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.DarkGray

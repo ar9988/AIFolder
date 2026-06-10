@@ -92,7 +92,9 @@ class ResourceRepositoryImpl @Inject constructor(
 
     override fun syncStorage(targetPath: String): Flow<ScanEvent> = flow {
         val startFile = File(targetPath)
-        if (!startFile.exists()) return@flow
+        if (!startFile.exists()) {
+            return@flow
+        }
         val rootResource = localDataSource.getResourceByPath(targetPath)
         val rootId = if (rootResource == null) {
             val newRoot = Resource(

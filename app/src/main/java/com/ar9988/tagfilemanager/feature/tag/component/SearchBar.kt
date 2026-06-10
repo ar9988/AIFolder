@@ -29,7 +29,7 @@ fun SearchBar(
     OutlinedTextField(
         value = searchQuery,
         onValueChange = { onIntent(TagsIntent.UpdateSearchQuery(it)) },
-        placeholder = { Text("Search tags...") },
+        placeholder = { Text("태그 검색...") },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         modifier = Modifier
             .fillMaxWidth()

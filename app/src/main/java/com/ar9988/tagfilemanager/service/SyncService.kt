@@ -20,54 +20,31 @@ class SyncService : LifecycleService() {
     @Inject lateinit var syncStorageUseCase: SyncStorageUseCase
     @Inject lateinit var syncStateHolder: SyncStateHolder
 
-    @OptIn(FlowPreview::class)
+    override fun onCreate() {
+        super.onCreate()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val target = intent?.getStringExtra("TARGET")
             ?: return super.onStartCommand(intent, flags, startId)
+
+        if (!syncStateHolder.scanQueue.contains(target)) {
+            syncStateHolder.scanQueue.addLast(target)
+        }
+
         if (syncStateHolder.isScanning.value) {
-            stopSelf()
             return START_NOT_STICKY
         }
-        syncStateHolder.isScanning.value = true
 
-        createNotificationChannel()
-
-        val notificationManager =
-            getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
-
-        val notificationBuilder = createNotificationBuilder("스캔 준비 중...")
-        startForeground(NOTIFICATION_ID, notificationBuilder.build())
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                syncStorageUseCase(target)
-                    .distinctUntilChanged()
-                    .sample(200)
-                    .collect { progress ->
-
-                        val updatedNotification = notificationBuilder
-                            .setContentText("진행 중... $progress%")
-                            .setProgress(100, progress, false)
-                            .build()
-
-                        notificationManager.notify(NOTIFICATION_ID, updatedNotification)
-                    }
-
-            } finally {
-                syncStateHolder.isScanning.value = false
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                stopSelf()
-            }
-        }
-
+        processQueue()
         return START_NOT_STICKY
     }
 
-    private fun createNotificationBuilder(contentText: String): NotificationCompat.Builder {
+    private fun createNotificationBuilder(): NotificationCompat.Builder {
         val channelId = "sync_channel"
         return NotificationCompat.Builder(this, channelId)
             .setContentTitle("파일 동기화 중")
-            .setContentText(contentText)
+            .setContentText("스캔 준비 중...")
             .setSmallIcon(R.drawable.outline_sync_24)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
@@ -90,5 +67,43 @@ class SyncService : LifecycleService() {
 
     companion object {
         const val NOTIFICATION_ID = 1001
+    }
+
+
+    @OptIn(FlowPreview::class)
+    private fun processQueue() {
+        val target = syncStateHolder.scanQueue.removeFirstOrNull() ?: return
+
+        syncStateHolder.isScanning.value = true
+        createNotificationChannel()
+
+        val notificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val notificationBuilder = createNotificationBuilder()
+        startForeground(NOTIFICATION_ID, notificationBuilder.build())
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                syncStorageUseCase(target)
+                    .distinctUntilChanged()
+                    .sample(200)
+                    .collect { progress ->
+                        val updatedNotification = notificationBuilder
+                            .setContentText("진행 중... $progress%")
+                            .setProgress(100, progress, false)
+                            .build()
+                        notificationManager.notify(NOTIFICATION_ID, updatedNotification)
+                    }
+            } finally {
+                syncStateHolder.isScanning.value = false
+
+                if (syncStateHolder.scanQueue.isNotEmpty()) {
+                    processQueue()
+                } else {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+            }
+        }
     }
 }

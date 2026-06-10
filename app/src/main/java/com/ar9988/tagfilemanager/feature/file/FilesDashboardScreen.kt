@@ -48,8 +48,12 @@ fun FilesDashboardScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.sideEffect.collect { message ->
-            Toast.makeText(context, message.toString(), Toast.LENGTH_SHORT).show()
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is FilesSideEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 

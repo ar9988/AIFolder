@@ -111,12 +111,12 @@ fun EditTagBottomSheet(
             ) {
                 Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red)
                 Spacer(Modifier.width(8.dp))
-                Text(text = "태그 삭제", color = Color.Red)
+                Text(text = "태그 삭제", color = Color.Red, maxLines = 1,modifier = Modifier.weight(1f))
             }
             Button(
                 onClick = {onIntent(TagsIntent.SaveTag)},
                 modifier = Modifier
-                    .weight(1.5f)
+                    .weight(1f)
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {

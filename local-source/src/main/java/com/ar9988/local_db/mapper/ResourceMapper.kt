@@ -52,7 +52,6 @@ fun Resource.toEntity(): ResourceEntity {
         size = this.size,
         parentId = this.parentId,
         lastModified = this.lastModified,
-        googleAccountId = null,
         fileHash = this.fileHash,
         mimeType = this.mimeType,
         extension = this.extension,

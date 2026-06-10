@@ -7,4 +7,5 @@ import javax.inject.Singleton
 @Singleton
 class SyncStateHolder @Inject constructor() {
     val isScanning = MutableStateFlow(false)
+    val scanQueue = ArrayDeque<String>()
 }

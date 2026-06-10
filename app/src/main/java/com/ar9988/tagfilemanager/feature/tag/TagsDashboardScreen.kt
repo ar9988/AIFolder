@@ -47,7 +47,11 @@ fun TagsDashboardScreen(
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { message ->
-            Toast.makeText(context, message.toString(), Toast.LENGTH_SHORT).show()
+            when(message){
+                is TagsSideEffect.ShowToast -> {
+                    Toast.makeText(context, message.message, Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 

@@ -54,6 +54,7 @@ import com.ar9988.tagfilemanager.feature.file.FilesState
 import com.ar9988.tagfilemanager.feature.file.model.FileMode
 import com.ar9988.tagfilemanager.feature.common.model.TagChipAction
 import com.ar9988.domain.model.FileSortType
+import com.ar9988.domain.model.toName
 
 @Composable
 fun ListHeader(
@@ -222,7 +223,7 @@ fun ListHeader(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     SortOptionChip(
-                        text = state.fileSortType.toString(),
+                        text = state.fileSortType.toName(),
                         icon = Icons.AutoMirrored.Filled.Sort,
                         onClick = { onIntent(FilesIntent.ToggleSortDropdown) }
                     )

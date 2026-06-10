@@ -4,8 +4,8 @@ data class Settings(
     val showHiddenFiles: Boolean,
     val autoScanOnLaunch: Boolean,
     val dragDownScan: Boolean,
-    val excludedExtensions: List<String> = DEFAULT_EXCLUDED_EXTENSIONS,
-    val excludedFolders: List<String> = DEFAULT_EXCLUDED_FOLDERS,
+    val excludedExtensions: List<String>,
+    val excludedFolders: List<String>,
     val searchSensitivity: SearchSensitivity,
     val fileSortType: FileSortType,
     val tagSortType: TagSortType,
@@ -22,18 +22,6 @@ data class Settings(
             "bak",              // 백업
             "part",             // 미완성 다운로드
             "crdownload",       // Chrome 다운로드 임시
-        )
-
-        val DEFAULT_EXCLUDED_FOLDERS = listOf(
-            "/proc",
-            "/sys",
-            "/dev",
-            "Android/data",     // 앱 데이터
-            "Android/obb",      // 앱 확장파일
-            ".thumbnails",      // 썸네일 캐시
-            ".cache",           // 캐시 폴더
-            ".trash",           // 휴지통
-            "lost+found",       // 시스템 복구 폴더
         )
     }
 }

@@ -22,7 +22,6 @@ class FileScanner @Inject constructor(
     private val mimeTypeProvider: MimeTypeProvider,
     private val settingsUseCase: SettingsUseCase,
 ) {
-
     private val insertBuffer = mutableListOf<Resource>()
     private val updateBuffer = mutableListOf<Resource>()
 
@@ -31,9 +30,7 @@ class FileScanner @Inject constructor(
     private val dispatcher = Dispatchers.IO.limitedParallelism(4)
 
     fun scanDirectory(startFile: File, startFileId: Long?): Flow<ScanEvent> = channelFlow {
-        settingsUseCase.isInitialized.first { it }
         val settings = settingsUseCase().first()
-
         val excludedFolders =
             settings.excludedFolders.toSet()
 
@@ -55,46 +52,37 @@ class FileScanner @Inject constructor(
 
             val files = try {
                 directory.listFiles()
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                null
+            }
+
+            if (files == null) {
                 continue
-            } ?: continue
+            }
 
-            val filteredFiles =
+            val filteredFiles = try {
                 files.filterNot { file ->
-
-                    val path =
-                        file.absolutePath
-
-                    val extension =
-                        file.extension.lowercase()
-
-                    val normalizedPath =
-                        Normalizer.normalize(
-                            path,
-                            Normalizer.Form.NFC
-                        )
+                    val path = file.absolutePath
+                    val extension = file.extension.lowercase()
+                    val normalizedPath = Normalizer.normalize(path, Normalizer.Form.NFC)
 
                     val excludedByFolder =
                         excludedFolders.any { folder ->
-                            val normalizedFolder =
-                                Normalizer.normalize(
-                                    folder,
-                                    Normalizer.Form.NFC
-                                )
-
-                            normalizedPath == normalizedFolder ||
+                            val normalizedFolder = Normalizer.normalize(folder, Normalizer.Form.NFC)
+                            val result = normalizedPath == normalizedFolder ||
                                     normalizedPath.startsWith("$normalizedFolder/")
+                            result
                         }
 
-                    val excludedByExtension =
-                        !file.isDirectory &&
-                                extension in excludedExtensions
-
-
-                    val excludedByPattern = !file.isDirectory && shouldExcludeFile(file,excludedByHidden)
+                    val excludedByExtension = !file.isDirectory && extension in excludedExtensions
+                    val excludedByPattern = !file.isDirectory && shouldExcludeFile(file, excludedByHidden)
 
                     excludedByFolder || excludedByExtension || excludedByPattern
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                emptyList()
+            }
 
             val existingResources = getCached(parentId)
 
@@ -122,89 +110,103 @@ class FileScanner @Inject constructor(
 
             val jobs = filteredFiles.map { file ->
                 async(dispatcher) {
-                    processFile(
-                        file, parentId, existingResources, deletedResources, deletedByHash
-                    )
+
+                    try {
+                        val result = processFile(
+                            file,
+                            parentId,
+                            existingResources,
+                            deletedResources,
+                            deletedByHash
+                        )
+                        result
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+
+                        throw e
+                    }
                 }
             }
 
             val matchedIds = mutableSetOf<Long>()
-
             for (job in jobs) {
-                val result = job.await() ?: continue
+                try {
+                    val result = job.await() ?: continue
+                    when (result.type) {
 
-                when (result.type) {
+                        ScanType.DIRECTORY_RENAME -> {
+                            val oldPath = result.oldPath!!
+                            val newPath = result.resource.path
 
-                    ScanType.DIRECTORY_RENAME -> {
-                        val oldPath = result.oldPath!!
-                        val newPath = result.resource.path
+                            // DB subtree update
+                            localDataSource.updateSubtreePath(oldPath, newPath)
+                            // cache subtree update
+                            val affected = existingResources
+                                .filterKeys { it == oldPath || it.startsWith("$oldPath/") }
 
-                        // DB subtree update
-                        localDataSource.updateSubtreePath(oldPath, newPath)
-                        // cache subtree update
-                        val affected = existingResources
-                            .filterKeys { it == oldPath || it.startsWith("$oldPath/") }
+                            affected.forEach { (old, res) ->
+                                val newChildPath = if (old == oldPath) {
+                                    newPath
+                                } else {
+                                    old.replace("$oldPath/", "$newPath/")
+                                }
 
-                        affected.forEach { (old, res) ->
-                            val newChildPath = if (old == oldPath) {
-                                newPath
-                            } else {
-                                old.replace("$oldPath/", "$newPath/")
+                                val normalizedChildPath =
+                                    Normalizer.normalize(
+                                        newChildPath,
+                                        Normalizer.Form.NFC
+                                    )
+
+                                existingResources.remove(old)
+
+                                existingResources[normalizedChildPath] =
+                                    res.copy(
+                                        path = normalizedChildPath
+                                    )
                             }
 
-                            val normalizedChildPath =
-                                Normalizer.normalize(
-                                    newChildPath,
-                                    Normalizer.Form.NFC
-                                )
-
-                            existingResources.remove(old)
-
-                            existingResources[normalizedChildPath] =
-                                res.copy(
-                                    path = normalizedChildPath
-                                )
+                            updateBuffer.add(result.resource)
+                            matchedIds.add(result.resource.id)
+                            trySend(ScanEvent.DirectoryRenamed(oldPath, newPath))
                         }
 
-                        updateBuffer.add(result.resource)
-                        matchedIds.add(result.resource.id)
-                        trySend(ScanEvent.DirectoryRenamed(oldPath, newPath))
-                    }
+                        ScanType.UPDATE -> {
+                            updateBuffer.add(result.resource)
+                            matchedIds.add(result.resource.id)
+                        }
 
-                    ScanType.UPDATE -> {
-                        updateBuffer.add(result.resource)
-                        matchedIds.add(result.resource.id)
-                    }
+                        ScanType.INSERT -> {
+                            if (result.resource.isDirectory) {
+                                val existing = existingResources[result.resource.path]
 
-                    ScanType.INSERT -> {
-                        if (result.resource.isDirectory) {
-                            val existing = existingResources[result.resource.path]
+                                val id = existing?.id ?: localDataSource.insertResource(result.resource)
 
-                            val id = existing?.id ?: localDataSource.insertResource(result.resource)
+                                val newResource = result.resource.copy(id = id)
 
-                            val newResource = result.resource.copy(id = id)
+                                val parentCache = cache.getOrPut(parentId) { mutableMapOf() }
+                                parentCache[newResource.path] = newResource
 
-                            val parentCache = cache.getOrPut(parentId) { mutableMapOf() }
-                            parentCache[newResource.path] = newResource
+                                queue.add(result.directory!! to id)
 
-                            queue.add(result.directory!! to id)
-
-                            continue
-                        } else {
-                            insertBuffer.add(result.resource)
+                                continue
+                            } else {
+                                insertBuffer.add(result.resource)
+                            }
                         }
                     }
-                }
 
-                trySend(ScanEvent.FileProcessed(result.resource.id))
+                    trySend(ScanEvent.FileProcessed(result.resource.id))
 
-                // cache 업데이트
-                val parentCache = cache.getOrPut(parentId) { mutableMapOf() }
-                parentCache[result.resource.path] = result.resource
+                    // cache 업데이트
+                    val parentCache = cache.getOrPut(parentId) { mutableMapOf() }
+                    parentCache[result.resource.path] = result.resource
 
-                // 디렉토리면 queue 추가
-                result.directory?.let {
-                    queue.add(it to result.resource.id)
+                    // 디렉토리면 queue 추가
+                    result.directory?.let {
+                        queue.add(it to result.resource.id)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
 
@@ -238,7 +240,6 @@ class FileScanner @Inject constructor(
         deletedResources: List<Resource>,
         deletedByHash: Map<String, Resource>
     ): ScanResult? {
-
         val isDirectory = file.isDirectory
 
         val normalizedName =
@@ -381,6 +382,7 @@ class FileScanner @Inject constructor(
     private suspend fun flushInsertBuffer() {
         if (insertBuffer.isEmpty()) return
         localDataSource.insertAll(insertBuffer.toList())
+
         insertBuffer.clear()
     }
 

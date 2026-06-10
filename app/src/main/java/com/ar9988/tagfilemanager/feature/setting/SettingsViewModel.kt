@@ -2,6 +2,7 @@ package com.ar9988.tagfilemanager.feature.setting
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ar9988.domain.model.Settings
 import com.ar9988.domain.usecase.common.SettingsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +28,8 @@ class SettingsViewModel @Inject constructor(
                         dragDownScan = settings.dragDownScan,
                         excludedExtensions = settings.excludedExtensions,
                         excludedFiles = settings.excludedFolders,
-                        searchSensitivity = settings.searchSensitivity
+                        searchSensitivity = settings.searchSensitivity,
+                        showHiddenFiles = settings.showHiddenFiles
                     )
                 }
             }
@@ -50,6 +52,13 @@ class SettingsViewModel @Inject constructor(
                     is SettingsIntent.RemoveExcludedFolder -> currentState.copy(excludedFiles = currentState.excludedFiles - intent.folder)
                     is SettingsIntent.SetSearchSensitivity -> currentState.copy(searchSensitivity = intent.sensitivity)
                     is SettingsIntent.ToggleShowHiddenFiles -> currentState.copy(showHiddenFiles = intent.enabled)
+                    is SettingsIntent.ResetExcludedExtensions -> currentState.copy(excludedExtensions = Settings.DEFAULT_EXCLUDED_EXTENSIONS)
+                    is SettingsIntent.ResetExcludedFolders -> {
+                        val defaultFolders = settingsUseCase.getDefaultExcludedFolders()
+                        currentState.copy(
+                            excludedFiles = defaultFolders
+                        )
+                    }
                 }
             }
 
