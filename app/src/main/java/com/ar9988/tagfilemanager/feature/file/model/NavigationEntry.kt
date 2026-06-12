@@ -10,4 +10,6 @@ data class NavigationEntry(
     val fileMode: FileMode = FileMode.Normal,
     val activeTags: Set<Long> = emptySet(),
     val searchQuery: TextFieldValue = TextFieldValue(""),
+    val viewMode: ViewMode = ViewMode.DASHBOARD,
+    val categorySelectedTagId: Long? = null,
 )

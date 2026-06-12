@@ -28,7 +28,7 @@ import com.ar9988.tagfilemanager.ui.theme.CyanGradient
 @Composable
 fun FileStackListContent(
     state: FilesState,
-    onIntent: (FilesIntent) -> Unit
+    onIntent: (FilesIntent) -> Unit,
 ) {
     val listKey = remember(state.fileSortType, state.isAscending, state.isGridView) {
         "${state.fileSortType}_${state.isAscending}_${state.isGridView}"

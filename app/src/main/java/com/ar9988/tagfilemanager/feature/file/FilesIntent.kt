@@ -52,4 +52,5 @@ sealed class FilesIntent {
     data object ToggleSortOrder: FilesIntent()
     data object ToggleGridView: FilesIntent()
     data class ChangeSortType(val sortType: FileSortType): FilesIntent()
+    data class SelectCategoryTag(val tagId: Long) : FilesIntent()
 }

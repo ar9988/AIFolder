@@ -32,6 +32,8 @@ object FilesReducer {
                     folderId = currentState.currentFolderId,
                     category = currentState.selectedCategory,
                     fileMode = currentState.fileMode,
+                    viewMode = currentState.viewMode,
+                    categorySelectedTagId = currentState.categorySelectedTagId,
                     activeTags = currentState.activeTags,
                     searchQuery = currentState.searchQuery,
                 )
@@ -63,88 +65,22 @@ object FilesReducer {
         )
     }
 
-    fun reduceBack(currentState: FilesState): FilesState {
-        return when {
-            currentState.fileOverlay != null -> {
-                currentState.copy(
-                    fileOverlay = null
-                )
-            }
-
-            currentState.fileMode == FileMode.Move -> {
-                currentState.copy(
-                    fileMode = FileMode.Normal,
-                    moveTargets = emptyList(),
-                    selectedFileIds = emptySet()
-                )
-            }
-
-            currentState.isSelectionMode -> {
-                currentState.copy(
-                    selectedFileIds = emptySet()
-                )
-            }
-
-            currentState.fileMode == FileMode.Search -> {
-                currentState.copy(
-                    fileMode = FileMode.Normal,
-                    searchQuery = TextFieldValue(""),
-                    activeTags = emptySet()
-                )
-            }
-
-            currentState.navigationStack.isNotEmpty() -> {
-                val last =
-                    currentState.navigationStack.last()
-
-                currentState.copy(
-                    navigationStack =
-                        currentState.navigationStack.dropLast(1),
-
-                    currentPath = last.path,
-                    currentFolderId = last.folderId,
-                    selectedCategory = last.category,
-
-                    fileMode = last.fileMode,
-
-                    activeTags = last.activeTags,
-                    searchQuery = last.searchQuery,
-
-                    viewMode =
-                        if (
-                            last.path.isEmpty() &&
-                            last.category == null &&
-                            last.fileMode == FileMode.Normal
-                        ) {
-                            ViewMode.DASHBOARD
-                        } else {
-                            ViewMode.LIST
-                        }
-                )
-            }
-
-            else -> {
-                currentState.copy(
-                    navigationStack = emptyList(),
-                    currentFolderId = null,
-                    currentPath = "",
-                    selectedCategory = null,
-                    activeTags = emptySet(),
-                    searchQuery = TextFieldValue(""),
-                    fileMode = FileMode.Normal,
-                    viewMode = ViewMode.DASHBOARD
-                )
-            }
-        }
-    }
-
     fun reduceCategoryFilter(
         currentState: FilesState,
         category: FileCategory
     ): FilesState {
-
+        val newStack = currentState.navigationStack + NavigationEntry(
+            path = currentState.currentPath,
+            folderId = currentState.currentFolderId,
+            category = currentState.selectedCategory,
+            fileMode = currentState.fileMode,
+            activeTags = currentState.activeTags,
+            searchQuery = currentState.searchQuery,
+            viewMode = ViewMode.DASHBOARD
+        )
         return currentState.copy(
-            viewMode = ViewMode.LIST,
+            navigationStack = newStack,
+            viewMode = ViewMode.CATEGORY_TAG_GROUP,
             selectedCategory = category,
         )
     }
@@ -152,53 +88,10 @@ object FilesReducer {
     fun reduceClearFilter(
         currentState: FilesState
     ): FilesState {
-
         return currentState.copy(
             currentPath = "",
             currentFolderId = null,
             selectedCategory = null,
-        )
-    }
-
-    fun reduceLongClickResource(
-        currentState: FilesState,
-        resource: FileItemUiModel
-    ): FilesState {
-        return currentState.copy(
-            selectedFileIds =
-                currentState.selectedFileIds + resource.id
-        )
-    }
-
-    fun reduceToggleSelection(
-        currentState: FilesState,
-        resource: FileItemUiModel
-    ): FilesState {
-
-        if (currentState.fileMode == FileMode.Move) {
-            return currentState
-        }
-
-        val newSelectedIds =
-            currentState.selectedFileIds.toMutableSet()
-
-        if (resource.id in newSelectedIds) {
-            newSelectedIds.remove(resource.id)
-        } else {
-            newSelectedIds.add(resource.id)
-        }
-
-        return currentState.copy(
-            selectedFileIds = newSelectedIds,
-        )
-    }
-
-    fun reduceShowFileDetail(
-        currentState: FilesState,
-        resource: FileItemUiModel
-    ): FilesState {
-        return currentState.copy(
-            selectedFileIds = setOf(resource.id)
         )
     }
 
@@ -208,17 +101,6 @@ object FilesReducer {
 
         return currentState.copy(
             fileOverlay = FileOverlay.DeleteDialog,
-        )
-    }
-
-    fun reduceConfirmDelete(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileMode = FileMode.Normal,
-            fileOverlay = null,
-            selectedFileIds = emptySet(),
         )
     }
 
@@ -240,17 +122,6 @@ object FilesReducer {
         )
     }
 
-    fun reduceRenameSuccess(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileOverlay = null,
-            fileMode = FileMode.Normal,
-            selectedFileIds = emptySet(),
-        )
-    }
-
     fun reduceObserveFiles(
         currentState: FilesState,
         resourceList: List<FileItemUiModel>
@@ -259,28 +130,6 @@ object FilesReducer {
         val sortedList = tempState.sortedFiles()
         return currentState.copy(
             files = sortedList,
-        )
-    }
-
-    fun reduceStartMove(
-        currentState: FilesState
-    ): FilesState {
-        return currentState.copy(
-            fileMode = FileMode.Move,
-            fileOverlay = null,
-            moveTargets = currentState.selectedFiles()
-        )
-    }
-
-    fun reduceConfirmMove(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileMode = FileMode.Normal,
-            selectedFileIds = emptySet(),
-            moveTargets = emptyList(),
-            fileOverlay = null
         )
     }
 
@@ -381,77 +230,11 @@ object FilesReducer {
         )
     }
 
-    fun reduceOpenFolder(
-        currentState: FilesState
-    ): FilesState {
-        return currentState.copy(
-            fileOverlay = null,
-            selectedFileIds =
-                if (currentState.fileMode == FileMode.Move) {
-                    currentState.selectedFileIds
-                } else {
-                    emptySet()
-                }
-        )
-    }
-    fun reduceShowTagActionSheet(
-        currentState: FilesState
-    ): FilesState {
-
-        val targets =
-            currentState.selectedFiles()
-
-        val activeTags =
-            targets
-                .flatMap { it.tags }
-                .distinctBy { it.id }
-                .map(TagUiModel::id)
-
-        val tagStatusMap =
-            activeTags.associateWith { id ->
-
-                val count =
-                    targets.count { res ->
-                        res.tags.any { it.id == id }
-                    }
-
-                when {
-                    count == targets.size ->
-                        SelectionState.ALL
-
-                    else ->
-                        SelectionState.SOME
-                }
-            }
-
-        return currentState.copy(
-            fileOverlay = FileOverlay.TagActionSheet,
-            tagRecommendResult = null,
-            isAiTagRecommending = false,
-            aiTagRecommendRequested = false,
-            activeTags = activeTags.toSet(),
-            tagStatusMap = tagStatusMap,
-            tagSearchQuery = ""
-        )
-    }
-
-    fun reduceHideTagActionSheet(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileOverlay = null,
-            fileMode = FileMode.Normal,
-            selectedTagIds = emptySet(),
-            selectedFileIds = emptySet(),
-        )
-    }
 
     fun reduceObserveTags(
         currentState: FilesState,
         tags: List<TagUiModel>
     ): FilesState {
-
         return currentState.copy(
             allTags = tags.associateBy { it.id }
         )
@@ -462,7 +245,6 @@ object FilesReducer {
         tag: TagUiModel,
         nextState: SelectionState
     ): FilesState {
-
         val newTagStatusMap =
             currentState.tagStatusMap.toMutableMap().apply {
                 put(tag.id, nextState)
@@ -526,29 +308,6 @@ object FilesReducer {
         )
     }
 
-    fun reduceCancelMove(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileMode = FileMode.Normal,
-            selectedFileIds = emptySet(),
-            fileOverlay = null,
-            moveTargets = emptyList(),
-        )
-    }
-
-    fun reduceConfirmCopy(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileMode = FileMode.Normal,
-            selectedFileIds = emptySet(),
-            fileOverlay = null
-        )
-    }
-
     fun reduceUpdateSearchTag(
         currentState: FilesState,
         tagId: Long
@@ -574,14 +333,6 @@ object FilesReducer {
     fun reduceShowExcludeDialog(currentState: FilesState): FilesState {
         return currentState.copy(
             fileOverlay = FileOverlay.ExcludeDialog,
-        )
-    }
-
-    fun reduceConfirmExclude(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileMode = FileMode.Normal,
-            fileOverlay = null,
-            selectedFileIds = emptySet(),
         )
     }
 
@@ -725,5 +476,236 @@ object FilesReducer {
             else sorted.reversed()
 
         return parentPointer + result
+    }
+
+    fun reduceSelectCategoryTag(state: FilesState, tagId: Long): FilesState {
+        val newStack = state.navigationStack + NavigationEntry(
+            path = state.currentPath,
+            folderId = state.currentFolderId,
+            category = state.selectedCategory,
+            fileMode = state.fileMode,
+            activeTags = state.activeTags,
+            searchQuery = state.searchQuery,
+            viewMode = ViewMode.CATEGORY_TAG_GROUP,
+        )
+        return state.copy(
+            navigationStack = newStack,
+            categorySelectedTagId = tagId,
+            viewMode = ViewMode.CATEGORY_TAG_FILES
+        )
+    }
+
+    fun reduceLongClickResource(
+        currentState: FilesState,
+        resource: FileItemUiModel
+    ): FilesState {
+        return currentState.copy(
+            selectedFileIds = currentState.selectedFileIds + resource.id,
+            selectedFiles = currentState.selectedFiles + resource
+        )
+    }
+
+    fun reduceToggleSelection(
+        currentState: FilesState,
+        resource: FileItemUiModel
+    ): FilesState {
+        if (currentState.fileMode == FileMode.Move) return currentState
+
+        return if (resource.id in currentState.selectedFileIds) {
+            currentState.copy(
+                selectedFileIds = currentState.selectedFileIds - resource.id,
+                selectedFiles = currentState.selectedFiles.filter { it.id != resource.id }
+            )
+        } else {
+            currentState.copy(
+                selectedFileIds = currentState.selectedFileIds + resource.id,
+                selectedFiles = currentState.selectedFiles + resource
+            )
+        }
+    }
+
+    fun reduceShowFileDetail(
+        currentState: FilesState,
+        resource: FileItemUiModel
+    ): FilesState {
+        return currentState.copy(
+            selectedFileIds = setOf(resource.id),
+            selectedFiles = listOf(resource)
+        )
+    }
+
+    fun reduceConfirmDelete(currentState: FilesState): FilesState {
+        return currentState.copy(
+            fileMode = FileMode.Normal,
+            fileOverlay = null,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList()
+        )
+    }
+
+    fun reduceRenameSuccess(currentState: FilesState): FilesState {
+        return currentState.copy(
+            fileOverlay = null,
+            fileMode = FileMode.Normal,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList()
+        )
+    }
+
+    fun reduceStartMove(currentState: FilesState): FilesState {
+        return currentState.copy(
+            fileMode = FileMode.Move,
+            fileOverlay = null,
+            moveTargets = currentState.selectedFiles
+        )
+    }
+
+    fun reduceConfirmMove(currentState: FilesState): FilesState {
+        return currentState.copy(
+            fileMode = FileMode.Normal,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList(),
+            moveTargets = emptyList(),
+            fileOverlay = null
+        )
+    }
+
+    fun reduceHideTagActionSheet(currentState: FilesState): FilesState {
+        return currentState.copy(
+            fileOverlay = null,
+            fileMode = FileMode.Normal,
+            selectedTagIds = emptySet(),
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList()
+        )
+    }
+
+    fun reduceCancelMove(currentState: FilesState): FilesState {
+        return currentState.copy(
+            fileMode = FileMode.Normal,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList(),
+            fileOverlay = null,
+            moveTargets = emptyList(),
+        )
+    }
+
+    fun reduceConfirmCopy(currentState: FilesState): FilesState {
+        return currentState.copy(
+            fileMode = FileMode.Normal,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList(),
+            fileOverlay = null
+        )
+    }
+
+    fun reduceConfirmExclude(currentState: FilesState): FilesState {
+        return currentState.copy(
+            fileMode = FileMode.Normal,
+            fileOverlay = null,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList()
+        )
+    }
+
+    fun reduceBack(currentState: FilesState): FilesState {
+        return when {
+            currentState.fileOverlay != null -> {
+                currentState.copy(fileOverlay = null)
+            }
+            currentState.fileMode == FileMode.Move -> {
+                currentState.copy(
+                    fileMode = FileMode.Normal,
+                    moveTargets = emptyList(),
+                    selectedFileIds = emptySet(),
+                    selectedFiles = emptyList()
+                )
+            }
+            currentState.isSelectionMode -> {
+                currentState.copy(
+                    selectedFileIds = emptySet(),
+                    selectedFiles = emptyList()
+                )
+            }
+            currentState.fileMode == FileMode.Search -> {
+                currentState.copy(
+                    fileMode = FileMode.Normal,
+                    searchQuery = TextFieldValue(""),
+                    activeTags = emptySet()
+                )
+            }
+
+            currentState.navigationStack.isNotEmpty() -> {
+                val last =
+                    currentState.navigationStack.last()
+
+                currentState.copy(
+                    navigationStack =
+                        currentState.navigationStack.dropLast(1),
+                    currentPath = last.path,
+                    currentFolderId = last.folderId,
+                    selectedCategory = last.category,
+                    fileMode = last.fileMode,
+                    activeTags = last.activeTags,
+                    searchQuery = last.searchQuery,
+                    viewMode = last.viewMode,
+                    categorySelectedTagId = last.categorySelectedTagId,
+                )
+            }
+
+            else -> {
+                currentState.copy(
+                    navigationStack = emptyList(),
+                    currentFolderId = null,
+                    currentPath = "",
+                    selectedCategory = null,
+                    activeTags = emptySet(),
+                    searchQuery = TextFieldValue(""),
+                    fileMode = FileMode.Normal,
+                    viewMode = ViewMode.DASHBOARD,
+                    categorySelectedTagId = null,
+                    categoryTagGroups = emptyList()
+                )
+            }
+        }
+    }
+
+    fun reduceOpenFolder(currentState: FilesState): FilesState {
+        return currentState.copy(
+            fileOverlay = null,
+            selectedFileIds = if (currentState.fileMode == FileMode.Move) {
+                currentState.selectedFileIds
+            } else {
+                emptySet()
+            },
+            selectedFiles = if (currentState.fileMode == FileMode.Move) {
+                currentState.selectedFiles
+            } else {
+                emptyList()
+            }
+        )
+    }
+
+    fun reduceShowTagActionSheet(currentState: FilesState): FilesState {
+        val targets = currentState.selectedFiles
+        val activeTags = targets
+            .flatMap { it.tags }
+            .distinctBy { it.id }
+            .map(TagUiModel::id)
+
+        val tagStatusMap = activeTags.associateWith { id ->
+            val count = targets.count { res -> res.tags.any { it.id == id } }
+            if (count == targets.size) SelectionState.ALL else SelectionState.SOME
+        }
+
+        return currentState.copy(
+            fileOverlay = FileOverlay.TagActionSheet,
+            tagRecommendResult = null,
+            isAiTagRecommending = false,
+            aiTagRecommendRequested = false,
+            activeTags = activeTags.toSet(),
+            tagStatusMap = tagStatusMap,
+            tagSearchQuery = ""
+        )
     }
 }

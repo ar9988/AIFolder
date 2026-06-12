@@ -1,5 +1,6 @@
 package com.ar9988.tagfilemanager.feature.file
 
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -20,7 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.ar9988.tagfilemanager.feature.file.component.AddDialog
+import com.ar9988.tagfilemanager.feature.file.component.CategoryTagFilesScreen
+import com.ar9988.tagfilemanager.feature.file.component.CategoryTagGroupScreen
 import com.ar9988.tagfilemanager.feature.file.component.DashboardContent
 import com.ar9988.tagfilemanager.feature.file.component.DeleteFilesConfirmDialog
 import com.ar9988.tagfilemanager.feature.file.component.ExcludeConfirmDialog
@@ -38,6 +42,24 @@ fun FilesDashboardScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+
+    val categoryPagedFiles = if (state.viewMode == ViewMode.CATEGORY_TAG_FILES) {
+        viewModel.categoryPagedFiles.collectAsLazyPagingItems()
+    } else null
+
+    LaunchedEffect(categoryPagedFiles?.loadState) {
+        Log.d(
+            "PAGING",
+            categoryPagedFiles?.loadState.toString()
+        )
+    }
+
+    LaunchedEffect(categoryPagedFiles?.itemCount) {
+        Log.d(
+            "PAGING",
+            "itemCount=${categoryPagedFiles?.itemCount}"
+        )
+    }
 
     BackHandler(
         enabled = state.fileOverlay != null ||
@@ -71,6 +93,27 @@ fun FilesDashboardScreen(
             when (mode) {
                 ViewMode.DASHBOARD -> DashboardContent(state, viewModel::handleIntent)
                 ViewMode.LIST -> FileStackListContent(state, viewModel::handleIntent)
+                ViewMode.CATEGORY_TAG_FILES -> {
+                    if (categoryPagedFiles != null) {
+                        CategoryTagFilesScreen(
+                            state = state,
+                            pagedFiles = categoryPagedFiles,
+                            onIntent = viewModel::handleIntent
+                        )
+                    }
+                }
+                ViewMode.CATEGORY_TAG_GROUP -> {
+                    state.selectedCategory?.let {
+                        CategoryTagGroupScreen(
+                            category = state.selectedCategory!!,
+                            tagGroups = state.categoryTagGroups,
+                            onTagGroupClick = { tagId ->
+                                viewModel.handleIntent(FilesIntent.SelectCategoryTag(tagId))
+                            },
+                            onBack = { viewModel.handleIntent(FilesIntent.Back) }
+                        )
+                    }
+                }
             }
         }
 

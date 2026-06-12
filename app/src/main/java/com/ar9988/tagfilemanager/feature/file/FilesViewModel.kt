@@ -8,6 +8,9 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.map
 import com.ar9988.domain.model.FileInput
 import com.ar9988.domain.model.FileSortType
 import com.ar9988.domain.model.Resource
@@ -22,17 +25,20 @@ import com.ar9988.domain.usecase.files.CopyResourceUseCase
 import com.ar9988.domain.usecase.files.CreateRecommendTagUseCase
 import com.ar9988.domain.usecase.files.GetFilteredResourcesUseCase
 import com.ar9988.domain.usecase.files.GetResourceByPathUseCase
-import com.ar9988.domain.usecase.files.GetResourcesByCategoryUseCase
 import com.ar9988.domain.usecase.files.GetResourcesByParentIdUseCase
+import com.ar9988.domain.usecase.files.GetTagGroupsByCategoryUseCase
 import com.ar9988.domain.usecase.files.MoveResourceUseCase
 import com.ar9988.domain.usecase.files.OpenFileUseCase
 import com.ar9988.domain.usecase.files.RemoveTagFromResourceUseCase
 import com.ar9988.domain.usecase.files.RenameResourceUseCase
+import com.ar9988.local_db.mapper.toDomain
+import com.ar9988.local_db.paging.CategoryFilesPager
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 import com.ar9988.tagfilemanager.feature.file.model.FileMode
 import com.ar9988.tagfilemanager.feature.file.model.SelectionState
 import com.ar9988.tagfilemanager.feature.common.model.toUiModel
 import com.ar9988.tagfilemanager.feature.file.model.StorageUiModel
+import com.ar9988.tagfilemanager.feature.file.model.ViewMode
 import com.ar9988.tagfilemanager.service.SyncService
 import com.ar9988.tagfilemanager.service.SyncStateHolder
 import com.ar9988.tagfilemanager.ui.theme.getRandomColor
@@ -50,7 +56,7 @@ class FilesViewModel @Inject constructor(
     application: Application,
     private val getResourceByPathUseCase: GetResourceByPathUseCase,
     private val getResourcesByParentIdUseCase: GetResourcesByParentIdUseCase,
-    private val getResourcesByCategoryUseCase: GetResourcesByCategoryUseCase,
+    private val getTagGroupsByCategoryUseCase: GetTagGroupsByCategoryUseCase,
     private val getFilteredResourcesUseCase: GetFilteredResourcesUseCase,
     private val createTagUseCase: CreateTagUseCase,
     private val addTagToResourceUseCase: AddTagToResourceUseCase,
@@ -66,6 +72,7 @@ class FilesViewModel @Inject constructor(
     private val syncStateHolder: SyncStateHolder,
     private val settingsUseCase: SettingsUseCase,
     private val createRecommendTagUseCase: CreateRecommendTagUseCase,
+    private val categoryFilesPager: CategoryFilesPager,
 ) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(FilesState())
@@ -74,9 +81,25 @@ class FilesViewModel @Inject constructor(
     private val _sideEffect = Channel<FilesSideEffect>()
     val sideEffect = _sideEffect.receiveAsFlow()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val categoryPagedFiles: Flow<PagingData<FileItemUiModel>> =
+        state
+            .map { it.categorySelectedTagId to it.selectedCategory }
+            .distinctUntilChanged()
+            .flatMapLatest { (tagId, category) ->
+                if (category == null || tagId == null) emptyFlow()
+                else categoryFilesPager.getPagingFlow(tagId, category)
+                    .map { pagingData ->
+                        pagingData.map { it.toDomain().toUiModel() }
+                    }
+            }
+            .cachedIn(viewModelScope)
+
     init {
         observeTags()
         observeFiles()
+        observeCategoryTagGroups()
+
         viewModelScope.launch {
             syncStateHolder.isScanning.collect { isScanning ->
                 _state.update {
@@ -403,17 +426,14 @@ class FilesViewModel @Inject constructor(
             }
 
             is FilesIntent.OpenContainingFolder -> {
-
                 val parentPath =
                     File(intent.path)
                         .parentFile
                         ?.path
                         ?: return
-
                 _state.update {
                     FilesReducer.reduceOpenFolder(it)
                 }
-
                 navigateToPath(
                     path = parentPath,
                     preserveCurrentState = true
@@ -466,12 +486,17 @@ class FilesViewModel @Inject constructor(
                     FilesReducer.reduceToggleDropdown(it)
                 }
             }
+            is FilesIntent.SelectCategoryTag -> {
+                _state.update {
+                    FilesReducer.reduceSelectCategoryTag(it, intent.tagId)
+                }
+            }
         }
     }
 
     private fun handleAiTagRecommend() {
         val currentState = state.value
-        val selectedFiles = currentState.selectedFiles()
+        val selectedFiles = currentState.selectedFiles
 
         if (selectedFiles.isEmpty()) return
 
@@ -500,9 +525,7 @@ class FilesViewModel @Inject constructor(
     }
 
     private fun handleConfirmCopy() {
-
         val currentState = state.value
-
         val targets =
             currentState.moveTargets.map {
                 Triple(
@@ -521,7 +544,6 @@ class FilesViewModel @Inject constructor(
             )
 
             result.onSuccess {
-
                 _sideEffect.send(
                     FilesSideEffect.ShowToast(
                         "${targets.size}개의 항목이 복사되었습니다."
@@ -671,7 +693,7 @@ class FilesViewModel @Inject constructor(
         val currentState = state.value
 
         val targets =
-            currentState.selectedFiles()
+            currentState.selectedFiles
                 .map {
                     Pair(
                         it.id,
@@ -740,7 +762,12 @@ class FilesViewModel @Inject constructor(
                         state.value.activeTags.mapNotNull { id ->
                             state.value.allTags[id]
                         }.map { it.id })
-                    category != null -> getResourcesByCategoryUseCase(category)
+                    category != null && state.value.categorySelectedTagId == null -> {
+                        emptyFlow()
+                    }
+                    category != null && state.value.categorySelectedTagId != null -> {
+                        emptyFlow()
+                    }
                     folderId != null -> getResourcesByParentIdUseCase(folderId)
                     else -> emptyFlow()
                 }
@@ -771,7 +798,7 @@ class FilesViewModel @Inject constructor(
         val currentState = state.value
 
         val targets =
-            currentState.selectedFiles()
+            currentState.selectedFiles
                 .map {
                     it.path
                 }
@@ -882,5 +909,21 @@ class FilesViewModel @Inject constructor(
             FilesReducer.reduceUpdateStorageInfo(it, storageList)
         }
         return storageList
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeCategoryTagGroups() {
+        state
+            .map { it.selectedCategory to it.viewMode }
+            .distinctUntilChanged()
+            .flatMapLatest { (category, viewMode) ->
+                println("$category $viewMode")
+                if (category == null || viewMode != ViewMode.CATEGORY_TAG_GROUP) emptyFlow()
+                else getTagGroupsByCategoryUseCase(category)
+            }
+            .onEach { groups ->
+                _state.update { it.copy(categoryTagGroups = groups) }
+            }
+            .launchIn(viewModelScope)
     }
 }

@@ -86,6 +86,9 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.video)
 
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.paging.compose)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

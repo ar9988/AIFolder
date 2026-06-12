@@ -1,5 +1,6 @@
 package com.ar9988.local_db.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -181,4 +182,58 @@ ORDER BY lastModified DESC
 
     @Query("SELECT * FROM resource WHERE id = :resId LIMIT 1")
     suspend fun getResourceById(resId: Long): ResourceEntity?
+
+    @Query("""
+    SELECT DISTINCT r.* FROM resource r
+    INNER JOIN resource_tag_cross_ref rt ON r.id = rt.resourceId
+    WHERE rt.tagId = :tagId
+    AND r.mimeType LIKE :mimePattern
+    ORDER BY r.lastModified DESC
+""")
+    @Transaction
+    fun getPagedResourcesByTag(
+        tagId: Long,
+        mimePattern: String
+    ): PagingSource<Int, ResourceWithTags>
+
+    @Transaction
+    @Query("""
+    SELECT DISTINCT r.* FROM resource r
+    INNER JOIN resource_tag_cross_ref rt ON r.id = rt.resourceId
+    WHERE rt.tagId = :tagId
+    AND r.extension IN (:extensions)
+    ORDER BY r.lastModified DESC
+    """)
+    fun getPagedResourcesByExtensions(
+        tagId: Long,
+        extensions: List<String>
+    ): PagingSource<Int,ResourceWithTags>
+    @Query("""
+    SELECT r.* FROM resource r
+    WHERE r.mimeType LIKE :mimePattern
+    AND NOT EXISTS (
+        SELECT 1 FROM resource_tag_cross_ref rt 
+        WHERE rt.resourceId = r.id
+    )
+    ORDER BY r.lastModified DESC
+""")
+    @Transaction
+    fun getPagedUntaggedResources(
+        mimePattern: String
+    ): PagingSource<Int, ResourceWithTags>
+
+    @Query("""
+    SELECT r.* FROM resource r
+    WHERE r.extension IN (:extensions)
+    AND NOT EXISTS (
+        SELECT 1 FROM resource_tag_cross_ref rt 
+        WHERE rt.resourceId = r.id
+    )
+    ORDER BY r.lastModified DESC
+""")
+    @Transaction
+    fun getPagedUntaggedResources(
+        extensions: List<String>
+    ): PagingSource<Int, ResourceWithTags>
+
 }

@@ -1,6 +1,7 @@
 package com.ar9988.tagfilemanager.feature.file
 
 import androidx.compose.ui.text.input.TextFieldValue
+import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.domain.model.FileCategory
 import com.ar9988.domain.model.TagRecommendResult
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
@@ -22,6 +23,8 @@ data class FilesState(
     val currentFolderId: Long? = null,
     val selectedFileIds: Set<Long> = emptySet(),
     val moveTargets: List<FileItemUiModel> = emptyList(),
+    val categoryTagGroups: List<CategoryTagGroupModel> = emptyList(),
+    val categorySelectedTagId: Long? = null,
     val selectedCategory: FileCategory? = null,
     val selectedTagIds: Set<Long> = emptySet(),
     val activeTags: Set<Long> = emptySet(),
@@ -44,24 +47,16 @@ data class FilesState(
     val isAscending: Boolean = false,
     val isSortDropdownVisible: Boolean = false,
     val isGridView: Boolean = false,
+    val selectedFiles: List<FileItemUiModel> = emptyList(),
 ){
-
     val hasSelection: Boolean
         get() = selectedFileIds.isNotEmpty()
 
     val isSingleSelection: Boolean
         get() = selectedFileIds.size == 1
 
-    fun selectedFiles(): List<FileItemUiModel> {
-        return files.filter { it.id in selectedFileIds }
-    }
-
     fun selectedFileOrNull(): FileItemUiModel? {
-        return if (selectedFileIds.size == 1) {
-            files.firstOrNull { it.id in selectedFileIds }
-        } else {
-            null
-        }
+        return if (selectedFiles.size == 1) selectedFiles.first() else null
     }
 
     val isSelectionMode
