@@ -2,6 +2,7 @@ package com.ar9988.local_db.repository.local
 
 import androidx.room.withTransaction
 import com.ar9988.data.repository.local.LocalDataSource
+import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.domain.model.DateRange
 import com.ar9988.domain.model.Resource
 import com.ar9988.domain.model.ResourceTagCrossRefModel
@@ -213,5 +214,13 @@ class LocalDataSourceImpl(
 
     override fun deleteTags(tagIds: List<Long>) {
         tagDao.deleteTags(tagIds)
+    }
+
+    override fun getTagGroupsByCategory(mimePattern: String): Flow<List<CategoryTagGroupModel>> {
+        return resourceDao.getTagGroupsByCategory(mimePattern)
+    }
+
+    override fun getTagGroupsByExtensions(extensions: List<String>): Flow<List<CategoryTagGroupModel>> {
+        return resourceDao.getTagGroupsByExtensions(extensions)
     }
 }

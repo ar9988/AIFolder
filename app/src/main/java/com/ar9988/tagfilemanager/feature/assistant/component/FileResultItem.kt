@@ -21,7 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.ar9988.tagfilemanager.feature.common.model.FileExtensionIcon
+import com.ar9988.tagfilemanager.feature.common.component.FileExtensionIcon
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 
 @Composable

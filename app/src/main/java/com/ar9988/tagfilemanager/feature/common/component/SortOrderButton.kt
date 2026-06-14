@@ -1,4 +1,4 @@
-package com.ar9988.tagfilemanager.feature.common.model
+package com.ar9988.tagfilemanager.feature.common.component
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.material.icons.Icons
@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import com.ar9988.tagfilemanager.feature.common.model.SortOrder
 
 @Composable
 fun SortOrderButton(

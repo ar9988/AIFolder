@@ -1,4 +1,4 @@
-package com.ar9988.tagfilemanager.feature.common.model
+package com.ar9988.tagfilemanager.feature.common.component
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size

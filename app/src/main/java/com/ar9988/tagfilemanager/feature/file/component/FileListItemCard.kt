@@ -28,10 +28,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ar9988.tagfilemanager.R
-import com.ar9988.tagfilemanager.feature.common.model.FileExtensionIcon
+import com.ar9988.tagfilemanager.feature.common.component.FileExtensionIcon
 import com.ar9988.tagfilemanager.feature.file.FilesIntent
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
-import com.ar9988.tagfilemanager.feature.common.model.TagChip
+import com.ar9988.tagfilemanager.feature.common.component.TagChip
 import com.ar9988.tagfilemanager.feature.file.model.FileMode
 import com.ar9988.tagfilemanager.ui.theme.CardWhite
 import com.ar9988.tagfilemanager.util.FileTypeUtils

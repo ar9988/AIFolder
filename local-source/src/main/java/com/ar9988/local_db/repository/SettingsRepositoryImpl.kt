@@ -109,13 +109,14 @@ class SettingsRepositoryImpl @Inject constructor(
     private fun buildDefaultExcludedFolders(): List<String> {
         val base = Environment.getExternalStorageDirectory().absolutePath
         return listOf(
-            "/proc", "/sys", "/dev",
-            "$base/Android/data",
-            "$base/Android/obb",
-            "$base/.thumbnails",
+            "$base/Android",
+
+            "$base/DCIM/.thumbnails",
+            "$base/Pictures/.thumbnails",
+
             "$base/.cache",
             "$base/.trash",
-            "$base/lost+found",
+            "$base/lost+found"
         )
     }
 

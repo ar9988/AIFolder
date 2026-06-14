@@ -20,7 +20,7 @@ import com.ar9988.tagfilemanager.feature.assistant.model.AssistantSortType
 import com.ar9988.tagfilemanager.feature.assistant.model.MessageContent
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 import com.ar9988.tagfilemanager.feature.common.model.SortOrder
-import com.ar9988.tagfilemanager.feature.common.model.SortOrderButton
+import com.ar9988.tagfilemanager.feature.common.component.SortOrderButton
 import com.ar9988.tagfilemanager.ui.theme.CardWhite
 import java.time.format.DateTimeFormatter
 

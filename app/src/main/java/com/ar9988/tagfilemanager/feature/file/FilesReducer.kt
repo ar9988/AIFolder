@@ -13,6 +13,7 @@ import com.ar9988.tagfilemanager.feature.file.model.NavigationEntry
 import com.ar9988.tagfilemanager.feature.file.model.SelectionState
 import com.ar9988.tagfilemanager.feature.file.model.StorageUiModel
 import com.ar9988.tagfilemanager.feature.file.model.ViewMode
+import com.ar9988.tagfilemanager.service.model.ScanRequestType
 
 object FilesReducer {
     fun reduceNavigate(
@@ -221,7 +222,8 @@ object FilesReducer {
                 category = currentState.selectedCategory,
                 fileMode = currentState.fileMode,
                 activeTags = currentState.activeTags,
-                searchQuery = currentState.searchQuery
+                searchQuery = currentState.searchQuery,
+                viewMode = currentState.viewMode
             )
 
         return currentState.copy(
@@ -319,7 +321,8 @@ object FilesReducer {
                 category = currentState.selectedCategory,
                 fileMode = currentState.fileMode,
                 activeTags = currentState.activeTags,
-                searchQuery = currentState.searchQuery
+                searchQuery = currentState.searchQuery,
+                viewMode = currentState.viewMode
             )
 
         return currentState.copy(
@@ -336,9 +339,14 @@ object FilesReducer {
         )
     }
 
-    fun reduceObserveScan(currentState: FilesState, isScanning: Boolean): FilesState {
+    fun reduceObserveScan(
+        currentState: FilesState,
+        isScanning: Boolean,
+        currentScanType: ScanRequestType?
+    ): FilesState {
         return currentState.copy(
-            isScanning = isScanning
+            isScanning = isScanning,
+            currentScanRequestType = currentScanType
         )
     }
 
@@ -706,6 +714,12 @@ object FilesReducer {
             activeTags = activeTags.toSet(),
             tagStatusMap = tagStatusMap,
             tagSearchQuery = ""
+        )
+    }
+
+    fun reduceSaveScrollPosition(state: FilesState, key: String, index: Int, offset: Int): FilesState {
+        return state.copy(
+            scrollPositions = state.scrollPositions + (key to (index to offset))
         )
     }
 }

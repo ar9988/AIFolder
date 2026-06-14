@@ -8,6 +8,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.local_db.entity.ResourceEntity
 import com.ar9988.local_db.entity.ResourceTagCrossRef
 import com.ar9988.local_db.entity.ResourceWithTags
@@ -236,4 +237,87 @@ ORDER BY lastModified DESC
         extensions: List<String>
     ): PagingSource<Int, ResourceWithTags>
 
+    @Query("""
+    SELECT * FROM (
+    SELECT 
+        t.tagId AS tagId, 
+        t.tagName AS tagName, 
+        t.tagColor AS tagColor, 
+        COUNT(rt.resourceId) AS fileCount,
+        (SELECT r.path FROM resource r 
+         JOIN resource_tag_cross_ref rtc ON r.id = rtc.resourceId 
+         WHERE rtc.tagId = t.tagId 
+         AND r.mimeType LIKE :mimePattern
+         ORDER BY r.lastModified DESC
+         LIMIT 1) AS thumbnailPath
+    FROM tags t
+    JOIN resource_tag_cross_ref rt ON t.tagId = rt.tagId
+    JOIN resource r ON rt.resourceId = r.id
+    WHERE r.isDirectory = 0 AND r.mimeType LIKE :mimePattern
+    GROUP BY t.tagId
+
+    UNION ALL
+
+    SELECT 
+        -1 AS tagId, 
+        '태그 없음' AS tagName, 
+        :defaultColor AS tagColor,
+        COUNT(*) AS fileCount,
+        (SELECT path FROM resource 
+         WHERE id NOT IN (SELECT resourceId FROM resource_tag_cross_ref)
+         AND isDirectory = 0 
+         AND mimeType LIKE :mimePattern
+         ORDER BY lastModified DESC
+         LIMIT 1) AS thumbnailPath
+    FROM resource
+    WHERE id NOT IN (SELECT resourceId FROM resource_tag_cross_ref)
+      AND isDirectory = 0 
+      AND mimeType LIKE :mimePattern
+) AS combined_results
+WHERE fileCount > 0
+ORDER BY fileCount DESC
+""")
+    fun getTagGroupsByCategory(mimePattern: String,defaultColor: Long = 0xFF888888L): Flow<List<CategoryTagGroupModel>>
+
+    @Query("""
+    SELECT * FROM (
+        SELECT 
+            t.tagId AS tagId, 
+            t.tagName AS tagName, 
+            t.tagColor AS tagColor, 
+            COUNT(rt.resourceId) AS fileCount,
+            (SELECT r.path FROM resource r 
+             JOIN resource_tag_cross_ref rtc ON r.id = rtc.resourceId 
+             WHERE rtc.tagId = t.tagId 
+             AND r.extension IN (:extensions)
+             ORDER BY r.lastModified DESC
+             LIMIT 1) AS thumbnailPath
+        FROM tags t
+        JOIN resource_tag_cross_ref rt ON t.tagId = rt.tagId
+        JOIN resource r ON rt.resourceId = r.id
+        WHERE r.isDirectory = 0 AND r.extension IN (:extensions)
+        GROUP BY t.tagId
+
+        UNION ALL
+
+        SELECT 
+            -1 AS tagId, 
+            '태그 없음' AS tagName, 
+            :defaultColor AS tagColor,
+            COUNT(*) AS fileCount,
+            (SELECT path FROM resource 
+             WHERE id NOT IN (SELECT resourceId FROM resource_tag_cross_ref)
+             AND isDirectory = 0 
+             AND extension IN (:extensions)
+             ORDER BY lastModified DESC
+             LIMIT 1) AS thumbnailPath
+        FROM resource
+        WHERE id NOT IN (SELECT resourceId FROM resource_tag_cross_ref)
+          AND isDirectory = 0 
+          AND extension IN (:extensions)
+    ) combined_results
+    WHERE fileCount > 0
+    ORDER BY fileCount DESC
+""")
+    fun getTagGroupsByExtensions(extensions: List<String>,defaultColor: Long = 0xFF888888L): Flow<List<CategoryTagGroupModel>>
 }

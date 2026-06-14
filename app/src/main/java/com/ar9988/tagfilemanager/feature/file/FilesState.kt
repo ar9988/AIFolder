@@ -13,6 +13,7 @@ import com.ar9988.tagfilemanager.feature.file.model.NavigationEntry
 import com.ar9988.tagfilemanager.feature.file.model.SelectionState
 import com.ar9988.tagfilemanager.feature.file.model.StorageUiModel
 import com.ar9988.tagfilemanager.feature.file.model.ViewMode
+import com.ar9988.tagfilemanager.service.model.ScanRequestType
 
 data class FilesState(
     val viewMode: ViewMode = ViewMode.DASHBOARD,
@@ -38,6 +39,7 @@ data class FilesState(
     val isLoading: Boolean = false,
     val tagStatusMap: Map<Long, SelectionState> = emptyMap(),
     val isScanning: Boolean = false,
+    val currentScanRequestType: ScanRequestType? = null,
     val dragDownScanEnabled: Boolean = false,
     val storageRootPaths: Set<String> = emptySet(),
     val aiTagRecommendRequested: Boolean = false,
@@ -48,7 +50,12 @@ data class FilesState(
     val isSortDropdownVisible: Boolean = false,
     val isGridView: Boolean = false,
     val selectedFiles: List<FileItemUiModel> = emptyList(),
+    val scrollPositions: Map<String, Pair<Int, Int>> = emptyMap()
 ){
+
+    val currentScrollKey: String
+        get() = "$viewMode:$currentPath:$categorySelectedTagId:$isGridView"
+
     val hasSelection: Boolean
         get() = selectedFileIds.isNotEmpty()
 

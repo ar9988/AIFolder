@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,11 +20,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.decode.VideoFrameDecoder
+import coil.request.ImageRequest
 import com.ar9988.domain.model.CategoryTagGroupModel
+import com.ar9988.domain.model.FileCategory
+import com.ar9988.tagfilemanager.feature.common.component.getIconInfo
 import com.ar9988.tagfilemanager.ui.theme.CardWhite
 import java.io.File
 
@@ -35,8 +38,10 @@ import java.io.File
 fun CategoryTagGroupCard(
     group: CategoryTagGroupModel,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    category: FileCategory
 ) {
+    val context = LocalContext.current
     Surface(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
@@ -53,20 +58,36 @@ fun CategoryTagGroupCard(
                     .background(Color(group.tagColor).copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                if (group.thumbnailPath != null) {
+                if (category in setOf(FileCategory.Images, FileCategory.Videos)) {
                     AsyncImage(
-                        model = File(group.thumbnailPath),
+                        model = if (category == FileCategory.Videos) {
+                            ImageRequest.Builder(context)
+                                .data(File(group.thumbnailPath))
+                                .decoderFactory(VideoFrameDecoder.Factory())
+                                .build()
+                        } else {
+                            File(group.thumbnailPath)
+                        },
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(6.dp))
                     )
                 } else {
-                    Icon(
-                        imageVector = Icons.Default.Sell,
-                        contentDescription = null,
-                        tint = Color(group.tagColor),
-                        modifier = Modifier.size(36.dp)
-                    )
+                    val (icon, color) = category.getIconInfo()
+
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(Color(group.tagColor).copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint =  color,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
                 }
 
                 // 태그 색상 도트

@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ar9988.tagfilemanager.feature.common.model.SortOrder
-import com.ar9988.tagfilemanager.feature.common.model.SortOrderButton
+import com.ar9988.tagfilemanager.feature.common.component.SortOrderButton
 import com.ar9988.domain.model.TagSortType
 
 @Composable

@@ -41,6 +41,7 @@ import com.ar9988.tagfilemanager.feature.file.model.StorageUiModel
 import com.ar9988.tagfilemanager.feature.file.model.ViewMode
 import com.ar9988.tagfilemanager.service.SyncService
 import com.ar9988.tagfilemanager.service.SyncStateHolder
+import com.ar9988.tagfilemanager.service.model.ScanRequestType
 import com.ar9988.tagfilemanager.ui.theme.getRandomColor
 import com.ar9988.tagfilemanager.util.nfc
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -101,20 +102,24 @@ class FilesViewModel @Inject constructor(
         observeCategoryTagGroups()
 
         viewModelScope.launch {
-            syncStateHolder.isScanning.collect { isScanning ->
+            combine(
+                syncStateHolder.isScanning,
+                syncStateHolder.currentScanRequestType
+            ) { isScanning, currentScanType ->
+                isScanning to currentScanType
+            }.collect { (isScanning, currentScanType) ->
                 _state.update {
-                    FilesReducer.reduceObserveScan(it, isScanning)
+                    FilesReducer.reduceObserveScan(it,isScanning,currentScanType)
                 }
             }
         }
-        val storageList = loadStorageInfo()
 
+        val storageList = loadStorageInfo()
         viewModelScope.launch {
             val settings = settingsUseCase().first()
-
             if (settings.autoScanOnLaunch) {
                 storageList.forEach { storage ->
-                    startScan(storage.path)
+                    startScan(storage.path, ScanRequestType.AUTO)
                 }
             }
         }
@@ -133,6 +138,11 @@ class FilesViewModel @Inject constructor(
 
     fun handleIntent(intent: FilesIntent) {
         when (intent) {
+            is FilesIntent.SaveScrollPosition ->{
+                _state.update {
+                    FilesReducer.reduceSaveScrollPosition(it, intent.scrollKey, intent.index, intent.offset)
+                }
+            }
 
             is FilesIntent.FileOpen -> {
 
@@ -182,7 +192,7 @@ class FilesViewModel @Inject constructor(
 
             is FilesIntent.TriggerScan -> {
                 val currentState = state.value
-                startScan(currentState.currentPath)
+                startScan(currentState.currentPath, ScanRequestType.MANUAL)
             }
 
             is FilesIntent.ClickResource -> {
@@ -828,9 +838,10 @@ class FilesViewModel @Inject constructor(
         }
     }
 
-    private fun startScan(path: String) {
+    private fun startScan(path: String, scanType: ScanRequestType = ScanRequestType.AUTO) {
         val intent = Intent(getApplication(), SyncService::class.java).apply {
             putExtra("TARGET", path)
+            putExtra("SCAN_TYPE", scanType.name)
         }
         getApplication<Application>().startForegroundService(intent)
     }
@@ -917,7 +928,6 @@ class FilesViewModel @Inject constructor(
             .map { it.selectedCategory to it.viewMode }
             .distinctUntilChanged()
             .flatMapLatest { (category, viewMode) ->
-                println("$category $viewMode")
                 if (category == null || viewMode != ViewMode.CATEGORY_TAG_GROUP) emptyFlow()
                 else getTagGroupsByCategoryUseCase(category)
             }

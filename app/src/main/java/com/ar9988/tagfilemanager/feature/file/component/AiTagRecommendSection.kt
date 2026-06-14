@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.ar9988.tagfilemanager.feature.common.model.InputTagChip
+import com.ar9988.tagfilemanager.feature.common.component.InputTagChip
 import com.ar9988.tagfilemanager.feature.common.model.TagChipAction
 import com.ar9988.tagfilemanager.feature.file.FilesIntent
 import com.ar9988.tagfilemanager.feature.file.FilesState

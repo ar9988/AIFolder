@@ -14,6 +14,8 @@ import com.ar9988.data.scanner.model.ScanResult
 import com.ar9988.data.scanner.model.ScanType
 import com.ar9988.domain.usecase.common.SettingsUseCase
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import java.text.Normalizer
 
 class FileScanner @Inject constructor(
@@ -27,28 +29,30 @@ class FileScanner @Inject constructor(
 
     private val cache = mutableMapOf<Long?, MutableMap<String, Resource>>()
 
-    private val dispatcher = Dispatchers.IO.limitedParallelism(4)
+    private val diskReadSemaphore = Semaphore(2)
+
+    private val dispatcher = Dispatchers.IO
 
     fun scanDirectory(startFile: File, startFileId: Long?): Flow<ScanEvent> = channelFlow {
         val settings = settingsUseCase().first()
-        val excludedFolders =
-            settings.excludedFolders.toSet()
 
-        val excludedExtensions =
-            settings.excludedExtensions
-                .map { it.lowercase() }
-                .toSet()
+        val excludedFolders = settings.excludedFolders
+            .map { Normalizer.normalize(it, Normalizer.Form.NFC) }
+            .toSet()
 
-        val excludedByHidden =
-            settings.showHiddenFiles
+        val excludedExtensions = settings.excludedExtensions
+            .map { it.lowercase() }
+            .toSet()
+
+        val excludedByHidden = !settings.showHiddenFiles
 
         val queue = ArrayDeque<Pair<File, Long?>>()
-        queue.add(startFile to startFileId)
+        queue.addLast(startFile to startFileId)
 
         while (queue.isNotEmpty()) {
             coroutineContext.ensureActive()
 
-            val (directory, parentId) = queue.removeFirst()
+            val (directory, parentId) = queue.removeLast()
 
             val files = try {
                 directory.listFiles()
@@ -66,16 +70,13 @@ class FileScanner @Inject constructor(
                     val extension = file.extension.lowercase()
                     val normalizedPath = Normalizer.normalize(path, Normalizer.Form.NFC)
 
-                    val excludedByFolder =
-                        excludedFolders.any { folder ->
-                            val normalizedFolder = Normalizer.normalize(folder, Normalizer.Form.NFC)
-                            val result = normalizedPath == normalizedFolder ||
-                                    normalizedPath.startsWith("$normalizedFolder/")
-                            result
-                        }
+                    val excludedByFolder = excludedFolders.any { normalizedFolder ->
+                        normalizedPath == normalizedFolder || normalizedPath.startsWith("$normalizedFolder/")
+                    }
 
                     val excludedByExtension = !file.isDirectory && extension in excludedExtensions
-                    val excludedByPattern = !file.isDirectory && shouldExcludeFile(file, excludedByHidden)
+
+                    val excludedByPattern = shouldExcludeFile(file, excludedByHidden)
 
                     excludedByFolder || excludedByExtension || excludedByPattern
                 }
@@ -87,10 +88,7 @@ class FileScanner @Inject constructor(
             val existingResources = getCached(parentId)
 
             val actualPaths = filteredFiles.map {
-                Normalizer.normalize(
-                    it.absolutePath,
-                    Normalizer.Form.NFC
-                )
+                Normalizer.normalize(it.absolutePath, Normalizer.Form.NFC)
             }.toSet()
             val deletedPaths = existingResources.keys - actualPaths
 
@@ -103,26 +101,22 @@ class FileScanner @Inject constructor(
                 .filter { it.fileHash != null }
                 .associateBy { it.fileHash!! }
 
-
             filteredFiles.forEach { file ->
                 trySend(ScanEvent.FileDiscovered(file.absolutePath))
             }
 
             val jobs = filteredFiles.map { file ->
                 async(dispatcher) {
-
                     try {
-                        val result = processFile(
+                        processFile(
                             file,
                             parentId,
                             existingResources,
                             deletedResources,
                             deletedByHash
                         )
-                        result
                     } catch (e: Exception) {
                         e.printStackTrace()
-
                         throw e
                     }
                 }
@@ -138,9 +132,7 @@ class FileScanner @Inject constructor(
                             val oldPath = result.oldPath!!
                             val newPath = result.resource.path
 
-                            // DB subtree update
                             localDataSource.updateSubtreePath(oldPath, newPath)
-                            // cache subtree update
                             val affected = existingResources
                                 .filterKeys { it == oldPath || it.startsWith("$oldPath/") }
 
@@ -151,18 +143,10 @@ class FileScanner @Inject constructor(
                                     old.replace("$oldPath/", "$newPath/")
                                 }
 
-                                val normalizedChildPath =
-                                    Normalizer.normalize(
-                                        newChildPath,
-                                        Normalizer.Form.NFC
-                                    )
+                                val normalizedChildPath = Normalizer.normalize(newChildPath, Normalizer.Form.NFC)
 
                                 existingResources.remove(old)
-
-                                existingResources[normalizedChildPath] =
-                                    res.copy(
-                                        path = normalizedChildPath
-                                    )
+                                existingResources[normalizedChildPath] = res.copy(path = normalizedChildPath)
                             }
 
                             updateBuffer.add(result.resource)
@@ -186,8 +170,7 @@ class FileScanner @Inject constructor(
                                 val parentCache = cache.getOrPut(parentId) { mutableMapOf() }
                                 parentCache[newResource.path] = newResource
 
-                                queue.add(result.directory!! to id)
-
+                                queue.addLast(result.directory!! to id)
                                 continue
                             } else {
                                 insertBuffer.add(result.resource)
@@ -197,35 +180,30 @@ class FileScanner @Inject constructor(
 
                     trySend(ScanEvent.FileProcessed(result.resource.id))
 
-                    // cache 업데이트
                     val parentCache = cache.getOrPut(parentId) { mutableMapOf() }
                     parentCache[result.resource.path] = result.resource
 
-                    // 디렉토리면 queue 추가
                     result.directory?.let {
-                        queue.add(it to result.resource.id)
+                        queue.addLast(it to result.resource.id)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
             }
 
-            // rename 제외 후 삭제
             deletedResources.removeAll { it.id in matchedIds }
 
-            // cache 제거
             deletedResources.forEach {
                 existingResources.remove(it.path)
             }
 
-            // DB 삭제
             if (deletedResources.isNotEmpty()) {
                 localDataSource.deleteAll(deletedResources)
             }
 
+            flushInsertBuffer()
             flushUpdateBuffer()
 
-            // 캐시 제거
             cache.remove(parentId)
         }
 
@@ -233,7 +211,7 @@ class FileScanner @Inject constructor(
         flushUpdateBuffer()
     }
 
-    private fun processFile(
+    private suspend fun processFile(
         file: File,
         parentId: Long?,
         existingResources: Map<String, Resource>,
@@ -242,17 +220,8 @@ class FileScanner @Inject constructor(
     ): ScanResult? {
         val isDirectory = file.isDirectory
 
-        val normalizedName =
-            Normalizer.normalize(
-                file.name,
-                Normalizer.Form.NFC
-            )
-
-        val normalizedPath =
-            Normalizer.normalize(
-                file.absolutePath,
-                Normalizer.Form.NFC
-            )
+        val normalizedName = Normalizer.normalize(file.name, Normalizer.Form.NFC)
+        val normalizedPath = Normalizer.normalize(file.absolutePath, Normalizer.Form.NFC)
         val existing = existingResources[normalizedPath]
 
         val lastModified = file.lastModified()
@@ -261,9 +230,6 @@ class FileScanner @Inject constructor(
         val extension = getExtension(file)
         val mimeType = getMimeType(file)
 
-        // ----------------------------------------
-        // 0. 변경 없음 (파일만 체크)
-        // ----------------------------------------
         if (!isDirectory &&
             existing != null &&
             existing.lastModified == lastModified &&
@@ -272,9 +238,6 @@ class FileScanner @Inject constructor(
             return null
         }
 
-        // ----------------------------------------
-        // 1. 디렉토리 rename 감지
-        // ----------------------------------------
         val dirMatched = detectDirectoryRename(file, deletedResources)
 
         if (dirMatched != null) {
@@ -293,12 +256,15 @@ class FileScanner @Inject constructor(
             )
         }
 
-        // ----------------------------------------
-        // 2. 파일 rename 감지 (hash 기반)
-        // ----------------------------------------
-        val hash = if (!isDirectory) {
-            hashExtractor.calculateHash(file)
-        } else null
+        val hasPotentialRenameCandidate = !isDirectory && deletedResources.any { it.size == size && it.fileHash != null }
+
+        val hash = if (hasPotentialRenameCandidate) {
+            diskReadSemaphore.withPermit {
+                hashExtractor.calculatePartialHash(file)
+            }
+        } else {
+            existing?.fileHash
+        }
 
         val matched = hash?.let { deletedByHash[it] }
         if (matched != null) {
@@ -315,9 +281,6 @@ class FileScanner @Inject constructor(
             )
         }
 
-        // ----------------------------------------
-        // 3. 공통 Resource 생성
-        // ----------------------------------------
         val newResource = Resource(
             name = normalizedName,
             path = normalizedPath,
@@ -330,21 +293,16 @@ class FileScanner @Inject constructor(
             mimeType = mimeType
         )
 
-        // ----------------------------------------
-        // 4. 디렉토리 처리 (핵심)
-        // ----------------------------------------
         if (isDirectory) {
             return if (existing != null) {
-                // 기존 폴더 재사용 (ID 유지)
                 ScanResult(
                     resource = existing,
                     parentId = parentId,
                     directory = file,
-                    type = ScanType.UPDATE, // or NO_OP로 바꿔도 OK
+                    type = ScanType.UPDATE,
                     oldPath = null
                 )
             } else {
-                // 신규 폴더
                 ScanResult(
                     resource = newResource,
                     parentId = parentId,
@@ -355,11 +313,7 @@ class FileScanner @Inject constructor(
             }
         }
 
-        // ----------------------------------------
-        // 5. 파일 처리 (핵심)
-        // ----------------------------------------
         return if (existing != null) {
-            // 기존 파일 → UPDATE
             ScanResult(
                 resource = newResource.copy(id = existing.id),
                 parentId = parentId,
@@ -368,7 +322,6 @@ class FileScanner @Inject constructor(
                 oldPath = null
             )
         } else {
-            // 신규 파일 → INSERT
             ScanResult(
                 resource = newResource,
                 parentId = parentId,
@@ -382,7 +335,6 @@ class FileScanner @Inject constructor(
     private suspend fun flushInsertBuffer() {
         if (insertBuffer.isEmpty()) return
         localDataSource.insertAll(insertBuffer.toList())
-
         insertBuffer.clear()
     }
 
@@ -408,7 +360,7 @@ class FileScanner @Inject constructor(
         val normalizedFileName = Normalizer.normalize(file.name, Normalizer.Form.NFC)
         return deletedDirs.firstOrNull {
             it.isDirectory &&
-                    Normalizer.normalize(it.name, Normalizer.Form.NFC) == normalizedFileName &&
+                    it.name == normalizedFileName &&
                     abs(it.lastModified - file.lastModified()) < 2000
         }
     }
@@ -426,15 +378,12 @@ class FileScanner @Inject constructor(
     }
 
     private fun shouldExcludeFile(file: File, excludedByHidden: Boolean): Boolean {
-        if(!excludedByHidden) return false
+        if (!excludedByHidden) return false
         val name = file.name
 
         if (name.matches(Regex("\\.[0-9]+\\.[a-zA-Z]+"))) return true
-
         if (name.startsWith(".")) return true
-
         if (name.startsWith("~")) return true
-
         if (name.endsWith(".tmp", ignoreCase = true)) return true
 
         return false

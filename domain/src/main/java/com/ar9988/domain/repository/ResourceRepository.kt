@@ -1,5 +1,6 @@
 package com.ar9988.domain.repository
 
+import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.domain.model.DateRange
 import com.ar9988.domain.model.FileCategory
 import com.ar9988.domain.model.Resource
@@ -41,4 +42,6 @@ interface ResourceRepository {
         targetParentId: Long?,
         targetParentPath: String
     ): Result<Unit>
+
+    fun getTagGroupsByCategory(category: FileCategory): Flow<List<CategoryTagGroupModel>>
 }

@@ -6,6 +6,8 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.ar9988.domain.usecase.files.SyncStorageUseCase
+import com.ar9988.tagfilemanager.service.model.ScanRequest
+import com.ar9988.tagfilemanager.service.model.ScanRequestType
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -20,16 +22,21 @@ class SyncService : LifecycleService() {
     @Inject lateinit var syncStorageUseCase: SyncStorageUseCase
     @Inject lateinit var syncStateHolder: SyncStateHolder
 
-    override fun onCreate() {
-        super.onCreate()
-    }
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val target = intent?.getStringExtra("TARGET")
             ?: return super.onStartCommand(intent, flags, startId)
 
-        if (!syncStateHolder.scanQueue.contains(target)) {
-            syncStateHolder.scanQueue.addLast(target)
+        val scanRequestTypeStr = intent.getStringExtra("SCAN_TYPE") ?: ScanRequestType.AUTO.name
+        val scanRequestType = try {
+            ScanRequestType.valueOf(scanRequestTypeStr)
+        } catch (e: Exception) {
+            ScanRequestType.AUTO
+        }
+
+        val request = ScanRequest(target, scanRequestType)
+
+        if (syncStateHolder.scanQueue.none { it.targetPath == target }) {
+            syncStateHolder.scanQueue.addLast(request)
         }
 
         if (syncStateHolder.isScanning.value) {
@@ -48,7 +55,7 @@ class SyncService : LifecycleService() {
             .setSmallIcon(R.drawable.outline_sync_24)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
-            .setProgress(100, 0, true) // 초기 indeterminate
+            .setProgress(100, 0, true)
     }
 
     private fun createNotificationChannel() {
@@ -69,12 +76,12 @@ class SyncService : LifecycleService() {
         const val NOTIFICATION_ID = 1001
     }
 
-
     @OptIn(FlowPreview::class)
     private fun processQueue() {
-        val target = syncStateHolder.scanQueue.removeFirstOrNull() ?: return
+        val request = syncStateHolder.scanQueue.removeFirstOrNull() ?: return
 
         syncStateHolder.isScanning.value = true
+        syncStateHolder.currentScanRequestType.value = request.scanRequestType // 현재 스캔 타입 지정
         createNotificationChannel()
 
         val notificationManager =
@@ -84,7 +91,7 @@ class SyncService : LifecycleService() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                syncStorageUseCase(target)
+                syncStorageUseCase(request.targetPath)
                     .distinctUntilChanged()
                     .sample(200)
                     .collect { progress ->
@@ -96,6 +103,7 @@ class SyncService : LifecycleService() {
                     }
             } finally {
                 syncStateHolder.isScanning.value = false
+                syncStateHolder.currentScanRequestType.value = null
 
                 if (syncStateHolder.scanQueue.isNotEmpty()) {
                     processQueue()

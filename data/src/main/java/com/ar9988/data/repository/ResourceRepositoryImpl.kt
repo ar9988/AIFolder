@@ -3,6 +3,7 @@ package com.ar9988.data.repository
 import com.ar9988.data.mapper.toResource
 import com.ar9988.data.repository.local.LocalDataSource
 import com.ar9988.data.scanner.FileScanner
+import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.domain.model.DateRange
 import com.ar9988.domain.model.FileCategory
 import com.ar9988.domain.model.Resource
@@ -374,6 +375,15 @@ class ResourceRepositoryImpl @Inject constructor(
         }
 
         return candidate
+    }
+
+    override fun getTagGroupsByCategory(category: FileCategory): Flow<List<CategoryTagGroupModel>> {
+        return when (category) {
+            FileCategory.Images -> localDataSource.getTagGroupsByCategory("image/%")
+            FileCategory.Videos -> localDataSource.getTagGroupsByCategory("video/%")
+            FileCategory.Audios -> localDataSource.getTagGroupsByCategory("audio/%")
+            FileCategory.Documents -> localDataSource.getTagGroupsByExtensions(listOf("pdf", "docx", "txt", "xlsx", "pptx"))
+        }
     }
 
 }

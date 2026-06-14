@@ -83,6 +83,7 @@ fun CategoryTagGroupScreen(
             ) {
                 items(tagGroups, key = { it.tagId }) { group ->
                     CategoryTagGroupCard(
+                        category = category,
                         group = group,
                         onClick = { onTagGroupClick(group.tagId) }
                     )

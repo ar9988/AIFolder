@@ -1,5 +1,6 @@
 package com.ar9988.data.repository.local
 
+import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.domain.model.DateRange
 import com.ar9988.domain.model.Resource
 import com.ar9988.domain.model.ResourceTagCrossRefModel
@@ -51,5 +52,7 @@ interface LocalDataSource {
     suspend fun getTagName(tagId: Long): String
     suspend fun getTag(tagId: Long): Tag
     suspend fun deleteByFolderPath(path: String)
-    fun deleteTags(tagIds: List<Long>) 
+    fun deleteTags(tagIds: List<Long>)
+    fun getTagGroupsByCategory(mimePattern: String): Flow<List<CategoryTagGroupModel>>
+    fun getTagGroupsByExtensions(extensions: List<String>): Flow<List<CategoryTagGroupModel>>
 }

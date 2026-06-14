@@ -53,4 +53,5 @@ sealed class FilesIntent {
     data object ToggleGridView: FilesIntent()
     data class ChangeSortType(val sortType: FileSortType): FilesIntent()
     data class SelectCategoryTag(val tagId: Long) : FilesIntent()
+    data class SaveScrollPosition(val scrollKey: String, val index: Int, val offset: Int) : FilesIntent()
 }

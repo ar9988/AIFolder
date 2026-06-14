@@ -7,6 +7,7 @@ dependencies {
     implementation(libs.javax.inject)
     implementation(libs.kotlinx.coroutines.core)
     implementation(project(":domain"))
+    implementation(libs.kotlinx.coroutines.core.v1xx)
 }
 
 java {

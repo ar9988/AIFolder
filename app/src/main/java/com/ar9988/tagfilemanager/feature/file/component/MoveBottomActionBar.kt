@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
-import com.ar9988.tagfilemanager.feature.common.model.ActionItem
+import com.ar9988.tagfilemanager.feature.common.component.ActionItem
 import com.ar9988.tagfilemanager.feature.file.FilesIntent
 
 @Composable
