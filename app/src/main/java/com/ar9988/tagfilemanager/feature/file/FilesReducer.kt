@@ -1,6 +1,7 @@
 package com.ar9988.tagfilemanager.feature.file
 
 import androidx.compose.ui.text.input.TextFieldValue
+import com.ar9988.domain.model.AppInfo
 import com.ar9988.domain.model.FileCategory
 import com.ar9988.domain.model.Resource
 import com.ar9988.domain.model.TagRecommendResult
@@ -147,7 +148,9 @@ object FilesReducer {
         currentState: FilesState
     ): FilesState {
         return currentState.copy(
-            fileOverlay = null
+            fileOverlay = null,
+            appSelectorList = emptyList(),
+            targetFilePathForOpen = null
         )
     }
 
@@ -298,15 +301,6 @@ object FilesReducer {
 
         return currentState.copy(
             activeTags = currentState.activeTags - tag.id
-        )
-    }
-
-    fun reduceOpenFile(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileOverlay = null
         )
     }
 
@@ -618,8 +612,13 @@ object FilesReducer {
 
     fun reduceBack(currentState: FilesState): FilesState {
         return when {
+            currentState.isImageViewerVisible -> reduceCloseImageViewer(currentState)
             currentState.fileOverlay != null -> {
-                currentState.copy(fileOverlay = null)
+                currentState.copy(
+                    fileOverlay = null,
+                    appSelectorList = emptyList(),
+                    targetFilePathForOpen = null
+                )
             }
             currentState.fileMode == FileMode.Move -> {
                 currentState.copy(
@@ -720,6 +719,53 @@ object FilesReducer {
     fun reduceSaveScrollPosition(state: FilesState, key: String, index: Int, offset: Int): FilesState {
         return state.copy(
             scrollPositions = state.scrollPositions + (key to (index to offset))
+        )
+    }
+
+    fun reduceShowAppSelectorDialog(
+        currentState: FilesState,
+        apps: List<AppInfo>,
+        targetFilePath: String
+    ): FilesState {
+        return currentState.copy(
+            appSelectorList = apps,
+            targetFilePathForOpen = targetFilePath,
+            fileOverlay = FileOverlay.AppSelectorDialog,
+        )
+    }
+
+    fun reduceSelectDefaultApp(it: FilesState) : FilesState {
+        return it.copy(
+            fileOverlay = null,
+            appSelectorList = emptyList(),
+            targetFilePathForOpen = null
+        )
+    }
+
+    fun reduceShowCopyDialog(it: FilesState): FilesState {
+        return it.copy(
+            fileOverlay = FileOverlay.CopyDialog,
+        )
+    }
+
+    fun reduceOpenImageViewer(currentState: FilesState, resource: FileItemUiModel): FilesState {
+        val imageFiles = currentState.files.filter {
+            !it.isParent && it.mimeType?.startsWith("image/") ?: return currentState
+        }
+        val initialIndex = imageFiles.indexOfFirst { it.id == resource.id }.coerceAtLeast(0)
+
+        return currentState.copy(
+            isImageViewerVisible = true,
+            imageViewerFiles = imageFiles,
+            imageViewerInitialIndex = initialIndex
+        )
+    }
+
+    fun reduceCloseImageViewer(currentState: FilesState): FilesState {
+        return currentState.copy(
+            isImageViewerVisible = false,
+            imageViewerFiles = emptyList(),
+            imageViewerInitialIndex = 0
         )
     }
 }

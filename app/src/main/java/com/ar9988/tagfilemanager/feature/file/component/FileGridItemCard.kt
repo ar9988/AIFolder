@@ -72,13 +72,20 @@ fun FileGridItemCard(
                         fileMode == FileMode.Move -> {
                             if (resource.isDirectory) onIntent(FilesIntent.ClickResource(resource))
                         }
-                        hasSelection -> onIntent(FilesIntent.ToggleSelection(resource))
-                        resource.isDirectory -> onIntent(FilesIntent.ClickResource(resource))
-                        else -> onIntent(FilesIntent.ShowFileDetail(resource))
+                        hasSelection -> {
+                            onIntent(FilesIntent.ToggleSelection(resource))
+                        }
+                        else -> {
+                            onIntent(FilesIntent.FileOpen(resource))
+                        }
                     }
                 },
                 onLongClick = if (fileMode == FileMode.Move) null else {
-                    { onIntent(FilesIntent.ToggleSelection(resource)) }
+                    {
+                        if (!hasSelection) {
+                            onIntent(FilesIntent.ToggleSelection(resource))
+                        }
+                    }
                 }
             )
     ) {

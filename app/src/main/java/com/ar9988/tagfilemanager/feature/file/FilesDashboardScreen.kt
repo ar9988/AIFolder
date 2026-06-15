@@ -1,6 +1,5 @@
 package com.ar9988.tagfilemanager.feature.file
 
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -23,8 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.ar9988.tagfilemanager.feature.file.component.AddDialog
+import com.ar9988.tagfilemanager.feature.file.component.AppSelectorDialog
 import com.ar9988.tagfilemanager.feature.file.component.CategoryTagFilesScreen
 import com.ar9988.tagfilemanager.feature.file.component.CategoryTagGroupScreen
+import com.ar9988.tagfilemanager.feature.file.component.CopyConfirmDialog
 import com.ar9988.tagfilemanager.feature.file.component.DashboardContent
 import com.ar9988.tagfilemanager.feature.file.component.DeleteFilesConfirmDialog
 import com.ar9988.tagfilemanager.feature.file.component.ExcludeConfirmDialog
@@ -46,20 +47,6 @@ fun FilesDashboardScreen(
     val categoryPagedFiles = if (state.viewMode == ViewMode.CATEGORY_TAG_FILES) {
         viewModel.categoryPagedFiles.collectAsLazyPagingItems()
     } else null
-
-    LaunchedEffect(categoryPagedFiles?.loadState) {
-        Log.d(
-            "PAGING",
-            categoryPagedFiles?.loadState.toString()
-        )
-    }
-
-    LaunchedEffect(categoryPagedFiles?.itemCount) {
-        Log.d(
-            "PAGING",
-            "itemCount=${categoryPagedFiles?.itemCount}"
-        )
-    }
 
     BackHandler(
         enabled = state.fileOverlay != null ||
@@ -139,6 +126,8 @@ fun FilesDashboardScreen(
                 FileOverlay.MoveDialog -> MoveDialog(state, viewModel::handleIntent)
                 FileOverlay.AddDialog -> AddDialog(state,viewModel::handleIntent)
                 FileOverlay.ExcludeDialog -> ExcludeConfirmDialog(state,viewModel::handleIntent)
+                FileOverlay.AppSelectorDialog -> AppSelectorDialog(state,viewModel::handleIntent)
+                FileOverlay.CopyDialog -> CopyConfirmDialog(state, viewModel::handleIntent)
             }
         }
     }

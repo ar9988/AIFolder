@@ -23,7 +23,7 @@ class CreateRecommendTagUseCase @Inject constructor(
         val extractedData = files.map { file ->
             async {
                 if (file.isDirectory) {
-                    "" to emptyList()
+                    "" to FileNameProcessor.process(file.name)
                 } else {
                     val content = textExtractor.extract(file.path, file.mimeType)
                     val titleWords = FileNameProcessor.process(file.name)

@@ -48,15 +48,21 @@ fun AddDialog(
         confirmButton = {
             TextButton(onClick = {
                 if (text.isNotBlank()) {
-                    onIntent(FilesIntent.ConfirmAdd(text,state.currentPath))
+                    onIntent(FilesIntent.ConfirmAdd(text, state.currentPath))
                 }
             }) {
-                Text("생성")
+                Text(
+                    "생성",
+                    color = Color.Black
+                )
             }
         },
         dismissButton = {
             TextButton(onClick = { onIntent(FilesIntent.DismissDialog) }) {
-                Text("취소")
+                Text(
+                    "취소",
+                    color = Color.Black
+                )
             }
         }
     )

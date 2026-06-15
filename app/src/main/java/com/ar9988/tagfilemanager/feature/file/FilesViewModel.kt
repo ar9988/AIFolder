@@ -13,6 +13,7 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import com.ar9988.domain.model.FileInput
 import com.ar9988.domain.model.FileSortType
+import com.ar9988.domain.model.FolderSortConfig
 import com.ar9988.domain.model.Resource
 import com.ar9988.domain.usecase.files.AddResourceUseCase
 import com.ar9988.domain.usecase.files.AddTagToResourceUseCase
@@ -31,6 +32,7 @@ import com.ar9988.domain.usecase.files.MoveResourceUseCase
 import com.ar9988.domain.usecase.files.OpenFileUseCase
 import com.ar9988.domain.usecase.files.RemoveTagFromResourceUseCase
 import com.ar9988.domain.usecase.files.RenameResourceUseCase
+import com.ar9988.local_db.manager.DefaultAppManager
 import com.ar9988.local_db.mapper.toDomain
 import com.ar9988.local_db.paging.CategoryFilesPager
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
@@ -74,6 +76,7 @@ class FilesViewModel @Inject constructor(
     private val settingsUseCase: SettingsUseCase,
     private val createRecommendTagUseCase: CreateRecommendTagUseCase,
     private val categoryFilesPager: CategoryFilesPager,
+    private val defaultAppManager: DefaultAppManager,
 ) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(FilesState())
@@ -124,11 +127,20 @@ class FilesViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            settingsUseCase().collect { settings ->
-                _state.update {
-                    it.copy(
-                        fileSortType = settings.fileSortType,
-                        isAscending = settings.isFileSortAscending,
+            combine(
+                state.map { it.currentPath }.distinctUntilChanged(),
+                settingsUseCase()
+            ) { currentPath, settings ->
+                currentPath to settings
+            }.collect { (currentPath, settings) ->
+                _state.update { currentState ->
+                    val folderConfig = settings.folderSortConfigs[currentPath]
+                    val sortType = folderConfig?.sortType ?: settings.fileSortType
+                    val isAscending = folderConfig?.isAscending ?: settings.isFileSortAscending
+
+                    currentState.copy(
+                        fileSortType = sortType,
+                        isAscending = isAscending,
                         dragDownScanEnabled = settings.dragDownScan
                     )
                 }
@@ -138,6 +150,32 @@ class FilesViewModel @Inject constructor(
 
     fun handleIntent(intent: FilesIntent) {
         when (intent) {
+            is FilesIntent.CloseImageViewer -> {
+                _state.update { FilesReducer.reduceCloseImageViewer(it) }
+            }
+
+            is FilesIntent.ShowCopyDialog -> {
+                _state.update {
+                    FilesReducer.reduceShowCopyDialog(it)
+                }
+            }
+
+            is FilesIntent.SelectDefaultApp -> {
+                val path = state.value.targetFilePathForOpen ?: return
+                val file = File(path)
+                val ext = file.extension.lowercase()
+
+                if (intent.alwaysUse) {
+                    defaultAppManager.setDefaultApp(ext, intent.app.packageName, intent.app.activityName)
+                }
+
+                openFileUseCase.invoke(path, intent.app.packageName, intent.app.activityName)
+
+                _state.update {
+                    FilesReducer.reduceSelectDefaultApp(it)
+                }
+            }
+
             is FilesIntent.SaveScrollPosition ->{
                 _state.update {
                     FilesReducer.reduceSaveScrollPosition(it, intent.scrollKey, intent.index, intent.offset)
@@ -145,22 +183,36 @@ class FilesViewModel @Inject constructor(
             }
 
             is FilesIntent.FileOpen -> {
-
                 if (intent.resource.isDirectory) {
-                    _state.update {
-                        FilesReducer.reduceOpenFolder(it)
-                    }
-
-                    navigateToPath(
-                        path = intent.resource.path
-                    )
-
+                    _state.update { FilesReducer.reduceOpenFolder(it) }
+                    navigateToPath(path = intent.resource.path)
                 } else {
+                    val path = intent.resource.path
+                    val file = File(path)
+                    val ext = file.extension.lowercase()
+                    val mimeType = intent.resource.mimeType
+                    val savedDefault = defaultAppManager.getDefaultApp(ext)
 
-                    openFileUseCase(intent.resource.path)
-
-                    _state.update {
-                        FilesReducer.reduceOpenFile(it)
+                    if (mimeType?.startsWith("image/") == true && !intent.forceChooser && state.value.viewMode == ViewMode.LIST) {
+                        _state.update { FilesReducer.reduceOpenImageViewer(it, intent.resource) }
+                    }
+                    else {
+                        if (intent.forceChooser || savedDefault == null) {
+                            viewModelScope.launch {
+                                val apps = openFileUseCase.getResolveActivities(path)
+                                if (apps.isEmpty()) {
+                                    _sideEffect.send(FilesSideEffect.ShowToast("이 파일을 열 수 있는 앱이 없습니다."))
+                                } else if (apps.size == 1 && !intent.forceChooser) {
+                                    openFileUseCase(path, apps[0].packageName, apps[0].activityName)
+                                } else {
+                                    _state.update {
+                                        FilesReducer.reduceShowAppSelectorDialog(it, apps, targetFilePath = path)
+                                    }
+                                }
+                            }
+                        } else {
+                            openFileUseCase(path, savedDefault.first, savedDefault.second)
+                        }
                     }
                 }
             }
@@ -839,6 +891,16 @@ class FilesViewModel @Inject constructor(
     }
 
     private fun startScan(path: String, scanType: ScanRequestType = ScanRequestType.AUTO) {
+        val currentTime = System.currentTimeMillis()
+        val lastScanTime = defaultAppManager.getLastScanTime(path)
+        val cooldownInterval = 30 * 60 * 1000
+
+        if (scanType == ScanRequestType.AUTO && (currentTime - lastScanTime < cooldownInterval)) {
+            return
+        }
+
+        defaultAppManager.setLastScanTime(path, currentTime)
+
         val intent = Intent(getApplication(), SyncService::class.java).apply {
             putExtra("TARGET", path)
             putExtra("SCAN_TYPE", scanType.name)
@@ -860,11 +922,23 @@ class FilesViewModel @Inject constructor(
 
     private fun updateSortSettings(sortType: FileSortType? = null, isAscending: Boolean? = null) {
         viewModelScope.launch {
+            val currentPath = state.value.currentPath
             settingsUseCase.updateSettings { currentSettings ->
-                currentSettings.copy(
-                    fileSortType = sortType ?: currentSettings.fileSortType,
-                    isFileSortAscending = isAscending ?: currentSettings.isFileSortAscending
-                )
+                if (currentPath.isNotBlank()) {
+                    val currentFolderConfig = currentSettings.folderSortConfigs[currentPath]
+                    val newSortType = sortType ?: currentFolderConfig?.sortType ?: currentSettings.fileSortType
+                    val newAscending = isAscending ?: currentFolderConfig?.isAscending ?: currentSettings.isFileSortAscending
+
+                    val updatedConfigs = currentSettings.folderSortConfigs.toMutableMap().apply {
+                        put(currentPath, FolderSortConfig(newSortType, newAscending))
+                    }
+                    currentSettings.copy(folderSortConfigs = updatedConfigs)
+                } else {
+                    currentSettings.copy(
+                        fileSortType = sortType ?: currentSettings.fileSortType,
+                        isFileSortAscending = isAscending ?: currentSettings.isFileSortAscending
+                    )
+                }
             }
         }
     }

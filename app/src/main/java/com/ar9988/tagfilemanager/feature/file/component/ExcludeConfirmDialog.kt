@@ -28,7 +28,7 @@ fun ExcludeConfirmDialog(
             TextButton(
                 onClick = { onIntent(FilesIntent.DismissDialog) }
             ) {
-                Text(text = "취소")
+                Text(text = "취소",color = Color.Black)
             }
         }
     )

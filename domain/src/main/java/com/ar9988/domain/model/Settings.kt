@@ -10,7 +10,8 @@ data class Settings(
     val fileSortType: FileSortType,
     val tagSortType: TagSortType,
     val isFileSortAscending: Boolean,
-    val isTagSortAscending: Boolean
+    val isTagSortAscending: Boolean,
+    val folderSortConfigs: Map<String, FolderSortConfig> = emptyMap() // <- 개별 폴더 매핑 추가
 ){
     companion object {
         val DEFAULT_EXCLUDED_EXTENSIONS = listOf(

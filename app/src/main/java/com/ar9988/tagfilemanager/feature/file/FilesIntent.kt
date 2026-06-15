@@ -1,6 +1,7 @@
 package com.ar9988.tagfilemanager.feature.file
 
 import androidx.compose.ui.text.input.TextFieldValue
+import com.ar9988.domain.model.AppInfo
 import com.ar9988.domain.model.FileCategory
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 import com.ar9988.tagfilemanager.feature.common.model.TagUiModel
@@ -22,6 +23,7 @@ sealed class FilesIntent {
     data object ShowDeleteConfirmDialog : FilesIntent()
     data object ConfirmDelete : FilesIntent()
     data object ShowRenameDialog : FilesIntent()
+    data object ShowCopyDialog : FilesIntent()
     data object DismissDialog : FilesIntent()
     data object ShowExcludeDialog : FilesIntent()
     data class ConfirmRename(val name: String,val resource: FileItemUiModel?): FilesIntent()
@@ -36,7 +38,8 @@ sealed class FilesIntent {
     data object ConfirmSearch: FilesIntent()
     data object OpenSearch: FilesIntent()
     data class ConfirmAdd(val name: String,val parentPath:String) : FilesIntent()
-    data class FileOpen(val resource: FileItemUiModel): FilesIntent()
+    data class FileOpen(val resource: FileItemUiModel, val forceChooser: Boolean = false): FilesIntent()
+    data class SelectDefaultApp(val app: AppInfo, val alwaysUse: Boolean) : FilesIntent()
     data class CreateAndAddTag(val tagName: String): FilesIntent()
     data class ToggleTagSelection(val tag: TagUiModel,val nextState: SelectionState): FilesIntent()
     data class AddTag(val tag: TagUiModel): FilesIntent()
@@ -54,4 +57,5 @@ sealed class FilesIntent {
     data class ChangeSortType(val sortType: FileSortType): FilesIntent()
     data class SelectCategoryTag(val tagId: Long) : FilesIntent()
     data class SaveScrollPosition(val scrollKey: String, val index: Int, val offset: Int) : FilesIntent()
+    data object CloseImageViewer : FilesIntent()
 }

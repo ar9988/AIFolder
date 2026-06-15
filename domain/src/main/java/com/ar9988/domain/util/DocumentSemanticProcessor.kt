@@ -3,7 +3,6 @@ package com.ar9988.domain.util
 object DocumentSemanticProcessor {
 
     private val stopWords = setOf(
-
         // 조사
         "은", "는", "이", "가",
         "을", "를", "에", "의",
@@ -63,8 +62,19 @@ object DocumentSemanticProcessor {
         val scoreMap = mutableMapOf<String, Double>()
         val titleSet = titleWords.map { it.lowercase() }.toSet()
 
+        titleSet.forEach { word ->
+            if (word !in stopWords && word.length in 2..30) {
+                scoreMap[word] = 5.0 // 파일명은 핵심 식별자이므로 높은 기본 가중치를 부여합니다.
+            }
+        }
+
         tokens.forEachIndexed { index, word ->
-            val baseScore = if (word in titleSet) 3.0 else 1.0
+            val isTitleWord = word in titleSet
+            val baseScore = if (isTitleWord) {
+                3.0
+            } else {
+                1.0
+            }
             val positionBonus = if (index < 10) 2.0 else 0.0
 
             scoreMap[word] = (scoreMap[word] ?: 0.0) + baseScore + positionBonus

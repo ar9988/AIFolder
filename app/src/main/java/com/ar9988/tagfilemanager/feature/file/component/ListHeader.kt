@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ar9988.tagfilemanager.R
 import com.ar9988.tagfilemanager.feature.common.component.InputTagChip
@@ -191,7 +192,9 @@ fun ListHeader(
                                 text = folderName,
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.DarkGray
+                                color = Color.DarkGray,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         } else {
                             Text(
@@ -233,7 +236,7 @@ fun ListHeader(
                         onDismissRequest = { onIntent(FilesIntent.ToggleSortDropdown) }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("날짜순",fontWeight = if (state.fileSortType == FileSortType.Recent) FontWeight.Bold else FontWeight.Normal)},
+                            text = { Text("최신순",fontWeight = if (state.fileSortType == FileSortType.Recent) FontWeight.Bold else FontWeight.Normal)},
                             onClick = {
                                 onIntent(FilesIntent.ChangeSortType(FileSortType.Recent))
                                 onIntent(FilesIntent.ToggleSortDropdown)

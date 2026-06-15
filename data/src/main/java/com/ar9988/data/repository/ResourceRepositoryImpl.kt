@@ -9,6 +9,7 @@ import com.ar9988.domain.model.FileCategory
 import com.ar9988.domain.model.Resource
 import com.ar9988.domain.model.ScanEvent
 import com.ar9988.domain.repository.ResourceRepository
+import com.ar9988.domain.repository.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -20,6 +21,7 @@ import javax.inject.Inject
 class ResourceRepositoryImpl @Inject constructor(
     private val localDataSource: LocalDataSource,
     private val fileScanner: FileScanner,
+    private val settingsRepository: SettingsRepository
 ) : ResourceRepository {
     override suspend fun getResourceById(id: Long): Resource? {
         return localDataSource.getResourceById(id)
@@ -44,8 +46,8 @@ class ResourceRepositoryImpl @Inject constructor(
 
     override suspend fun deleteResources(resources: List<Pair<Long,String>>): Result<Unit> = withContext(
         Dispatchers.IO) {
-        //id , path
         val deletedResources = mutableListOf<Long>()
+        val deletedPaths = mutableListOf<String>()
 
         resources.forEach { resource ->
             val file = File(resource.second)
@@ -57,12 +59,20 @@ class ResourceRepositoryImpl @Inject constructor(
 
             if (success) {
                 deletedResources.add(resource.first)
+                deletedPaths.add(resource.second)
             }
         }
 
         return@withContext try {
             if (deletedResources.isNotEmpty()) {
                 localDataSource.deleteAllByIds(deletedResources)
+
+                settingsRepository.updateSettings { currentSettings ->
+                    val updatedConfigs = currentSettings.folderSortConfigs.toMutableMap().apply {
+                        deletedPaths.forEach { remove(it) }
+                    }
+                    currentSettings.copy(folderSortConfigs = updatedConfigs)
+                }
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -154,13 +164,24 @@ class ResourceRepositoryImpl @Inject constructor(
                 movedFolders.forEach { (oldPath, newPath) ->
                     localDataSource.updateSubtreePath(oldPath, newPath)
                 }
+
+                settingsRepository.updateSettings { currentSettings ->
+                    val updatedConfigs = currentSettings.folderSortConfigs.toMutableMap().apply {
+                        movedFolders.forEach { (oldPath, newPath) ->
+                            val config = remove(oldPath)
+                            if (config != null) {
+                                put(newPath, config)
+                            }
+                        }
+                    }
+                    currentSettings.copy(folderSortConfigs = updatedConfigs)
+                }
             }
             Unit
         }
     }
 
     override suspend fun renameResource(resource: Triple<Long,String,String>, newName: String): Result<Unit> = withContext(Dispatchers.IO) {
-        //id ,path, name
         try {
             val oldFile = File(resource.second)
             val parentPath = oldFile.parent ?: ""
@@ -173,6 +194,17 @@ class ResourceRepositoryImpl @Inject constructor(
                 if (newFile.isDirectory) {
                     localDataSource.updateSubtreePath(resource.second, newPath)
                 }
+
+                settingsRepository.updateSettings { currentSettings ->
+                    val updatedConfigs = currentSettings.folderSortConfigs.toMutableMap().apply {
+                        val config = remove(resource.second)
+                        if (config != null) {
+                            put(newPath, config)
+                        }
+                    }
+                    currentSettings.copy(folderSortConfigs = updatedConfigs)
+                }
+
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("파일 시스템에서 이름 변경에 실패했습니다."))
@@ -385,5 +417,4 @@ class ResourceRepositoryImpl @Inject constructor(
             FileCategory.Documents -> localDataSource.getTagGroupsByExtensions(listOf("pdf", "docx", "txt", "xlsx", "pptx"))
         }
     }
-
 }

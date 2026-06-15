@@ -1,6 +1,7 @@
 package com.ar9988.tagfilemanager.feature.file
 
 import androidx.compose.ui.text.input.TextFieldValue
+import com.ar9988.domain.model.AppInfo
 import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.domain.model.FileCategory
 import com.ar9988.domain.model.TagRecommendResult
@@ -50,7 +51,12 @@ data class FilesState(
     val isSortDropdownVisible: Boolean = false,
     val isGridView: Boolean = false,
     val selectedFiles: List<FileItemUiModel> = emptyList(),
-    val scrollPositions: Map<String, Pair<Int, Int>> = emptyMap()
+    val scrollPositions: Map<String, Pair<Int, Int>> = emptyMap(),
+    val appSelectorList: List<AppInfo> = emptyList(),
+    val targetFilePathForOpen: String? = null,
+    val isImageViewerVisible: Boolean = false,
+    val imageViewerFiles: List<FileItemUiModel> = emptyList(),
+    val imageViewerInitialIndex: Int = 0,
 ){
 
     val currentScrollKey: String

@@ -46,7 +46,7 @@ fun MoveBottomActionBar(
                 icon = Icons.Outlined.ContentCopy,
                 label = "여기로 복사",
                 onClick = {
-                    onIntent(FilesIntent.ConfirmCopy)
+                    onIntent(FilesIntent.ShowCopyDialog)
                 }
             )
 
@@ -55,7 +55,7 @@ fun MoveBottomActionBar(
                 icon = Icons.AutoMirrored.Outlined.DriveFileMove,
                 label = "여기로 이동",
                 onClick = {
-                    onIntent(FilesIntent.ConfirmMove)
+                    onIntent(FilesIntent.ShowMoveDialog)
                 }
             )
 

@@ -7,4 +7,6 @@ sealed interface FileOverlay {
     object RenameDialog: FileOverlay
     object AddDialog: FileOverlay
     object ExcludeDialog: FileOverlay
+    object AppSelectorDialog: FileOverlay
+    object CopyDialog: FileOverlay
 }

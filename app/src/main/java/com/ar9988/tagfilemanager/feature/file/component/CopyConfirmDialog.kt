@@ -9,19 +9,19 @@ import com.ar9988.tagfilemanager.feature.file.FilesIntent
 import com.ar9988.tagfilemanager.feature.file.FilesState
 
 @Composable
-fun DeleteFilesConfirmDialog(
+fun CopyConfirmDialog(
     state: FilesState,
     onIntent: (FilesIntent) -> Unit
 ) {
     AlertDialog(
         onDismissRequest = { onIntent(FilesIntent.DismissDialog) },
-        title = { Text(text = "항목 삭제") },
-        text = { Text(text = "${state.selectionLabel} 을 삭제하시겠습니까?\n 이 작업은 취소할 수 없습니다.") },
+        title = { Text(text = "항목 복사") },
+        text = { Text(text = "${state.selectionLabel} 을 복사하시겠습니까?") },
         confirmButton = {
             TextButton(
-                onClick = { onIntent(FilesIntent.ConfirmDelete) }
+                onClick = { onIntent(FilesIntent.ConfirmCopy) }
             ) {
-                Text(text = "삭제", color = Color.Red)
+                Text(text = "복사", color = Color.Black)
             }
         },
         dismissButton = {

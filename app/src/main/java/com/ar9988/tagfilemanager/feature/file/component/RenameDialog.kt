@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.ar9988.tagfilemanager.feature.file.FilesIntent
 import com.ar9988.tagfilemanager.feature.file.FilesState
@@ -56,7 +57,6 @@ fun RenameDialog(
                         onValueChange = { nameInput = it },
                         label = { Text("새 이름") },
                         suffix = {
-                            // 확장자가 있을 때만 오른쪽에 흐릿하게 표시 (고정값)
                             if (extension.isNotEmpty()) {
                                 Text(text = extension)
                             }
@@ -75,12 +75,12 @@ fun RenameDialog(
                         }
                     }
                 ) {
-                    Text("변경")
+                    Text("변경", color = Color.Black)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { onIntent(FilesIntent.DismissDialog) }) {
-                    Text("취소")
+                    Text("취소", color = Color.Black)
                 }
             }
         )
