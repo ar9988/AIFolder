@@ -46,7 +46,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ar9988.tagfilemanager.R
 import com.ar9988.tagfilemanager.feature.common.component.InputTagChip
@@ -62,7 +61,6 @@ fun ListHeader(
     state: FilesState,
     onIntent: (FilesIntent) -> Unit
 ) {
-    val folderName = state.currentPath.split("/").lastOrNull() ?: "Root"
     val focusRequester = remember { FocusRequester() }
     val backgroundColor = when (state.fileMode) {
         is FileMode.Move -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
@@ -188,13 +186,12 @@ fun ListHeader(
 
                     else -> {
                         if (state.selectedCategory == null) {
-                            Text(
-                                text = folderName,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.DarkGray,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                            PathBreadcrumbs(
+                                currentPath = state.currentPath,
+                                storageRootPaths = state.storageRootPaths,
+                                onNavigate = { targetPath ->
+                                    onIntent(FilesIntent.NavigateTo(targetPath))
+                                }
                             )
                         } else {
                             Text(

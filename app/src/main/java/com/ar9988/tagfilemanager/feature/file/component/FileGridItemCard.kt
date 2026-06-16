@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha // 추가됨
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -49,14 +50,22 @@ fun FileGridItemCard(
     val isParent = resource.isParent
     val isMoving = fileMode == FileMode.Move && isSelected
 
+    val isParentDisabled = isParent && hasSelection && fileMode != FileMode.Move
+
     val backgroundColor = when {
+        isParentDisabled -> Color(0xFFF5F5F5)
         isMoving -> Color(0xFFE0E0E0)
         isParent -> Color(0xFFF5F5F5)
         resource.isDirectory -> Color(0xFFFFECB3)
         else -> Color(0xFFE3F2FD)
     }
 
-    val iconTint = if (isParent) Color(0xFF757575) else Color(0xFFFFA000)
+    val iconTint = when {
+        isParentDisabled -> Color(0xFFBDBDBD)
+        isParent -> Color(0xFF757575)
+        else -> Color(0xFFFFA000)
+    }
+
     val iconRes = if (isParent) R.drawable.baseline_arrow_upward_24 else R.drawable.outline_folder_24
 
     Box(
@@ -64,8 +73,9 @@ fun FileGridItemCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(if (isMoving) Color.Black.copy(alpha = 0.05f) else CardWhite)
+            .alpha(if (isParentDisabled) 0.4f else 1f)
             .combinedClickable(
-                enabled = !isMoving,
+                enabled = !isMoving && !isParentDisabled,
                 onClick = {
                     when {
                         isParent -> onIntent(FilesIntent.NavigateToParent(resource.path))
@@ -80,7 +90,7 @@ fun FileGridItemCard(
                         }
                     }
                 },
-                onLongClick = if (fileMode == FileMode.Move) null else {
+                onLongClick = if (fileMode == FileMode.Move || isParentDisabled) null else {
                     {
                         if (!hasSelection) {
                             onIntent(FilesIntent.ToggleSelection(resource))
@@ -129,7 +139,6 @@ fun FileGridItemCard(
                     }
                 }
 
-                // 체크박스
                 if (hasSelection && !isParent && fileMode != FileMode.Move) {
                     Checkbox(
                         checked = isSelected,
@@ -152,6 +161,7 @@ fun FileGridItemCard(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (isParent) FontWeight.Medium else FontWeight.Bold,
                     color = when {
+                        isParentDisabled -> Color(0xFF9E9E9E)
                         isMoving -> Color.LightGray
                         isParent -> Color.Gray
                         else -> MaterialTheme.colorScheme.onSurface
@@ -181,7 +191,7 @@ fun FileGridItemCard(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp), // 고정 높이
+                                .height(52.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
                         ) {

@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -20,7 +18,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -83,22 +80,8 @@ fun FileStackListContent(
                         state = state,
                         onIntent = onIntent,
                     )
-                    if (state.isScanning && state.currentScanRequestType == ScanRequestType.AUTO) {
-                        LinearProgressIndicator(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(2.dp),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = Color.Transparent
-                        )
-                    }
                     key(listKey) {
                         val visibleFiles = state.files
-                            .filterNot {
-                                state.hasSelection &&
-                                        state.fileMode != FileMode.Move &&
-                                        it.isParent
-                            }
 
                         if (visibleFiles.isEmpty()) {
                             Column(

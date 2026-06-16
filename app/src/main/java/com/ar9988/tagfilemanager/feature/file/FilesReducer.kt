@@ -536,77 +536,11 @@ object FilesReducer {
         )
     }
 
-    fun reduceConfirmDelete(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileMode = FileMode.Normal,
-            fileOverlay = null,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList()
-        )
-    }
-
-    fun reduceRenameSuccess(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileOverlay = null,
-            fileMode = FileMode.Normal,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList()
-        )
-    }
-
     fun reduceStartMove(currentState: FilesState): FilesState {
         return currentState.copy(
             fileMode = FileMode.Move,
             fileOverlay = null,
             moveTargets = currentState.selectedFiles
-        )
-    }
-
-    fun reduceConfirmMove(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileMode = FileMode.Normal,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList(),
-            moveTargets = emptyList(),
-            fileOverlay = null
-        )
-    }
-
-    fun reduceHideTagActionSheet(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileOverlay = null,
-            fileMode = FileMode.Normal,
-            selectedTagIds = emptySet(),
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList()
-        )
-    }
-
-    fun reduceCancelMove(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileMode = FileMode.Normal,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList(),
-            fileOverlay = null,
-            moveTargets = emptyList(),
-        )
-    }
-
-    fun reduceConfirmCopy(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileMode = FileMode.Normal,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList(),
-            fileOverlay = null
-        )
-    }
-
-    fun reduceConfirmExclude(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileMode = FileMode.Normal,
-            fileOverlay = null,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList()
         )
     }
 
@@ -766,6 +700,107 @@ object FilesReducer {
             isImageViewerVisible = false,
             imageViewerFiles = emptyList(),
             imageViewerInitialIndex = 0
+        )
+    }
+
+    fun reduceConfirmDelete(currentState: FilesState): FilesState {
+        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
+            FileMode.SearchResult
+        } else {
+            FileMode.Normal
+        }
+        return currentState.copy(
+            fileMode = nextFileMode,
+            fileOverlay = null,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList()
+        )
+    }
+
+    fun reduceRenameSuccess(currentState: FilesState): FilesState {
+        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
+            FileMode.SearchResult
+        } else {
+            FileMode.Normal
+        }
+        return currentState.copy(
+            fileOverlay = null,
+            fileMode = nextFileMode,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList()
+        )
+    }
+
+    fun reduceConfirmMove(currentState: FilesState): FilesState {
+        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
+            FileMode.SearchResult
+        } else {
+            FileMode.Normal
+        }
+        return currentState.copy(
+            fileMode = nextFileMode,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList(),
+            moveTargets = emptyList(),
+            fileOverlay = null
+        )
+    }
+
+    fun reduceHideTagActionSheet(currentState: FilesState): FilesState {
+        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
+            FileMode.SearchResult
+        } else {
+            FileMode.Normal
+        }
+        return currentState.copy(
+            fileOverlay = null,
+            fileMode = nextFileMode,
+            selectedTagIds = emptySet(),
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList()
+        )
+    }
+
+    fun reduceCancelMove(currentState: FilesState): FilesState {
+        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
+            FileMode.SearchResult
+        } else {
+            FileMode.Normal
+        }
+        return currentState.copy(
+            fileMode = nextFileMode,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList(),
+            fileOverlay = null,
+            moveTargets = emptyList(),
+        )
+    }
+
+    fun reduceConfirmCopy(currentState: FilesState): FilesState {
+        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
+            FileMode.SearchResult
+        } else {
+            FileMode.Normal
+        }
+        return currentState.copy(
+            fileMode = nextFileMode,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList(),
+            fileOverlay = null
+        )
+    }
+
+    fun reduceConfirmExclude(currentState: FilesState): FilesState {
+        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
+            FileMode.SearchResult
+        } else {
+            FileMode.Normal
+        }
+        return currentState.copy(
+            fileMode = nextFileMode,
+            fileOverlay = null,
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList()
         )
     }
 }
