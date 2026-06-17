@@ -15,18 +15,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import coil.decode.VideoFrameDecoder
-import coil.request.ImageRequest
+import coil.compose.AsyncImagePainter
 import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.domain.model.FileCategory
 import com.ar9988.tagfilemanager.feature.common.component.getIconInfo
@@ -41,7 +43,9 @@ fun CategoryTagGroupCard(
     modifier: Modifier = Modifier,
     category: FileCategory
 ) {
-    val context = LocalContext.current
+    var isError by remember { mutableStateOf(false) }
+
+    val isMediaCategory = category in setOf(FileCategory.Images, FileCategory.Videos)
     Surface(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
@@ -49,7 +53,6 @@ fun CategoryTagGroupCard(
         color = CardWhite
     ) {
         Column {
-            // 섬네일 영역
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -58,33 +61,27 @@ fun CategoryTagGroupCard(
                     .background(Color(group.tagColor).copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                if (category in setOf(FileCategory.Images, FileCategory.Videos)) {
+                if (isMediaCategory && !isError) {
                     AsyncImage(
-                        model = if (category == FileCategory.Videos) {
-                            ImageRequest.Builder(context)
-                                .data(File(group.thumbnailPath))
-                                .decoderFactory(VideoFrameDecoder.Factory())
-                                .build()
-                        } else {
-                            File(group.thumbnailPath)
-                        },
+                        model = File(group.thumbnailPath),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clip(RoundedCornerShape(6.dp))
+                        modifier = Modifier.matchParentSize(),
+                        onState = { state ->
+                            isError = state is AsyncImagePainter.State.Error
+                        }
                     )
-                } else {
+                }
+                if (!isMediaCategory || isError) {
                     val (icon, color) = category.getIconInfo()
-
                     Box(
-                        modifier = Modifier.fillMaxSize().background(Color(group.tagColor).copy(alpha = 0.1f)),
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            tint =  color,
+                            tint = color,
                             modifier = Modifier.size(36.dp)
                         )
                     }
