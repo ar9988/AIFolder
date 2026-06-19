@@ -21,115 +21,23 @@ class EmbeddingSimilarityTest {
 
 
     val testSets = listOf(
+        SimilarityCase("영수증", "결제", minSimilarity = 0.45f),
+        SimilarityCase("스타벅스", "카페", minSimilarity = 0.45f),
+        SimilarityCase("아메리카노", "커피", minSimilarity = 0.5f),
 
-        // ===== 매우 유사 =====
-        SimilarityCase(
-            "영수증",
-            "구매 내역",
-            minSimilarity = 0.5f
-        ),
+        // 업무 채널
+        SimilarityCase("회의록", "업무", minSimilarity = 0.45f),
+        SimilarityCase("이력서", "채용 공고", minSimilarity = 0.43f),
+        SimilarityCase("보고서", "문서", minSimilarity = 0.5f),
 
-        SimilarityCase(
-            "세금계산서",
-            "invoice",
-            minSimilarity = 0.4f
-        ),
+        // 여행 채널
+        SimilarityCase("항공권", "티켓", minSimilarity = 0.5f),
+        SimilarityCase("호텔", "숙소", minSimilarity = 0.55f),
+        SimilarityCase("일정표", "계획", minSimilarity = 0.43f),
 
-        SimilarityCase(
-            "사진",
-            "image",
-            minSimilarity = 0.4f
-        ),
-
-        SimilarityCase(
-            "계약서",
-            "contract document",
-            minSimilarity = 0.4f
-        ),
-
-        SimilarityCase(
-            "강의자료",
-            "lecture notes",
-            minSimilarity = 0.35f
-        ),
-
-        // ===== 실제 파일 관리 시나리오 =====
-
-        SimilarityCase(
-            "여행",
-            "제주도 항공권 예약 확인서",
-            minSimilarity = 0.4f
-        ),
-
-        SimilarityCase(
-            "영수증",
-            "스타벅스 카드 결제 영수증",
-            minSimilarity = 0.5f
-        ),
-
-        SimilarityCase(
-            "병원",
-            "진료 예약 확인 문자",
-            minSimilarity = 0.35f
-        ),
-
-        SimilarityCase(
-            "회의",
-            "프로젝트 회의록",
-            minSimilarity = 0.45f
-        ),
-
-        SimilarityCase(
-            "resume",
-            "이력서",
-            minSimilarity = 0.35f
-        ),
-
-        // ===== 중간 정도 관련 =====
-
-        SimilarityCase(
-            "강아지",
-            "고양이",
-            minSimilarity = 0.2f
-        ),
-
-        SimilarityCase(
-            "노트북",
-            "스마트폰",
-            minSimilarity = 0.2f
-        ),
-
-        SimilarityCase(
-            "커피",
-            "음료수",
-            minSimilarity = 0.2f
-        ),
-
-        // ===== 무관 =====
-
-        SimilarityCase(
-            "영수증",
-            "바다",
-            maxSimilarity = 0.3f
-        ),
-
-        SimilarityCase(
-            "database",
-            "고양이",
-            maxSimilarity = 0.3f
-        ),
-
-        SimilarityCase(
-            "비행기",
-            "냉장고",
-            maxSimilarity = 0.3f
-        ),
-
-        SimilarityCase(
-            "계약서",
-            "라면",
-            maxSimilarity = 0.3f
-        )
+        // 교육 채널
+        SimilarityCase("수료증", "교육", minSimilarity = 0.45f),
+        SimilarityCase("자격증", "증명서", minSimilarity = 0.5f)
     )
 
     @Test

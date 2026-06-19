@@ -33,24 +33,15 @@ class CategoryFilesPager @Inject constructor(
         tagId: Long,
         category: FileCategory
     ): PagingSource<Int, ResourceWithTags> {
-        return when (category) {
-            FileCategory.Images -> {
-                if (tagId == -1L) resourceDao.getPagedUntaggedResources("image/%")
-                else resourceDao.getPagedResourcesByTag(tagId, "image/%")
-            }
-            FileCategory.Videos -> {
-                if (tagId == -1L) resourceDao.getPagedUntaggedResources("video/%")
-                else resourceDao.getPagedResourcesByTag(tagId, "video/%")
-            }
-            FileCategory.Audios -> {
-                if (tagId == -1L) resourceDao.getPagedUntaggedResources("audio/%")
-                else resourceDao.getPagedResourcesByTag(tagId, "audio/%")
-            }
-            FileCategory.Documents -> {
-                val extensions = listOf("pdf", "docx", "txt", "xlsx", "pptx")
-                if (tagId == -1L) resourceDao.getPagedUntaggedResources(extensions)
-                else resourceDao.getPagedResourcesByExtensions(tagId, extensions)
-            }
+        val pattern = category.getMimeTypePattern()
+        if (pattern != null) {
+            return if (tagId == -1L) resourceDao.getPagedUntaggedResources(pattern)
+            else resourceDao.getPagedResourcesByTag(tagId, pattern)
+        }
+        else{
+            val extensions = category.getExtensions() ?: emptyList()
+            return if (tagId == -1L) resourceDao.getPagedUntaggedResources(extensions)
+            else resourceDao.getPagedResourcesByTag(tagId, extensions)
         }
     }
 }

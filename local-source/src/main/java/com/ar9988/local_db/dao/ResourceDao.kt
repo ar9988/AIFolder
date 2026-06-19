@@ -205,7 +205,7 @@ ORDER BY lastModified DESC
     AND r.extension IN (:extensions)
     ORDER BY r.lastModified DESC
     """)
-    fun getPagedResourcesByExtensions(
+    fun getPagedResourcesByTag(
         tagId: Long,
         extensions: List<String>
     ): PagingSource<Int,ResourceWithTags>

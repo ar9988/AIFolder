@@ -249,7 +249,6 @@ class AssistantSearchUseCase @Inject constructor(
         triedStrategies: Set<SearchStrategy>,
         currentSensitivity: SearchSensitivity
     ): List<SearchStrategy> {
-        println(triedStrategies.toString())
         val suggestions = when (failureReason) {
             SearchFailureReason.NoMatchedTags ->
                 mutableListOf(
@@ -271,7 +270,6 @@ class AssistantSearchUseCase @Inject constructor(
 
         suggestions.removeAll(triedStrategies)
 
-        println(suggestions.toString())
         if (currentSensitivity == SearchSensitivity.WIDE) {
             suggestions.remove(SearchStrategy.RELAX_SENSITIVITY)
         }

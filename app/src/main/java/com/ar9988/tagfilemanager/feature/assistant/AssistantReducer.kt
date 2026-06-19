@@ -173,9 +173,11 @@ object AssistantReducer {
         result: AssistantResult,
         originalQuery: String
     ): AssistantState {
+        var matchedTagIds = emptySet<Long>()
         val message =
             when (result) {
                 is AssistantResult.Success -> {
+                    matchedTagIds = result.matchedTags.map { it.id }.toSet()
                     val description =
                         buildString {
 
@@ -246,14 +248,13 @@ object AssistantReducer {
             fileContent?.files ?: emptyList()
 
         val trimmedMessages = (state.messages + message).takeLast(AssistantState.MAX_MESSAGES)
-
-        val activeIds = trimmedMessages.map { it.id }.toSet()
+        val validMessageIds = trimmedMessages.map { it.id }.toSet()
 
         return state.copy(
             query = "",
             messages = trimmedMessages,
             isLoading = false,
-            tagFilters = state.tagFilters + (messageId to activeIds),
+            tagFilters = state.tagFilters + (messageId to matchedTagIds),
             messageSortTypes =
                 state.messageSortTypes +
                         (messageId to AssistantSortType.Recent),
@@ -262,7 +263,7 @@ object AssistantReducer {
                 state.messageSortOrders +
                         (messageId to SortOrder.DESC),
 
-            filteredFiles = state.filteredFiles.filterKeys { it in activeIds }
+            filteredFiles = state.filteredFiles.filterKeys { it in validMessageIds }
                     + (messageId to initialFiles)
         )
     }

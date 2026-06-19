@@ -38,6 +38,7 @@ fun AiTagRecommendSection(
     onIntent: (FilesIntent) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
+        val result = state.tagRecommendResult
         when {
             // 초기 상태: 버튼만 보여줌
             !state.aiTagRecommendRequested -> {
@@ -87,8 +88,21 @@ fun AiTagRecommendSection(
                 }
             }
 
-            state.tagRecommendResult != null -> {
-                val result = state.tagRecommendResult
+            result != null && result.existingTags.isEmpty() && result.suggestedKeywords.isEmpty() -> {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "추천할 태그를 찾지 못했어요",
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+            }
+
+            result != null -> {
 
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -101,7 +115,7 @@ fun AiTagRecommendSection(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Outlined.AutoAwesome, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.width(4.dp))
-                            Text("AI 추천", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,)
+                            Text("AI 추천", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                         }
 
                         val matchedTags = result.existingTags.mapNotNull { state.allTags[it] }
@@ -134,7 +148,6 @@ fun AiTagRecommendSection(
                 }
             }
 
-            // 추천 결과 없음
             else -> {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),

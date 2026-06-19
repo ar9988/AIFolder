@@ -1,5 +1,6 @@
 package com.ar9988.tagfilemanager.feature.tag.component
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.ar9988.tagfilemanager.feature.common.model.SortOrder
 import com.ar9988.tagfilemanager.feature.common.component.SortOrderButton
 import com.ar9988.domain.model.TagSortType
+import com.ar9988.tagfilemanager.ui.theme.CardWhite
 
 @Composable
 fun FilterChips(
@@ -55,14 +57,30 @@ fun FilterChips(
             Surface(
                 onClick = { onSortTypeChange(type) },
                 shape = RoundedCornerShape(24.dp),
-                color = if (isSelected) Color(0xFF1F108E) else Color(0xFFF0ECF6),
-                contentColor = if (isSelected) Color.White else Color(0xFF464553)
+                color = CardWhite,
+                border = BorderStroke(
+                    width = if (isSelected) 2.dp else 1.dp,
+                    color = if (isSelected)
+                        Color(0xFF00ACC1)
+                    else
+                        Color(0xFFE0E0E0)
+                ),
+                contentColor = if (isSelected)
+                    Color(0xFF00ACC1)
+                else
+                    Color(0xFF464553)
             ) {
                 Text(
                     text = label,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(
+                        horizontal = 16.dp,
+                        vertical = 8.dp
+                    ),
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = if (isSelected)
+                        FontWeight.Bold
+                    else
+                        FontWeight.SemiBold
                 )
             }
         }

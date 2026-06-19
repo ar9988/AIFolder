@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ar9988.domain.model.Tag
+import com.ar9988.tagfilemanager.ui.theme.CardWhite
 
 
 @Composable
@@ -30,39 +31,49 @@ fun FilterableTagChip(
     modifier: Modifier = Modifier
 ) {
     val tagColor = Color(tag.color)
-    val bgColor = if (isSelected) tagColor.copy(alpha = 0.15f)
-    else MaterialTheme.colorScheme.surfaceVariant
-    val borderColor = if (isSelected) tagColor
-    else MaterialTheme.colorScheme.outlineVariant
-    val textColor = if (isSelected) tagColor
-    else MaterialTheme.colorScheme.onSurfaceVariant
+    val borderColor = if (isSelected) {
+        tagColor
+    } else {
+        MaterialTheme.colorScheme.outlineVariant
+    }
+
+    val textColor = if (isSelected) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Surface(
         onClick = onToggle,
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        color = bgColor,
+        color = CardWhite,
         border = BorderStroke(
-            width = if (isSelected) 1.5.dp else 0.5.dp,
+            width = if (isSelected) 2.dp else 0.5.dp,
             color = borderColor
         )
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(6.dp)
+                    .size(if (isSelected) 10.dp else 6.dp)
                     .clip(CircleShape)
                     .background(tagColor)
             )
+
             Text(
                 text = tag.name,
                 style = MaterialTheme.typography.labelSmall,
                 color = textColor,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                fontWeight = if (isSelected) {
+                    FontWeight.Bold
+                } else {
+                    FontWeight.Normal
+                }
             )
         }
     }

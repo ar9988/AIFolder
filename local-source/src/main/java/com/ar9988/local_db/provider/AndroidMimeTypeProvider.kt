@@ -13,6 +13,8 @@ class AndroidMimeTypeProvider @Inject constructor() : MimeTypeProvider {
 
     private fun fallback(extension: String): String? {
         return when (extension.lowercase()) {
+            "hwp" -> "application/x-hwp"
+            "hwpx" -> "application/haansofthwpx"
             "md", "json", "xml", "csv" -> "text/plain"
             "apk" -> "application/vnd.android.package-archive"
             "zip", "rar" -> "application/zip"

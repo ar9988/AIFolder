@@ -28,7 +28,7 @@ fun DeleteTagConfirmDialog(
             TextButton(
                 onClick = { onIntent(TagsIntent.DismissDialog) }
             ) {
-                Text(text = "취소")
+                Text(text = "취소",color = Color.Black)
             }
         }
     )

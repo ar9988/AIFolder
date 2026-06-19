@@ -36,11 +36,11 @@ class ResourceRepositoryImpl @Inject constructor(
     }
 
     override fun getResourcesByCategory(category: FileCategory): Flow<List<Resource>> {
-        return when (category) {
-            FileCategory.Images -> localDataSource.getResourcesByMimeType("image/%")
-            FileCategory.Videos -> localDataSource.getResourcesByMimeType("video/%")
-            FileCategory.Audios -> localDataSource.getResourcesByMimeType("audio/%")
-            FileCategory.Documents -> localDataSource.getResourcesByExtensions(listOf("pdf", "docx", "txt", "xlsx", "pptx"))
+        val pattern = category.getMimeTypePattern()
+        return if (pattern != null) {
+            localDataSource.getResourcesByMimeType(pattern)
+        } else {
+            localDataSource.getResourcesByExtensions(category.getExtensions() ?: emptyList())
         }
     }
 
@@ -410,11 +410,11 @@ class ResourceRepositoryImpl @Inject constructor(
     }
 
     override fun getTagGroupsByCategory(category: FileCategory): Flow<List<CategoryTagGroupModel>> {
-        return when (category) {
-            FileCategory.Images -> localDataSource.getTagGroupsByCategory("image/%")
-            FileCategory.Videos -> localDataSource.getTagGroupsByCategory("video/%")
-            FileCategory.Audios -> localDataSource.getTagGroupsByCategory("audio/%")
-            FileCategory.Documents -> localDataSource.getTagGroupsByExtensions(listOf("pdf", "docx", "txt", "xlsx", "pptx"))
+        val pattern = category.getMimeTypePattern()
+        return if (pattern != null) {
+            localDataSource.getTagGroupsByCategory(pattern)
+        } else {
+            localDataSource.getTagGroupsByExtensions(category.getExtensions() ?: emptyList())
         }
     }
 }

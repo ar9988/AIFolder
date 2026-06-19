@@ -120,7 +120,6 @@ fun FileResultBubble(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 왼쪽: 정렬 기준 가로 스크롤 리스트 (레퍼런스 스타일 적용)
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.weight(1f)
@@ -131,14 +130,30 @@ fun FileResultBubble(
                         Surface(
                             onClick = { onSortTypeChange(type) },
                             shape = RoundedCornerShape(24.dp),
-                            color = if (isSelected) Color(0xFF1F108E) else Color(0xFFF0ECF6),
-                            contentColor = if (isSelected) Color.White else Color(0xFF464553)
+                            color = CardWhite,
+                            border = BorderStroke(
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected)
+                                    Color(0xFF00ACC1)
+                                else
+                                    Color(0xFFE0E0E0)
+                            ),
+                            contentColor = if (isSelected)
+                                Color(0xFF00ACC1)
+                            else
+                                Color(0xFF464553)
                         ) {
                             Text(
                                 text = label,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = 12.dp,
+                                    vertical = 6.dp
+                                ),
                                 style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = if (isSelected)
+                                    FontWeight.Bold
+                                else
+                                    FontWeight.Medium
                             )
                         }
                     }

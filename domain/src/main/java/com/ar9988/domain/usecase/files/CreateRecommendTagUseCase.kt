@@ -34,7 +34,6 @@ class CreateRecommendTagUseCase @Inject constructor(
 
         val combinedText = extractedData.joinToString(" ") { it.first }
         val allTitleWords = extractedData.flatMap { it.second }.distinct()
-
         val finalKeywords = DocumentSemanticProcessor.process(
             text = combinedText,
             titleWords = allTitleWords,
@@ -53,7 +52,7 @@ class CreateRecommendTagUseCase @Inject constructor(
         }
 
         val tagScoreMap = mutableMapOf<Long, Float>()
-        finalKeywords.take(3).forEach { keyword ->
+        finalKeywords.take(5).forEach { keyword ->
             val keywordEmbedding = embeddingModel.encode(keyword)
             allTags.forEach { tag ->
                 val similarity = cosineSimilarity(keywordEmbedding, tag.embedding)
