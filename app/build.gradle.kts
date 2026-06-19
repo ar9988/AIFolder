@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.hilt.android.gradle.plugin)
+    id("com.google.android.gms.oss-licenses-plugin")
 }
 
 val properties = Properties()
@@ -90,6 +91,8 @@ dependencies {
 
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.compose)
+
+    implementation("com.google.android.gms:play-services-oss-licenses:17.0.1")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
