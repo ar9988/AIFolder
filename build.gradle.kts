@@ -8,4 +8,6 @@ plugins {
     alias(libs.plugins.google.ksp) apply false
     alias(libs.plugins.hilt.android.gradle.plugin) apply false
     id("com.google.android.gms.oss-licenses-plugin") version "0.12.0" apply false
+    alias(libs.plugins.google.gms.google.services) apply false
+    alias(libs.plugins.google.firebase.crashlytics) apply false
 }

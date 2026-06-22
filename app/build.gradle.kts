@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.hilt.android.gradle.plugin)
     id("com.google.android.gms.oss-licenses-plugin")
+    alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.google.firebase.crashlytics)
 }
 
 val properties = Properties()
@@ -73,6 +75,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.process)
+    implementation(libs.firebase.crashlytics)
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.hilt.android)
