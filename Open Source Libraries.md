@@ -22,6 +22,14 @@ This project uses the following open source libraries and frameworks.
 ### Machine Learning & AI
 * **ONNX Runtime**
 * **Google ML Kit (Korean Text Recognition)**
+* ## AI Models
+
+### paraphrase-multilingual-MiniLM-L12-v2
+
+- Provider: Sentence Transformers
+- Source: https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+- License: Apache License 2.0
+- Purpose: Multilingual sentence embeddings for semantic search and document classification
 
 ### File Processing
 * **PDFBox-Android**
