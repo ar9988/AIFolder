@@ -726,7 +726,7 @@ class FilesViewModel @Inject constructor(
             val result = addResourceUseCase(parentPath, name)
 
             result.onSuccess {
-                startScan(parentPath)
+                startScan(parentPath, ScanRequestType.MANUAL)
                 _state.update { FilesReducer.reduceDismissDialog(it) }
                 _sideEffect.send(FilesSideEffect.ShowToast("파일/폴더가 생성되었습니다"))
             }.onFailure { e ->

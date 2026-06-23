@@ -32,7 +32,7 @@ fun AddDialog(
         text = {
             Column {
                 Text(
-                    text = "이름에 마침표(.)가 없으면 폴더, 있으면 파일로 생성됩니다.",
+                    text = "이름에 마침표(.)가 없으면 폴더,\n 있으면 파일로 생성됩니다.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
@@ -40,7 +40,7 @@ fun AddDialog(
                 TextField(
                     value = text,
                     onValueChange = { text = it },
-                    placeholder = { Text("이름을 입력하세요 (예: 폴더명 또는 file.txt)") },
+                    placeholder = { Text("이름을 입력하세요") },
                     singleLine = true
                 )
             }
