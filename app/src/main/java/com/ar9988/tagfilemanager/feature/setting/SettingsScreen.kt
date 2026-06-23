@@ -58,9 +58,15 @@ fun SettingsScreen(
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = "AI Model: paraphrase-multilingual-MiniLM-L12-v2 (Apache License 2.0)",
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
+            text = "Uses paraphrase-multilingual-MiniLM-L12-v2",
+            modifier = Modifier.padding(horizontal = 16.dp),
+            fontSize = 11.sp,
+            color = Color.Gray
+        )
+
+        Text(
+            text = "Licensed under Apache License 2.0",
+            modifier = Modifier.padding(horizontal = 16.dp),
             fontSize = 11.sp,
             color = Color.Gray
         )
