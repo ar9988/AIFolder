@@ -55,6 +55,15 @@ fun SettingsScreen(
                 Text("오픈소스 라이선스" , color = Color.Black)
             }
         }
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            text = "AI Model: paraphrase-multilingual-MiniLM-L12-v2 (Apache License 2.0)",
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+            fontSize = 11.sp,
+            color = Color.Gray
+        )
 
         Spacer(Modifier.height(32.dp))
     }
