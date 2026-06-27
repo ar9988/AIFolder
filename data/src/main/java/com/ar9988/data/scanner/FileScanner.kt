@@ -14,8 +14,6 @@ import com.ar9988.data.scanner.model.ScanResult
 import com.ar9988.data.scanner.model.ScanType
 import com.ar9988.domain.usecase.common.SettingsUseCase
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import java.text.Normalizer
 
 class FileScanner @Inject constructor(
@@ -29,11 +27,11 @@ class FileScanner @Inject constructor(
 
     private val cache = mutableMapOf<Long?, MutableMap<String, Resource>>()
 
-    private val diskReadSemaphore = Semaphore(2)
-
-    private val dispatcher = Dispatchers.IO
+    private val ioDispatcher = Dispatchers.IO.limitedParallelism(4)
+    private val traversalMode = TraversalMode.BFS // DFS, BFS
 
     fun scanDirectory(startFile: File, startFileId: Long?): Flow<ScanEvent> = channelFlow {
+        val startTime = System.currentTimeMillis()
         val settings = settingsUseCase().first()
 
         val excludedFolders = settings.excludedFolders
@@ -52,7 +50,10 @@ class FileScanner @Inject constructor(
         while (queue.isNotEmpty()) {
             coroutineContext.ensureActive()
 
-            val (directory, parentId) = queue.removeLast()
+            val (directory, parentId) = when (traversalMode) {
+                TraversalMode.DFS -> queue.removeLast()
+                TraversalMode.BFS -> queue.removeFirst()
+            }
 
             val files = try {
                 directory.listFiles()
@@ -106,19 +107,28 @@ class FileScanner @Inject constructor(
             }
 
             val jobs = filteredFiles.map { file ->
-                async(dispatcher) {
-                    try {
-                        processFile(
-                            file,
-                            parentId,
-                            existingResources,
-                            deletedResources,
-                            deletedByHash
-                        )
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        throw e
-                    }
+//                async(dispatcher) {
+//                    try {
+//                        processFile(
+//                            file,
+//                            parentId,
+//                            existingResources,
+//                            deletedResources,
+//                            deletedByHash
+//                        )
+//                    } catch (e: Exception) {
+//                        e.printStackTrace()
+//                        throw e
+//                    }
+//                }
+                async(ioDispatcher) {
+                    processFile(
+                        file,
+                        parentId,
+                        existingResources,
+                        deletedResources,
+                        deletedByHash
+                    )
                 }
             }
 
@@ -209,9 +219,11 @@ class FileScanner @Inject constructor(
 
         flushInsertBuffer()
         flushUpdateBuffer()
+        val elapsed = System.currentTimeMillis() - startTime
+        println("BenchmarkResult  / $traversalMode | ${elapsed}ms")
     }
 
-    private suspend fun processFile(
+    private fun processFile(
         file: File,
         parentId: Long?,
         existingResources: Map<String, Resource>,
@@ -259,9 +271,7 @@ class FileScanner @Inject constructor(
         val hasPotentialRenameCandidate = !isDirectory && deletedResources.any { it.size == size && it.fileHash != null }
 
         val hash = if (hasPotentialRenameCandidate) {
-            diskReadSemaphore.withPermit {
                 hashExtractor.calculatePartialHash(file)
-            }
         } else {
             existing?.fileHash
         }
@@ -388,4 +398,8 @@ class FileScanner @Inject constructor(
 
         return false
     }
+}
+
+enum class TraversalMode {
+    DFS,BFS
 }
