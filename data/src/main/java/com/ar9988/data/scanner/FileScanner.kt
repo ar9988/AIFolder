@@ -120,9 +120,12 @@ class FileScanner @Inject constructor(
             val matchedIds = mutableSetOf<Long>()
             for (job in jobs) {
                 try {
-                    val result = job.await() ?: continue
+                    val result = job.await()
+                    if (result == null) {
+                        trySend(ScanEvent.FileProcessed(-2L))
+                        continue
+                    }
                     when (result.type) {
-
                         ScanType.DIRECTORY_RENAME -> {
                             val oldPath = result.oldPath!!
                             val newPath = result.resource.path
@@ -166,6 +169,7 @@ class FileScanner @Inject constructor(
                                 parentCache[newResource.path] = newResource
 
                                 queue.addLast(result.directory!! to id)
+
                                 trySend(ScanEvent.FileProcessed(id))
                                 continue
                             } else {
@@ -184,6 +188,7 @@ class FileScanner @Inject constructor(
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
+                    trySend(ScanEvent.FileProcessed(-1L))
                 }
             }
 

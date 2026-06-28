@@ -1,5 +1,6 @@
 package com.ar9988.tagfilemanager.service
 
+import android.annotation.SuppressLint
 import com.ar9988.tagfilemanager.R
 import android.content.Intent
 import androidx.core.app.NotificationCompat
@@ -11,7 +12,6 @@ import com.ar9988.tagfilemanager.service.model.ScanRequestType
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -51,11 +51,11 @@ class SyncService : LifecycleService() {
         val channelId = "sync_channel"
         return NotificationCompat.Builder(this, channelId)
             .setContentTitle("파일 동기화 중")
-            .setContentText("스캔 준비 중...")
+            .setContentText("파일을 분석하고 있습니다...")
             .setSmallIcon(R.drawable.outline_sync_24)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
-            .setProgress(100, 0, true)
+            .setProgress(0, 0, true)
     }
 
     private fun createNotificationChannel() {
@@ -76,28 +76,28 @@ class SyncService : LifecycleService() {
         const val NOTIFICATION_ID = 1001
     }
 
+    @SuppressLint("DefaultLocale")
     @OptIn(FlowPreview::class)
     private fun processQueue() {
         val request = syncStateHolder.scanQueue.removeFirstOrNull() ?: return
 
         syncStateHolder.isScanning.value = true
-        syncStateHolder.currentScanRequestType.value = request.scanRequestType // 현재 스캔 타입 지정
         createNotificationChannel()
 
-        val notificationManager =
-            getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
         val notificationBuilder = createNotificationBuilder()
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                val storageName = if (request.targetPath.contains("emulated")) "내장 메모리" else "SD 카드"
+
                 syncStorageUseCase(request.targetPath)
-                    .distinctUntilChanged()
-                    .sample(200)
-                    .collect { progress ->
+                    .sample(500L)
+                    .collect { processedCount ->
                         val updatedNotification = notificationBuilder
-                            .setContentText("진행 중... $progress%")
-                            .setProgress(100, progress, false)
+                            .setContentTitle("$storageName 동기화 중")
+                            .setContentText("${String.format("%,d", processedCount)}개의 파일 처리 완료")
                             .build()
                         notificationManager.notify(NOTIFICATION_ID, updatedNotification)
                     }
