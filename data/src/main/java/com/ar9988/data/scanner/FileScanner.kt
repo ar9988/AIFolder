@@ -31,7 +31,6 @@ class FileScanner @Inject constructor(
     private val traversalMode = TraversalMode.BFS // DFS, BFS
 
     fun scanDirectory(startFile: File, startFileId: Long?): Flow<ScanEvent> = channelFlow {
-        val startTime = System.currentTimeMillis()
         val settings = settingsUseCase().first()
 
         val excludedFolders = settings.excludedFolders
@@ -57,7 +56,7 @@ class FileScanner @Inject constructor(
 
             val files = try {
                 directory.listFiles()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
 
@@ -107,20 +106,6 @@ class FileScanner @Inject constructor(
             }
 
             val jobs = filteredFiles.map { file ->
-//                async(dispatcher) {
-//                    try {
-//                        processFile(
-//                            file,
-//                            parentId,
-//                            existingResources,
-//                            deletedResources,
-//                            deletedByHash
-//                        )
-//                    } catch (e: Exception) {
-//                        e.printStackTrace()
-//                        throw e
-//                    }
-//                }
                 async(ioDispatcher) {
                     processFile(
                         file,
@@ -181,6 +166,7 @@ class FileScanner @Inject constructor(
                                 parentCache[newResource.path] = newResource
 
                                 queue.addLast(result.directory!! to id)
+                                trySend(ScanEvent.FileProcessed(id))
                                 continue
                             } else {
                                 insertBuffer.add(result.resource)
@@ -219,8 +205,6 @@ class FileScanner @Inject constructor(
 
         flushInsertBuffer()
         flushUpdateBuffer()
-        val elapsed = System.currentTimeMillis() - startTime
-        println("BenchmarkResult  / $traversalMode | ${elapsed}ms")
     }
 
     private fun processFile(

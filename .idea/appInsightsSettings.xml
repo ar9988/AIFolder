@@ -22,10 +22,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.ar9988.tagfilemanager" />
-                  <option name="mobileSdkAppId" value="1:390363010064:android:9496d6f9e0f18136d62695" />
-                  <option name="projectId" value="com-ar9988-tagfilemanager" />
-                  <option name="projectNumber" value="390363010064" />
+                  <option name="appId" value="PLACEHOLDER" />
+                  <option name="mobileSdkAppId" value="" />
+                  <option name="projectId" value="" />
+                  <option name="projectNumber" value="" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
