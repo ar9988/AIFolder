@@ -684,7 +684,7 @@ object FilesReducer {
 
     fun reduceOpenImageViewer(currentState: FilesState, resource: FileItemUiModel): FilesState {
         val imageFiles = currentState.files.filter {
-            !it.isParent && it.mimeType?.startsWith("image/") ?: return currentState
+            !it.isParent && it.mimeType?.startsWith("image/") == true
         }
         val initialIndex = imageFiles.indexOfFirst { it.id == resource.id }.coerceAtLeast(0)
 

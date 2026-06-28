@@ -94,11 +94,12 @@ dependencies {
     implementation(libs.coil.video)
     implementation(libs.coil.svg)
     implementation(libs.coil.video)
+    implementation(libs.coil.gif)
 
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.compose)
 
-    implementation("com.google.android.gms:play-services-oss-licenses:17.0.1")
+    implementation(libs.play.services.oss.licenses)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

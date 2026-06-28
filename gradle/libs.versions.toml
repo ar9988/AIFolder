@@ -1,5 +1,6 @@
 [versions]
 coilCompose = "2.7.0"
+coilGif = "2.7.0"
 coilSvg = "2.7.0"
 coilVideo = "2.7.0"
 datastorePreferences = "1.2.1"
@@ -13,6 +14,7 @@ onnxruntimeAndroid = "1.25.1"
 pagingCompose = "3.5.0"
 pagingRuntime = "3.5.0"
 pdfboxAndroid = "2.0.27.0"
+playServicesOssLicenses = "17.0.1"
 room = "2.6.1"
 ksp = "2.0.21-1.0.26"
 agp = "8.11.2"
@@ -51,6 +53,7 @@ androidx-paging-compose = { module = "androidx.paging:paging-compose", version.r
 androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "pagingRuntime" }
 androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "roomPaging" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coil-gif = { module = "io.coil-kt:coil-gif", version.ref = "coilGif" }
 coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coilSvg" }
 coil-video = { module = "io.coil-kt:coil-video", version.ref = "coilVideo" }
 hwplib = { module = "kr.dogfoot:hwplib", version.ref = "hwplib" }
@@ -89,6 +92,7 @@ mlkit-text-recognition-korean = { group = "com.google.mlkit", name = "text-recog
 pdfbox-android = { module = "com.tom-roush:pdfbox-android", version.ref = "pdfboxAndroid" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebaseCrashlytics" }
+play-services-oss-licenses = { module = "com.google.android.gms:play-services-oss-licenses", version.ref = "playServicesOssLicenses" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
