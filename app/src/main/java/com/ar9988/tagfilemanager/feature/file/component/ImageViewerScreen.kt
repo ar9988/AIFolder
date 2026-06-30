@@ -1,5 +1,6 @@
 package com.ar9988.tagfilemanager.feature.file.component
 
+import android.os.Build.VERSION.SDK_INT
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -7,23 +8,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.AsyncImage
-import com.ar9988.tagfilemanager.feature.file.FilesIntent
-import com.ar9988.tagfilemanager.feature.file.FilesState
-import java.io.File
-import android.os.Build.VERSION.SDK_INT
 import coil.ImageLoader
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import androidx.compose.ui.platform.LocalContext
+import com.ar9988.tagfilemanager.feature.common.model.ZoomState
+import com.ar9988.tagfilemanager.feature.file.FilesIntent
+import com.ar9988.tagfilemanager.feature.file.FilesState
+import java.io.File
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,15 +33,19 @@ fun ImageViewerScreen(
 ) {
     val context = LocalContext.current
 
-    val imageLoader = ImageLoader.Builder(context)
-        .components {
-            if (SDK_INT >= 28) {
-                add(ImageDecoderDecoder.Factory())
-            } else {
-                add(GifDecoder.Factory())
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                if (SDK_INT >= 28) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
             }
-        }
-        .build()
+            .build()
+    }
+
+    val zoomStates = remember { mutableStateMapOf<String, ZoomState>() }
 
     Dialog(
         onDismissRequest = { onIntent(FilesIntent.Back) },
@@ -55,6 +59,9 @@ fun ImageViewerScreen(
             pageCount = { state.imageViewerFiles.size }
         )
 
+        val currentPath = state.imageViewerFiles.getOrNull(pagerState.currentPage)?.path
+        val isCurrentZoomed = (zoomStates[currentPath]?.scale ?: 1f) > 1f
+
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = Color.Black
@@ -64,16 +71,19 @@ fun ImageViewerScreen(
                     state = pagerState,
                     modifier = Modifier.fillMaxSize(),
                     pageSpacing = 16.dp,
-                    beyondViewportPageCount = 1
+                    beyondViewportPageCount = 1,
+                    userScrollEnabled = !isCurrentZoomed
                 ) { page ->
                     val fileItem = state.imageViewerFiles[page]
+                    val savedState = zoomStates[fileItem.path] ?: ZoomState()
 
-                    AsyncImage(
-                        model = File(fileItem.path),
-                        contentDescription = null,
+                    ZoomableImage(
+                        file = File(fileItem.path),
                         imageLoader = imageLoader,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
+                        initialState = savedState,
+                        onStateChange = { newState ->
+                            zoomStates[fileItem.path] = newState
+                        }
                     )
                 }
 
