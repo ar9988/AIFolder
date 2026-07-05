@@ -15,7 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -144,14 +145,17 @@ fun TagActionSheet(
                 }
             }
 
-            Button(
+            TextButton(
                 onClick = { onIntent(FilesIntent.ApplyTagChanges) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 24.dp)
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                enabled = !state.isLoading
+                enabled = !state.isLoading,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
             ) {
                 Text("적용하기", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }

@@ -47,7 +47,7 @@ fun AssistantTopBar(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    color = Color.White,
                     modifier = Modifier.padding(bottom = 8.dp)
                 ) {
                     Row(

@@ -14,17 +14,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -102,23 +103,24 @@ fun EditTagBottomSheet(
         Spacer(modifier = Modifier.height(32.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Button(
+            TextButton (
                 onClick = {onIntent(TagsIntent.ShowDeleteDialog)},
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
-                shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red)
                 Spacer(Modifier.width(8.dp))
-                Text(text = "태그 삭제", color = Color.Red, maxLines = 1,modifier = Modifier.weight(1f))
+                Text(text = "태그 삭제", color = Color.Red, maxLines = 1)
             }
-            Button(
+            TextButton(
                 onClick = {onIntent(TagsIntent.SaveTag)},
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
-                shape = RoundedCornerShape(16.dp)
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
             ) {
                 Icon(Icons.Default.Check, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
