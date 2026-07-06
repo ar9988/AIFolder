@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -38,69 +39,77 @@ fun AssistantInputBar(
 ) {
     Column(modifier = modifier) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
-        Row(
+
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(CardWhite)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .background(CardWhite),
+            contentAlignment = Alignment.Center
         ) {
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
-                modifier = Modifier.weight(1f)
+            Row(
+                modifier = Modifier
+                    .widthIn(max = 640.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                BasicTextField(
-                    value = state.query,
-                    onValueChange = { onIntent(AssistantIntent.OnQueryChange(it)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = CardWhite,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    decorationBox = { inner ->
-                        if (state.query.isEmpty()) {
-                            Text(
-                                "Ask AI anything...",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    BasicTextField(
+                        value = state.query,
+                        onValueChange = { onIntent(AssistantIntent.OnQueryChange(it)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = CardWhite,
+                                shape = RoundedCornerShape(12.dp)
                             )
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        decorationBox = { inner ->
+                            if (state.query.isEmpty()) {
+                                Text(
+                                    "Ask AI anything...",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            inner()
                         }
-                        inner()
-                    }
-                )
-            }
-
-            Surface(
-                onClick = {
-                    if (state.query.isNotBlank() && !state.isLoading) {
-                        onIntent(AssistantIntent.OnSendMessage)
-                    }
-                },
-                shape = CircleShape,
-                color = if (state.query.isNotBlank() && !state.isLoading)
-                    MaterialTheme.colorScheme.primary
-                else
-                    CardWhite,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "전송",
-                        tint = if (state.query.isNotBlank() && !state.isLoading)
-                            CardWhite
-                        else
-                            CardBlack,
-                        modifier = Modifier.size(18.dp)
                     )
+                }
+
+                Surface(
+                    onClick = {
+                        if (state.query.isNotBlank() && !state.isLoading) {
+                            onIntent(AssistantIntent.OnSendMessage)
+                        }
+                    },
+                    shape = CircleShape,
+                    color = if (state.query.isNotBlank() && !state.isLoading)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        CardWhite,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "전송",
+                            tint = if (state.query.isNotBlank() && !state.isLoading)
+                                CardWhite
+                            else
+                                CardBlack,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }

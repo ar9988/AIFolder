@@ -19,19 +19,20 @@ import com.ar9988.tagfilemanager.feature.file.model.QuickAccessVariant
 @Composable
 fun QuickAccessGrid(
     onFolderClick: (String) -> Unit,
-    onCategoryClick: (FileCategory) -> Unit
+    onCategoryClick: (FileCategory) -> Unit,
+    modifier: Modifier
 ) {
-    Column(modifier = Modifier.padding(vertical = 24.dp)) {
+    Column(modifier = modifier.padding(vertical = 24.dp)) {
 
         Text(
             "Quick Access",
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 12.dp)
+            modifier = modifier.padding(bottom = 12.dp)
         )
 
         // 1줄: Category
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             QuickAccessItem(
@@ -68,11 +69,11 @@ fun QuickAccessGrid(
         }
 
         // spacing
-        Spacer(modifier = Modifier.padding(6.dp))
+        Spacer(modifier = modifier.padding(6.dp))
 
         // 2줄: Physical folders
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             QuickAccessItem(

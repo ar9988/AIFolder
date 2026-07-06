@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -26,52 +27,58 @@ fun SettingsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    Column(
-        modifier = Modifier
-            .padding(top = 16.dp)
-            .fillMaxSize()
-            .background(Color.Transparent)
-            .verticalScroll(rememberScrollState()),
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
     ) {
-        SettingsTopBar()
+        Column(
+            modifier = Modifier
+                .widthIn(max = 720.dp)
+                .padding(top = 16.dp)
+                .fillMaxSize()
+                .background(Color.Transparent)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            SettingsTopBar()
 
-        SettingsSection(title = "인덱싱 방식") {
-            ScanModeSection(state = state, onIntent = viewModel::onIntent)
-        }
-
-        SettingsSection(title = "인덱싱 제외 설정") {
-            ExcludeSettingsSection(state = state, onIntent = viewModel::onIntent)
-        }
-
-        SettingsSection(title = "AI 검색 민감도") {
-            SearchSensitivitySection(state = state, onIntent = viewModel::onIntent)
-        }
-        SettingsSection(title = "기타") {
-            TextButton(
-                onClick = {
-                    context.startActivity(Intent(context, OssLicensesMenuActivity::class.java))
-                }
-            ) {
-                Text("오픈소스 라이선스" , color = Color.Black)
+            SettingsSection(title = "인덱싱 방식") {
+                ScanModeSection(state = state, onIntent = viewModel::onIntent)
             }
+
+            SettingsSection(title = "인덱싱 제외 설정") {
+                ExcludeSettingsSection(state = state, onIntent = viewModel::onIntent)
+            }
+
+            SettingsSection(title = "AI 검색 민감도") {
+                SearchSensitivitySection(state = state, onIntent = viewModel::onIntent)
+            }
+            SettingsSection(title = "기타") {
+                TextButton(
+                    onClick = {
+                        context.startActivity(Intent(context, OssLicensesMenuActivity::class.java))
+                    }
+                ) {
+                    Text("오픈소스 라이선스", color = Color.Black)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = "Uses paraphrase-multilingual-MiniLM-L12-v2",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                fontSize = 11.sp,
+                color = Color.Gray
+            )
+
+            Text(
+                text = "Licensed under Apache License 2.0",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                fontSize = 11.sp,
+                color = Color.Gray
+            )
+
+            Spacer(Modifier.height(32.dp))
         }
-        Spacer(Modifier.height(16.dp))
-
-        Text(
-            text = "Uses paraphrase-multilingual-MiniLM-L12-v2",
-            modifier = Modifier.padding(horizontal = 16.dp),
-            fontSize = 11.sp,
-            color = Color.Gray
-        )
-
-        Text(
-            text = "Licensed under Apache License 2.0",
-            modifier = Modifier.padding(horizontal = 16.dp),
-            fontSize = 11.sp,
-            color = Color.Gray
-        )
-
-        Spacer(Modifier.height(32.dp))
     }
 }
-

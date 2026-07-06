@@ -4,15 +4,19 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -32,6 +36,7 @@ fun AssistantScreen(
 ) {
     val listState = rememberLazyListState()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
     LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) {
             listState.animateScrollToItem(state.messages.size - 1)
@@ -40,65 +45,77 @@ fun AssistantScreen(
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
             when (effect) {
-                is AssistantSideEffect.NavigateToFile -> {
-                    onNavigateToFile(effect.path)
-                }
+                is AssistantSideEffect.NavigateToFile -> onNavigateToFile(effect.path)
             }
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         AssistantTopBar(
             onClear = { viewModel.onIntent(AssistantIntent.ClearMessages) }
         )
 
-        if (state.messages.isEmpty()) {
-            AssistantEmptyState(
-                onSuggestionClick = viewModel::onIntent,
-                modifier = Modifier.weight(1f)
-            )
-        } else {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(state.messages, key = { it.id }) { message ->
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = fadeIn() + slideInVertically { it / 2 }
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Column(modifier = Modifier.widthIn(max = 640.dp).fillMaxSize()) {
+                if (state.messages.isEmpty()) {
+                    AssistantEmptyState(
+                        onSuggestionClick = viewModel::onIntent,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(
+                            top = 16.dp, bottom = 16.dp, start = 16.dp, end = 16.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        AssistantMessageItem(
-                            message = message,
-                            tagFilter = state.tagFilters,
-                            onIntent = viewModel::onIntent,
-                            displayFiles = state.filteredFiles[message.id] ?: emptyList(),
-                            currentSortType = state.messageSortTypes[message.id] ?: AssistantSortType.Recent,
-                            currentSortOrder = state.messageSortOrders[message.id] ?: SortOrder.ASC,
-                            onSortTypeChange = { newType ->
-                                viewModel.onIntent(AssistantIntent.ChangeSortType(message.id, newType))
-                            },
-                            onSortOrderToggle = {
-                                viewModel.onIntent(AssistantIntent.ToggleSortOrder(message.id))
-                            },
-                            onClick =  { path->
-                                viewModel.onIntent(AssistantIntent.NavigateToFile(path))
+                        items(state.messages, key = { it.id }) { message ->
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn() + slideInVertically { it / 2 }
+                            ) {
+                                AssistantMessageItem(
+                                    message = message,
+                                    tagFilter = state.tagFilters,
+                                    onIntent = viewModel::onIntent,
+                                    displayFiles = state.filteredFiles[message.id] ?: emptyList(),
+                                    currentSortType = state.messageSortTypes[message.id]
+                                        ?: AssistantSortType.Recent,
+                                    currentSortOrder = state.messageSortOrders[message.id]
+                                        ?: SortOrder.ASC,
+                                    onSortTypeChange = { newType ->
+                                        viewModel.onIntent(
+                                            AssistantIntent.ChangeSortType(message.id, newType)
+                                        )
+                                    },
+                                    onSortOrderToggle = {
+                                        viewModel.onIntent(AssistantIntent.ToggleSortOrder(message.id))
+                                    },
+                                    onClick = { path ->
+                                        viewModel.onIntent(AssistantIntent.NavigateToFile(path))
+                                    }
+                                )
                             }
-                        )
+                        }
+                        if (state.isLoading) {
+                            item { AssistantLoadingBubble() }
+                        }
                     }
-                }
-                if (state.isLoading) {
-                    item { AssistantLoadingBubble() }
                 }
             }
         }
+
         AssistantInputBar(
             onIntent = viewModel::onIntent,
-            state = state
+            state = state,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }

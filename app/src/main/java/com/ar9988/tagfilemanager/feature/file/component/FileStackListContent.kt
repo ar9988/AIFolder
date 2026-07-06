@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -102,7 +104,7 @@ fun FileStackListContent(
                                 modifier = Modifier.weight(1f)
                             ) {
                                 LazyVerticalGrid(
-                                    columns = GridCells.Fixed(3),
+                                    columns = GridCells.Adaptive(minSize = 100.dp),
                                     state = gridState,
                                     contentPadding = PaddingValues(16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -128,9 +130,11 @@ fun FileStackListContent(
                             }
                         } else {
                             Box(
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                contentAlignment = Alignment.TopCenter
                             ) {
                                 LazyColumn(
+                                    modifier = Modifier.widthIn(max = 720.dp),
                                     state = listState,
                                     contentPadding = PaddingValues(16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
