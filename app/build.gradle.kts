@@ -34,8 +34,8 @@ android {
         applicationId = "com.ar9988.tagfilemanager"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.0.9"
+        versionCode = 11
+        versionName = "1.1.0"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {

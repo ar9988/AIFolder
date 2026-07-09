@@ -28,7 +28,6 @@ class FileScanner @Inject constructor(
     private val cache = mutableMapOf<Long?, MutableMap<String, Resource>>()
 
     private val ioDispatcher = Dispatchers.IO.limitedParallelism(4)
-    private val traversalMode = TraversalMode.BFS // DFS, BFS
 
     fun scanDirectory(startFile: File, startFileId: Long?): Flow<ScanEvent> = channelFlow {
         val settings = settingsUseCase().first()
@@ -49,10 +48,7 @@ class FileScanner @Inject constructor(
         while (queue.isNotEmpty()) {
             coroutineContext.ensureActive()
 
-            val (directory, parentId) = when (traversalMode) {
-                TraversalMode.DFS -> queue.removeLast()
-                TraversalMode.BFS -> queue.removeFirst()
-            }
+            val (directory, parentId) = queue.removeFirst()
 
             val files = try {
                 directory.listFiles()
@@ -389,6 +385,3 @@ class FileScanner @Inject constructor(
     }
 }
 
-enum class TraversalMode {
-    DFS,BFS
-}
