@@ -143,6 +143,7 @@ fun DashboardContent(
                 contentAlignment = Alignment.TopCenter
             ) {
                 RecentTagsSection(
+                    modifier = Modifier.widthIn(max = ContentMaxWidth),
                     tags = state.allTags.values.toList(),
                     onTagClick = { tagId ->
                         onIntent(FilesIntent.UpdateSearchTag(tagId))

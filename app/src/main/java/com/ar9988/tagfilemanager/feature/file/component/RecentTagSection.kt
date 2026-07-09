@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,18 +21,19 @@ import com.ar9988.tagfilemanager.feature.common.model.TagUiModel
 @Composable
 fun RecentTagsSection(
     tags: List<TagUiModel>,
-    onTagClick: (Long) -> Unit
+    onTagClick: (Long) -> Unit,
+    modifier: Modifier
 ) {
     val recentTags = tags
         .sortedByDescending { it.lastUsedAt }
         .take(5)
 
-    Column(modifier = Modifier.padding(vertical = 16.dp)) {
+    Column(modifier = modifier.padding(vertical = 16.dp)) {
 
         Text(
             "Recent Used Tags",
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 12.dp)
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
         )
 
         if (recentTags.isEmpty()) {
