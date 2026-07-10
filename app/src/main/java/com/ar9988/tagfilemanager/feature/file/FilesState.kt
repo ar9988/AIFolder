@@ -87,3 +87,21 @@ data class FilesState(
                 viewMode == ViewMode.LIST &&
                 !hasSelection
 }
+fun moveModeTitle(targets: List<FileItemUiModel>): String {
+    return when (targets.size) {
+        0 -> "항목 이동 중..."
+        1 -> "'${targets.first().name}' 이동 중"
+        else -> "${targets.size}개 항목 이동 중"
+    }
+}
+
+fun currentLocationLabel(
+    currentPath: String,
+    storageList: List<StorageUiModel>
+): String {
+    val storage = storageList.firstOrNull { currentPath.startsWith(it.path) }
+        ?: return currentPath
+
+    val relative = currentPath.removePrefix(storage.path).trim('/')
+    return if (relative.isEmpty()) storage.title else "${storage.title} / $relative"
+}

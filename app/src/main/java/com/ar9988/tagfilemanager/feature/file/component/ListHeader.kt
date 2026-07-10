@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,6 +47,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ar9988.tagfilemanager.R
 import com.ar9988.tagfilemanager.feature.common.component.InputTagChip
@@ -55,6 +57,8 @@ import com.ar9988.tagfilemanager.feature.file.model.FileMode
 import com.ar9988.tagfilemanager.feature.common.model.TagChipAction
 import com.ar9988.domain.model.FileSortType
 import com.ar9988.domain.model.toName
+import com.ar9988.tagfilemanager.feature.file.currentLocationLabel
+import com.ar9988.tagfilemanager.feature.file.moveModeTitle
 
 @Composable
 fun ListHeader(
@@ -72,234 +76,299 @@ fun ListHeader(
     LaunchedEffect(state.searchQuery, state.activeTags) {
         scrollState.scrollTo(scrollState.maxValue)
     }
-    Column(modifier = Modifier.fillMaxWidth().background(backgroundColor)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(backgroundColor)
-                .padding(horizontal = 16.dp, vertical = 20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = { onIntent(FilesIntent.Back) },
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.5f))
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.outline_arrow_back_ios_new_24),
-                    contentDescription = "Back",
-                    modifier = Modifier.size(18.dp),
-                    tint = Color.DarkGray
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                when (state.fileMode) {
-                    FileMode.SearchResult -> {
-                        Text(
-                            text = "검색 결과",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    FileMode.Move -> {
-                        Text(
-                            text = "항목 이동 중...",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    FileMode.Search -> {
-                        LaunchedEffect(Unit) {
-                            focusRequester.requestFocus()
-                        }
-                        BasicTextField(
-                            value = state.searchQuery,
-                            onValueChange = { onIntent(FilesIntent.UpdateFileSearchQuery(it)) },
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-                            textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.DarkGray),
-                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                            decorationBox = { innerTextField ->
-                                Row(
-                                    modifier = Modifier
-                                        .background(Color.White, RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 8.dp, vertical = 6.dp)
-                                        .fillMaxWidth()
-                                        .horizontalScroll(scrollState),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    state.activeTags.forEach { tagId ->
-                                        val tag = state.allTags[tagId]
-                                        if (tag != null) {
-                                            InputTagChip(
-                                                tag,
-                                                action = TagChipAction.REMOVE,
-                                                onClick = { onIntent(FilesIntent.RemoveActiveTag(tag)) }
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                        }
-                                    }
-
-                                    Box(
-                                        contentAlignment = Alignment.CenterStart
-                                    ) {
-                                        if (state.searchQuery.text.isEmpty() && state.activeTags.isEmpty()) {
-                                            Text(
-                                                "파일 또는 태그 검색",
-                                                color = Color.LightGray,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                softWrap = false
-                                            )
-                                        }
-                                        innerTextField()
-                                    }
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            keyboardActions = KeyboardActions(onSearch = { onIntent(FilesIntent.ConfirmSearch) })
-                        )
-                        if (state.filteredTags.isNotEmpty() && state.searchQuery.text.isNotEmpty()) {
-                            FlowRow(
-                                modifier = Modifier
-                                    .padding(top = 8.dp)
-                                    .fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                state.filteredTags.take(5).forEach { tag ->
-                                    InputTagChip(
-                                        tag = tag,
-                                        action = TagChipAction.ADD,
-                                        onClick = { onIntent(FilesIntent.AddActiveTag(tag)) },
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    else -> {
-                        if (state.selectedCategory == null) {
-                            PathBreadcrumbs(
-                                currentPath = state.currentPath,
-                                storageRootPaths = state.storageRootPaths,
-                                onNavigate = { targetPath ->
-                                    onIntent(FilesIntent.NavigateTo(targetPath))
-                                }
-                            )
-                        } else {
-                            Text(
-                                text = state.selectedCategory.toString(),
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.DarkGray
-                            )
-                        }
-                    }
-                }
-            }
-            if (state.fileMode is FileMode.Normal) {
-                IconButton(onClick = { onIntent(FilesIntent.OpenSearch) }) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = Color.DarkGray
-                    )
-                }
-            }
-        }
-        if (state.fileMode is FileMode.Normal || state.fileMode is FileMode.SearchResult) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .background(backgroundColor)
+                    .padding(horizontal = 16.dp, vertical = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    SortOptionChip(
-                        text = state.fileSortType.toName(),
-                        icon = Icons.AutoMirrored.Filled.Sort,
-                        onClick = { onIntent(FilesIntent.ToggleSortDropdown) }
+                IconButton(
+                    onClick = { onIntent(FilesIntent.Back) },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.5f))
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.outline_arrow_back_ios_new_24),
+                        contentDescription = "Back",
+                        modifier = Modifier.size(18.dp),
+                        tint = Color.DarkGray
                     )
+                }
 
-                    DropdownMenu(
-                        expanded = state.isSortDropdownVisible,
-                        onDismissRequest = { onIntent(FilesIntent.ToggleSortDropdown) }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("최신순",fontWeight = if (state.fileSortType == FileSortType.Recent) FontWeight.Bold else FontWeight.Normal)},
-                            onClick = {
-                                onIntent(FilesIntent.ChangeSortType(FileSortType.Recent))
-                                onIntent(FilesIntent.ToggleSortDropdown)
-                            },
-                            leadingIcon = {
-                                if (state.fileSortType == FileSortType.Recent) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
-                                        modifier = Modifier.size(18.dp)
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    when (state.fileMode) {
+                        FileMode.SearchResult -> {
+                            Text(
+                                text = "검색 결과",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.tertiary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        FileMode.Move -> {
+                            Row(
+                                modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = moveModeTitle(state.moveTargets),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.tertiary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = currentLocationLabel(state.currentPath, state.storageList),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                if (state.storageList.size > 1) {
+                                    StorageSwitcher(
+                                        storageList = state.storageList,
+                                        currentPath = state.currentPath,
+                                        onNavigate = { path -> onIntent(FilesIntent.NavigateTo(path)) }
                                     )
                                 }
                             }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("이름순",fontWeight = if (state.fileSortType == FileSortType.Name) FontWeight.Bold else FontWeight.Normal) },
-                            onClick = {
-                                onIntent(FilesIntent.ChangeSortType(FileSortType.Name))
-                                onIntent(FilesIntent.ToggleSortDropdown)
-                            },
-                            leadingIcon = {
-                                if (state.fileSortType == FileSortType.Name) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                        }
+
+                        FileMode.Search -> {
+                            LaunchedEffect(Unit) {
+                                focusRequester.requestFocus()
+                            }
+                            BasicTextField(
+                                value = state.searchQuery,
+                                onValueChange = { onIntent(FilesIntent.UpdateFileSearchQuery(it)) },
+                                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.DarkGray),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                decorationBox = { innerTextField ->
+                                    Row(
+                                        modifier = Modifier
+                                            .background(Color.White, RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                                            .fillMaxWidth()
+                                            .horizontalScroll(scrollState),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        state.activeTags.forEach { tagId ->
+                                            val tag = state.allTags[tagId]
+                                            if (tag != null) {
+                                                InputTagChip(
+                                                    tag,
+                                                    action = TagChipAction.REMOVE,
+                                                    onClick = {
+                                                        onIntent(
+                                                            FilesIntent.RemoveActiveTag(
+                                                                tag
+                                                            )
+                                                        )
+                                                    }
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                            }
+                                        }
+
+                                        Box(
+                                            contentAlignment = Alignment.CenterStart
+                                        ) {
+                                            if (state.searchQuery.text.isEmpty() && state.activeTags.isEmpty()) {
+                                                Text(
+                                                    "파일 또는 태그 검색",
+                                                    color = Color.LightGray,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    softWrap = false
+                                                )
+                                            }
+                                            innerTextField()
+                                        }
+                                    }
+                                },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                keyboardActions = KeyboardActions(onSearch = { onIntent(FilesIntent.ConfirmSearch) })
+                            )
+                            if (state.filteredTags.isNotEmpty() && state.searchQuery.text.isNotEmpty()) {
+                                FlowRow(
+                                    modifier = Modifier
+                                        .padding(top = 8.dp)
+                                        .fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    state.filteredTags.take(5).forEach { tag ->
+                                        InputTagChip(
+                                            tag = tag,
+                                            action = TagChipAction.ADD,
+                                            onClick = { onIntent(FilesIntent.AddActiveTag(tag)) },
+                                        )
+                                    }
                                 }
                             }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("크기순",fontWeight = if (state.fileSortType == FileSortType.Size) FontWeight.Bold else FontWeight.Normal) },
-                            onClick = {
-                                onIntent(FilesIntent.ChangeSortType(FileSortType.Size))
-                                onIntent(FilesIntent.ToggleSortDropdown)
-                            },
-                            leadingIcon = {
-                                if (state.fileSortType == FileSortType.Size) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
-                                        modifier = Modifier.size(18.dp)
+                        }
+
+                        else -> {
+                            if (state.selectedCategory == null) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    PathBreadcrumbs(
+                                        currentPath = state.currentPath,
+                                        storageRootPaths = state.storageRootPaths,
+                                        onNavigate = { targetPath ->
+                                            onIntent(FilesIntent.NavigateTo(targetPath))
+                                        },
+                                        modifier = Modifier.weight(1f)
                                     )
+                                    if (state.storageList.size > 1) {
+                                        StorageSwitcher(
+                                            storageList = state.storageList,
+                                            currentPath = state.currentPath,
+                                            onNavigate = { path ->
+                                                onIntent(
+                                                    FilesIntent.NavigateTo(
+                                                        path
+                                                    )
+                                                )
+                                            }
+                                        )
+                                    }
                                 }
+                            } else {
+                                Text(
+                                    text = state.selectedCategory.toString(),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.DarkGray
+                                )
                             }
+                        }
+                    }
+                }
+                if (state.fileMode is FileMode.Normal) {
+                    IconButton(onClick = { onIntent(FilesIntent.OpenSearch) }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = Color.DarkGray
                         )
                     }
                 }
-                IconButton(onClick = { onIntent(FilesIntent.ToggleSortOrder) }) {
-                    Icon(
-                        imageVector = if (state.isAscending) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
-                        contentDescription = "Sort Order",
-                        tint = Color.DarkGray,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+            }
+            if (state.fileMode is FileMode.Normal || state.fileMode is FileMode.SearchResult) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        SortOptionChip(
+                            text = state.fileSortType.toName(),
+                            icon = Icons.AutoMirrored.Filled.Sort,
+                            onClick = { onIntent(FilesIntent.ToggleSortDropdown) }
+                        )
 
-                Spacer(modifier = Modifier.weight(1f))
+                        DropdownMenu(
+                            expanded = state.isSortDropdownVisible,
+                            onDismissRequest = { onIntent(FilesIntent.ToggleSortDropdown) }
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "최신순",
+                                        fontWeight = if (state.fileSortType == FileSortType.Recent) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                onClick = {
+                                    onIntent(FilesIntent.ChangeSortType(FileSortType.Recent))
+                                    onIntent(FilesIntent.ToggleSortDropdown)
+                                },
+                                leadingIcon = {
+                                    if (state.fileSortType == FileSortType.Recent) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "이름순",
+                                        fontWeight = if (state.fileSortType == FileSortType.Name) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                onClick = {
+                                    onIntent(FilesIntent.ChangeSortType(FileSortType.Name))
+                                    onIntent(FilesIntent.ToggleSortDropdown)
+                                },
+                                leadingIcon = {
+                                    if (state.fileSortType == FileSortType.Name) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "크기순",
+                                        fontWeight = if (state.fileSortType == FileSortType.Size) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                onClick = {
+                                    onIntent(FilesIntent.ChangeSortType(FileSortType.Size))
+                                    onIntent(FilesIntent.ToggleSortDropdown)
+                                },
+                                leadingIcon = {
+                                    if (state.fileSortType == FileSortType.Size) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    IconButton(onClick = { onIntent(FilesIntent.ToggleSortOrder) }) {
+                        Icon(
+                            imageVector = if (state.isAscending) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                            contentDescription = "Sort Order",
+                            tint = Color.DarkGray,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
 
-                IconButton(onClick = { onIntent(FilesIntent.ToggleGridView) }) {
-                    Icon(
-                        imageVector = if (state.isGridView) Icons.Default.ViewModule else Icons.AutoMirrored.Filled.ViewList,
-                        contentDescription = "View Mode",
-                        tint = Color.DarkGray,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    IconButton(onClick = { onIntent(FilesIntent.ToggleGridView) }) {
+                        Icon(
+                            imageVector = if (state.isGridView) Icons.Default.ViewModule else Icons.AutoMirrored.Filled.ViewList,
+                            contentDescription = "View Mode",
+                            tint = Color.DarkGray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }

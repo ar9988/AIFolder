@@ -147,11 +147,10 @@ class ResourceRepositoryImpl @Inject constructor(
                 if (!sourceFile.exists()) throw Exception("${it.third} 원본 파일이 없습니다.")
                 if (targetFile.exists()) throw Exception("대상 위치에 같은 이름의 항목이 이미 있습니다.")
 
-                val moveSuccess = sourceFile.renameTo(targetFile)
-                if (!moveSuccess) throw Exception("${it.third} 이동에 실패했습니다.")
+                moveFileOrDirectory(sourceFile, targetFile)  // renameTo -> 실패시 copy+delete 폴백
 
                 val newPath = targetFile.path
-                movedResources.add(Triple(it.first,newPath,targetParentId))
+                movedResources.add(Triple(it.first, newPath, targetParentId))
 
                 if (targetFile.isDirectory) {
                     movedFolders.add(it.second to newPath)
@@ -178,6 +177,41 @@ class ResourceRepositoryImpl @Inject constructor(
                 }
             }
             Unit
+        }
+    }
+
+    private fun moveFileOrDirectory(source: File, target: File) {
+        if (source.renameTo(target)) return
+
+        try {
+            if (source.isDirectory) {
+                copyDirectoryRecursively(source, target)
+            } else {
+                source.copyTo(target, overwrite = false)
+            }
+        } catch (e: Exception) {
+            // 복사 중 실패 시 대상에 생긴 부분 결과물 정리
+            target.deleteRecursively()
+            throw Exception("${source.name} 이동에 실패했습니다: ${e.message}")
+        }
+
+        val deleted = if (source.isDirectory) source.deleteRecursively() else source.delete()
+        if (!deleted) {
+            throw Exception("${source.name} 원본 삭제에 실패했습니다. 대상에는 복사되었습니다.")
+        }
+    }
+
+    private fun copyDirectoryRecursively(source: File, target: File) {
+        if (!target.mkdirs() && !target.isDirectory) {
+            throw Exception("대상 폴더 생성 실패: ${target.path}")
+        }
+        source.listFiles()?.forEach { child ->
+            val childTarget = File(target, child.name)
+            if (child.isDirectory) {
+                copyDirectoryRecursively(child, childTarget)
+            } else {
+                child.copyTo(childTarget, overwrite = false)
+            }
         }
     }
 

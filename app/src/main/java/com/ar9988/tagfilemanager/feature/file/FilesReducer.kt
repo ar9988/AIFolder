@@ -26,8 +26,7 @@ object FilesReducer {
         val newStack =
             if (
                 preserveCurrentState &&
-                currentState.viewMode != ViewMode.DASHBOARD &&
-                currentState.fileMode != FileMode.Move
+                currentState.viewMode != ViewMode.DASHBOARD
             ) {
                 currentState.navigationStack + NavigationEntry(
                     path = currentState.currentPath,
@@ -39,7 +38,6 @@ object FilesReducer {
                     activeTags = currentState.activeTags,
                     searchQuery = currentState.searchQuery,
                 )
-
             } else {
                 currentState.navigationStack
             }
@@ -461,23 +459,22 @@ object FilesReducer {
         val resources =
             files.filterNot { it.isParent }
 
-        val sorted =
+        val secondaryComparator: Comparator<FileItemUiModel> =
             when (sortType) {
-                FileSortType.Name ->
-                    resources.sortedBy { it.name.lowercase() }
-
-                FileSortType.Size ->
-                    resources.sortedBy { it.size }
-
-                FileSortType.Recent ->
-                    resources.sortedBy { it.lastModified }
+                FileSortType.Name -> compareBy<FileItemUiModel> { it.name.lowercase() }
+                FileSortType.Size -> compareBy<FileItemUiModel> { it.size }
+                FileSortType.Recent -> compareBy<FileItemUiModel> { it.lastModified }
+            }.let { comparator ->
+                if (ascending) comparator else comparator.reversed()
             }
 
-        val result =
-            if (ascending) sorted
-            else sorted.reversed()
+        val fullComparator: Comparator<FileItemUiModel> =
+            compareByDescending<FileItemUiModel> { it.isDirectory }
+                .then(secondaryComparator)
 
-        return parentPointer + result
+        val sorted = resources.sortedWith(fullComparator)
+
+        return parentPointer + sorted
     }
 
     fun reduceSelectCategoryTag(state: FilesState, tagId: Long): FilesState {
@@ -547,6 +544,7 @@ object FilesReducer {
     fun reduceBack(currentState: FilesState): FilesState {
         return when {
             currentState.isImageViewerVisible -> reduceCloseImageViewer(currentState)
+
             currentState.fileOverlay != null -> {
                 currentState.copy(
                     fileOverlay = null,
@@ -554,6 +552,27 @@ object FilesReducer {
                     targetFilePathForOpen = null
                 )
             }
+
+            currentState.fileMode == FileMode.Move && currentState.navigationStack.isNotEmpty() -> {
+                val last = currentState.navigationStack.last()
+                val exitingMove = last.fileMode != FileMode.Move
+
+                currentState.copy(
+                    navigationStack = currentState.navigationStack.dropLast(1),
+                    currentPath = last.path,
+                    currentFolderId = last.folderId,
+                    selectedCategory = last.category,
+                    fileMode = last.fileMode,
+                    activeTags = last.activeTags,
+                    searchQuery = last.searchQuery,
+                    viewMode = last.viewMode,
+                    categorySelectedTagId = last.categorySelectedTagId,
+                    moveTargets = if (exitingMove) emptyList() else currentState.moveTargets,
+                    selectedFileIds = if (exitingMove) emptySet() else currentState.selectedFileIds,
+                    selectedFiles = if (exitingMove) emptyList() else currentState.selectedFiles,
+                )
+            }
+
             currentState.fileMode == FileMode.Move -> {
                 currentState.copy(
                     fileMode = FileMode.Normal,
@@ -562,12 +581,14 @@ object FilesReducer {
                     selectedFiles = emptyList()
                 )
             }
+
             currentState.isSelectionMode -> {
                 currentState.copy(
                     selectedFileIds = emptySet(),
                     selectedFiles = emptyList()
                 )
             }
+
             currentState.fileMode == FileMode.Search -> {
                 currentState.copy(
                     fileMode = FileMode.Normal,
@@ -577,12 +598,9 @@ object FilesReducer {
             }
 
             currentState.navigationStack.isNotEmpty() -> {
-                val last =
-                    currentState.navigationStack.last()
-
+                val last = currentState.navigationStack.last()
                 currentState.copy(
-                    navigationStack =
-                        currentState.navigationStack.dropLast(1),
+                    navigationStack = currentState.navigationStack.dropLast(1),
                     currentPath = last.path,
                     currentFolderId = last.folderId,
                     selectedCategory = last.category,
@@ -605,7 +623,10 @@ object FilesReducer {
                     fileMode = FileMode.Normal,
                     viewMode = ViewMode.DASHBOARD,
                     categorySelectedTagId = null,
-                    categoryTagGroups = emptyList()
+                    categoryTagGroups = emptyList(),
+                    moveTargets = emptyList(),
+                    selectedFileIds = emptySet(),
+                    selectedFiles = emptyList()
                 )
             }
         }
