@@ -38,7 +38,7 @@ fun StorageCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(1.8f)
+            .aspectRatio(1.6f)
             .clip(RoundedCornerShape(24.dp))
             .background(CardWhite)
             .clickable { onClick(path) }
