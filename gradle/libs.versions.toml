@@ -9,6 +9,7 @@ hwplib = "1.1.10"
 javaxInject = "1"
 kotlinxCoroutinesCore = "1.10.2"
 kotlinxCoroutinesPlayServices = "1.10.2"
+leakcanaryAndroid = "2.14"
 lifecycleViewmodelKtx = "2.10.0"
 onnxruntimeAndroid = "1.25.1"
 pagingCompose = "3.5.0"
@@ -75,6 +76,7 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-coroutines-core-v1xx = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
+leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 # Room
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
