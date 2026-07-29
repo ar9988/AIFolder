@@ -58,4 +58,6 @@ sealed class FilesIntent {
     data class SelectCategoryTag(val tagId: Long) : FilesIntent()
     data class SaveScrollPosition(val scrollKey: String, val index: Int, val offset: Int) : FilesIntent()
     data object CloseImageViewer : FilesIntent()
+    data object ClearSelection : FilesIntent()
+    data object SelectAll: FilesIntent()
 }

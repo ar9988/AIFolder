@@ -65,6 +65,9 @@ data class FilesState(
     val hasSelection: Boolean
         get() = selectedFileIds.isNotEmpty()
 
+    val isAllSelected: Boolean
+        get() = selectedFileIds.size == files.size
+
     val isSingleSelection: Boolean
         get() = selectedFileIds.size == 1
 

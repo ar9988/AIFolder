@@ -553,6 +553,17 @@ class FilesViewModel @Inject constructor(
                     FilesReducer.reduceSelectCategoryTag(it, intent.tagId)
                 }
             }
+
+            is FilesIntent.ClearSelection -> {
+                _state.update {
+                    FilesReducer.reduceClearSelection(it)
+                }
+            }
+            is FilesIntent.SelectAll -> {
+                _state.update {
+                    FilesReducer.reduceToggleSelectAll(it)
+                }
+            }
         }
     }
 

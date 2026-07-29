@@ -824,4 +824,18 @@ object FilesReducer {
             selectedFiles = emptyList()
         )
     }
+
+    fun reduceClearSelection(currentState: FilesState): FilesState{
+        return currentState.copy(
+            selectedFileIds = emptySet(),
+            selectedFiles = emptyList()
+        )
+    }
+
+    fun reduceToggleSelectAll(currentState: FilesState): FilesState{
+        return currentState.copy(
+            selectedFileIds = currentState.files.map { it.id }.toSet(),
+            selectedFiles = currentState.files
+        )
+    }
 }
