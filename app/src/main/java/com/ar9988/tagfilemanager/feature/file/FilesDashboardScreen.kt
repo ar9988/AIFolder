@@ -13,13 +13,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.ar9988.tagfilemanager.feature.file.component.AddDialog
 import com.ar9988.tagfilemanager.feature.file.component.AppSelectorDialog
@@ -41,7 +41,7 @@ fun FilesDashboardScreen(
     navigatePath: String? = null,
     viewModel: FilesViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     val categoryPagedFiles = if (state.viewMode == ViewMode.CATEGORY_TAG_FILES) {
