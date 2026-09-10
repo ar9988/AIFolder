@@ -1,5 +1,6 @@
 package com.ar9988.domain.usecase.common
 
+import com.ar9988.domain.model.DomainError
 import com.ar9988.domain.model.Tag
 import com.ar9988.domain.repository.TagRepository
 import com.ar9988.domain.service.EmbeddingModel
@@ -13,9 +14,7 @@ class CreateTagUseCase @Inject constructor(
         return runCatching {
             val normalizedName = tagName.trim()
 
-            require(normalizedName.length >= 2) {
-                "태그 이름은 최소 2자 이상이어야 합니다."
-            }
+            if (normalizedName.length < 2) throw DomainError.TagNameTooShort
 
             val embedding = embeddingModel.encode(normalizedName)
 

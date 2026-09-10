@@ -12,6 +12,7 @@ import com.ar9988.domain.model.FolderSortConfig
 import com.ar9988.domain.model.SearchSensitivity
 import com.ar9988.domain.model.Settings
 import com.ar9988.domain.model.TagSortType
+import com.ar9988.domain.model.ThemeMode
 import com.ar9988.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +39,8 @@ class SettingsRepositoryImpl @Inject constructor(
         private val IS_TAG_SORT_ASCENDING_KEY = booleanPreferencesKey("is_tag_sort_ascending")
         private val SHOW_HIDDEN_FILES_KEY = booleanPreferencesKey("show_hidden_files")
         private val FOLDER_SORT_CONFIGS_KEY = stringPreferencesKey("folder_sort_configs")
+        private val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+        private val HAS_SEEN_STARTER_TAGS_KEY = booleanPreferencesKey("has_seen_starter_tags")
         private const val LIST_SEPARATOR = "\n"
     }
 
@@ -68,6 +71,8 @@ class SettingsRepositoryImpl @Inject constructor(
                 ),
                 isTagSortAscending = prefs[IS_TAG_SORT_ASCENDING_KEY] ?: false,
                 showHiddenFiles = prefs[SHOW_HIDDEN_FILES_KEY] ?: false,
+                themeMode = ThemeMode.fromName(prefs[THEME_MODE_KEY]),
+                hasSeenStarterTags = prefs[HAS_SEEN_STARTER_TAGS_KEY] ?: false,
                 folderSortConfigs = deserializeFolderConfigs(prefs[FOLDER_SORT_CONFIGS_KEY])
             )
         }
@@ -91,6 +96,8 @@ class SettingsRepositoryImpl @Inject constructor(
                 ),
                 isTagSortAscending = prefs[IS_TAG_SORT_ASCENDING_KEY] ?: false,
                 showHiddenFiles = prefs[SHOW_HIDDEN_FILES_KEY] ?: false,
+                themeMode = ThemeMode.fromName(prefs[THEME_MODE_KEY]),
+                hasSeenStarterTags = prefs[HAS_SEEN_STARTER_TAGS_KEY] ?: false,
                 folderSortConfigs = deserializeFolderConfigs(prefs[FOLDER_SORT_CONFIGS_KEY])
             )
             val updateSettings = transform(currentSettings)
@@ -107,6 +114,8 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs[TAG_SORT_TYPE_KEY] = updateSettings.tagSortType.name
             prefs[IS_TAG_SORT_ASCENDING_KEY] = updateSettings.isTagSortAscending
             prefs[SHOW_HIDDEN_FILES_KEY] = updateSettings.showHiddenFiles
+            prefs[THEME_MODE_KEY] = updateSettings.themeMode.name
+            prefs[HAS_SEEN_STARTER_TAGS_KEY] = updateSettings.hasSeenStarterTags
             prefs[FOLDER_SORT_CONFIGS_KEY] = serializeFolderConfigs(updateSettings.folderSortConfigs)
         }
     }

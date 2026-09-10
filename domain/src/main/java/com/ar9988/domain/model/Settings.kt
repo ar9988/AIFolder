@@ -11,6 +11,9 @@ data class Settings(
     val tagSortType: TagSortType,
     val isFileSortAscending: Boolean,
     val isTagSortAscending: Boolean,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    /** 시작 태그 제안을 이미 보여줬는지. 만들었든 닫았든 다시 뜨지 않는다. */
+    val hasSeenStarterTags: Boolean = false,
     val folderSortConfigs: Map<String, FolderSortConfig> = emptyMap() // <- 개별 폴더 매핑 추가
 ){
     companion object {
