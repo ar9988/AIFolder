@@ -1,3 +1,319 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">태그 파일</string>
+
+    <!-- ─────────── 하단 탭 ─────────── -->
+    <string name="nav_files">파일</string>
+    <string name="nav_tags">태그</string>
+    <string name="nav_ai">AI 검색</string>
+    <string name="nav_settings">설정</string>
+
+    <!-- ─────────── 공통 액션 ─────────── -->
+    <string name="action_cancel">취소</string>
+    <string name="action_confirm">확인</string>
+    <string name="action_delete">삭제</string>
+    <string name="action_copy">복사</string>
+    <string name="action_move">이동</string>
+    <string name="action_rename">이름 변경</string>
+    <string name="action_create">생성</string>
+    <string name="action_add">추가</string>
+    <string name="action_apply">적용하기</string>
+    <string name="action_save">저장</string>
+    <string name="action_change">변경</string>
+    <string name="action_back">뒤로</string>
+    <string name="action_search">검색</string>
+    <string name="action_more">더보기</string>
+    <string name="action_open">열기</string>
+    <string name="action_remove">제거</string>
+    <string name="action_select_all">전체 선택</string>
+    <string name="action_deselect_all">전체 해제</string>
+    <string name="action_reset_default">기본값으로 초기화</string>
+    <string name="action_view_all">전체 보기</string>
+    <string name="label_none">없음</string>
+
+    <!-- ─────────── 파일 화면 ─────────── -->
+    <string name="files_title">파일</string>
+    <string name="files_quick_access">빠른 접근</string>
+    <string name="files_recent_tags">최근 사용한 태그</string>
+    <string name="files_recent_tags_empty">아직 만든 태그가 없습니다. 파일에 태그를 붙여보세요.</string>
+    <string name="files_empty">파일이 없습니다</string>
+    <string name="files_parent_folder">상위 폴더로 이동</string>
+    <string name="files_parent_folder_short">상위 폴더</string>
+    <string name="files_moving_item">이동 중인 항목</string>
+    <string name="files_moving_short">이동 중</string>
+    <string name="files_search_result">검색 결과</string>
+    <string name="files_search_placeholder">파일 또는 태그 검색</string>
+    <string name="files_no_tags">태그 없음</string>
+    <string name="files_view_grid">바둑판 보기</string>
+    <string name="files_view_list">목록 보기</string>
+    <string name="files_sort_order">정렬 순서</string>
+    <string name="files_sort_ascending">오름차순</string>
+    <string name="files_sort_descending">내림차순</string>
+
+    <!-- 저장소 -->
+    <string name="storage_internal">내부 저장소</string>
+    <string name="storage_sd">SD 카드</string>
+    <string name="storage_root">저장소</string>
+    <string name="storage_internal_short">내장 메모리</string>
+    <string name="storage_switch">저장소 전환</string>
+    <string name="storage_current_location">현재 위치</string>
+    <!-- 예: "102.4GB 중 78.6GB 사용" -->
+    <string name="storage_usage_format">%1$s 중 %2$s 사용</string>
+    <string name="storage_used_format">사용 중 %1$s</string>
+    <string name="storage_free_format">여유 %1$s</string>
+    <string name="storage_percent_format">%1$d%%</string>
+
+    <!-- 카테고리 · 빠른 접근 -->
+    <string name="category_images">이미지</string>
+    <string name="category_videos">동영상</string>
+    <string name="category_audios">오디오</string>
+    <string name="category_documents">문서</string>
+    <string name="folder_downloads">다운로드</string>
+    <string name="folder_pictures">사진</string>
+    <string name="folder_music">음악</string>
+    <string name="folder_movies">영상</string>
+
+    <!-- 정렬 -->
+    <string name="sort_recent">최신순</string>
+    <string name="sort_name">이름순</string>
+    <string name="sort_size">크기순</string>
+    <string name="sort_selected">선택됨</string>
+
+    <!-- ─────────── 선택 모드 ─────────── -->
+    <plurals name="selection_item_count">
+        <item quantity="other">%1$d개의 항목</item>
+    </plurals>
+    <plurals name="selection_selected_count">
+        <item quantity="other">%1$d개 선택됨</item>
+    </plurals>
+    <plurals name="files_count">
+        <item quantity="other">파일 %1$d개</item>
+    </plurals>
+    <plurals name="item_count">
+        <item quantity="other">항목 %1$d개</item>
+    </plurals>
+
+    <!-- 이동 모드 헤더 -->
+    <string name="move_mode_title_empty">항목 이동 중…</string>
+    <string name="move_mode_title_single">‘%1$s’ 이동 중</string>
+    <plurals name="move_mode_title_multi">
+        <item quantity="other">%1$d개 항목 이동 중</item>
+    </plurals>
+
+    <!-- ─────────── 파일 액션 ─────────── -->
+    <string name="action_open_with">다른 앱으로 열기</string>
+    <string name="action_go_to_location">위치로 이동</string>
+    <string name="action_copy_or_move">복사/이동</string>
+    <string name="action_edit_tags">태그 편집</string>
+    <string name="action_exclude_indexing">색인에서 제외</string>
+    <string name="action_copy_here">여기로 복사</string>
+    <string name="action_move_here">여기로 이동</string>
+
+    <!-- ─────────── 다이얼로그 ─────────── -->
+    <string name="dialog_delete_title">항목 삭제</string>
+    <string name="dialog_delete_message">%1$s을(를) 삭제할까요?\n이 작업은 취소할 수 없습니다.</string>
+    <string name="dialog_copy_title">항목 복사</string>
+    <string name="dialog_copy_message">%1$s을(를) 복사할까요?</string>
+    <string name="dialog_move_title">항목 이동</string>
+    <string name="dialog_move_message">%1$s을(를) 이동할까요?</string>
+    <string name="dialog_exclude_title">색인에서 제외</string>
+    <string name="dialog_exclude_message">%1$s을(를) 색인에서 제외할까요?\n설정에서 되돌릴 수 있습니다.</string>
+    <string name="dialog_exclude_confirm">제외</string>
+
+    <string name="dialog_rename_file_title">파일 이름 변경</string>
+    <string name="dialog_rename_folder_title">폴더 이름 변경</string>
+    <string name="dialog_rename_label">새 이름</string>
+
+    <string name="dialog_add_title">새 항목 추가</string>
+    <string name="dialog_add_hint">이름에 마침표(.)가 없으면 폴더, 있으면 파일로 만들어집니다.</string>
+    <string name="dialog_add_placeholder">이름을 입력하세요</string>
+
+    <string name="dialog_app_selector_title">연결 프로그램 선택</string>
+    <string name="dialog_app_selector_always">항상 이 앱으로 열기</string>
+
+    <!-- ─────────── 태그 화면 ─────────── -->
+    <string name="tags_title">태그</string>
+    <plurals name="tags_total_count">
+        <item quantity="other">태그 %1$d개</item>
+    </plurals>
+    <plurals name="tags_applied_files">
+        <item quantity="other">파일 %1$d개에 적용됨</item>
+    </plurals>
+    <string name="tags_search_placeholder">태그 검색</string>
+    <string name="tags_empty">태그를 추가해보세요</string>
+    <string name="tag_sort_name">이름</string>
+    <string name="tag_sort_recent">최근 사용</string>
+    <string name="tag_sort_count">적용된 파일 수</string>
+    <plurals name="tag_file_count">
+        <item quantity="other">파일 %1$d개</item>
+    </plurals>
+    <string name="tag_created_at">생성일 %1$s</string>
+    <string name="tag_color">태그 색</string>
+    <string name="tag_name_placeholder">태그 이름</string>
+    <string name="tag_edit_title">태그 편집</string>
+    <string name="tag_delete_title">태그 삭제</string>
+    <string name="tag_delete_message">%1$s을(를) 삭제할까요?\n이 작업은 취소할 수 없습니다.</string>
+    <string name="tag_search_or_create_placeholder">태그 검색 또는 새 태그 입력</string>
+    <string name="tag_action_create">태그 새로 만들기</string>
+    <string name="tag_action_add">태그 추가하기</string>
+
+    <!-- 첫 실행 시작 태그 제안 -->
+    <string name="starter_tags_title">태그를 몇 개 만들어 뒀어요</string>
+    <string name="starter_tags_description">파일 이름에서 자주 나오는 낱말을 찾았습니다. 필요 없는 건 빼고 시작하세요.</string>
+    <string name="starter_tags_dismiss">닫기</string>
+    <string name="starter_tags_skip">나중에</string>
+    <plurals name="starter_tags_apply">
+        <item quantity="other">파일 %1$d개에 적용</item>
+    </plurals>
+    <plurals name="toast_starter_tags_created">
+        <item quantity="other">태그 %1$d개를 만들었습니다.</item>
+    </plurals>
+
+    <!-- AI 태그 추천 -->
+    <string name="ai_tag_recommend_action">AI 태그 추천받기</string>
+    <string name="ai_tag_analyzing">파일을 분석하고 있어요…</string>
+    <string name="ai_tag_none">추천할 태그를 찾지 못했어요</string>
+    <string name="ai_tag_badge">AI 추천</string>
+    <string name="ai_tag_create_new">이런 태그를 새로 만들까요?</string>
+
+    <!-- ─────────── AI 검색 ─────────── -->
+    <string name="ai_title">AI 검색</string>
+    <string name="ai_hero">어떤 자료들을\n찾고 싶으세요?</string>
+    <plurals name="ai_subtitle_indexed">
+        <item quantity="other">온디바이스 · 파일 %1$d개 색인됨</item>
+    </plurals>
+    <string name="ai_subtitle_on_device">온디바이스에서 동작합니다</string>
+    <string name="ai_input_placeholder">무엇을 찾고 계신가요?</string>
+    <string name="ai_reset_conversation">대화 초기화</string>
+    <string name="ai_send">전송</string>
+    <string name="ai_suggestions_title">이렇게 물어보세요</string>
+    <string name="ai_suggestion_receipt">저번달 영수증 찾아줘</string>
+    <string name="ai_suggestion_working">이번주 작업중인 파일 보여줘</string>
+    <string name="ai_suggestion_important">중요 문서 찾아줘</string>
+
+    <string name="ai_sort_recent">최신순</string>
+    <string name="ai_sort_size">용량순</string>
+    <string name="ai_sort_name">이름순</string>
+    <plurals name="ai_view_all">
+        <item quantity="other">전체 %1$d개 보기</item>
+    </plurals>
+    <string name="ai_result_no_files">해당하는 파일이 없어요</string>
+
+    <!-- 결과 문장. %1$s 는 태그 목록, %2$d 는 파일 개수. -->
+    <string name="ai_result_with_tags">%1$s 태그로 파일 %2$d개를 찾았어요.</string>
+    <string name="ai_result_with_tags_in_period">%1$s 태그로 해당 기간에서 파일 %2$d개를 찾았어요.</string>
+    <string name="ai_result_in_period">해당 기간에서 파일 %1$d개를 찾았어요.</string>
+    <plurals name="ai_result_plain">
+        <item quantity="other">파일 %1$d개를 찾았어요.</item>
+    </plurals>
+    <string name="ai_result_no_matched_tags">관련 태그를 찾지 못했어요.</string>
+    <string name="ai_result_nothing_found">조건에 맞는 파일을 찾지 못했어요.</string>
+    <string name="ai_result_nothing_in_period">해당 기간에는 조건에 맞는 파일이 없어요.</string>
+
+    <string name="ai_failure_title">검색 결과가 없습니다</string>
+    <string name="ai_failure_subtitle">다른 방식으로 찾아볼까요?</string>
+    <string name="ai_retry_relax_sensitivity">민감도 완화</string>
+    <string name="ai_retry_name_or_tag">파일명/태그명 검색</string>
+    <string name="ai_retry_ignore_date">날짜 무시</string>
+    <string name="ai_retry_default">기본 검색</string>
+    <string name="ai_error">오류가 발생했어요. 다시 시도해주세요.</string>
+
+    <!-- ─────────── 설정 ─────────── -->
+    <string name="settings_title">설정</string>
+    <string name="settings_group_indexing">색인</string>
+    <string name="settings_group_exclude">색인 제외</string>
+    <string name="settings_group_ai">AI 검색</string>
+    <string name="settings_group_appearance">모양</string>
+    <string name="settings_group_about">정보</string>
+
+    <string name="settings_auto_scan_title">시작할 때 전체 색인</string>
+    <string name="settings_auto_scan_desc">앱을 열 때 전체 파일을 자동으로 색인합니다</string>
+    <string name="settings_drag_scan_title">당겨서 다시 검사</string>
+    <string name="settings_drag_scan_desc">목록에서 아래로 당기면 색인을 갱신합니다</string>
+    <string name="settings_hidden_files_title">숨김 파일 표시</string>
+    <string name="settings_hidden_files_desc">마침표(.)로 시작하는 파일을 함께 표시합니다</string>
+
+    <string name="settings_excluded_extensions">제외 확장자</string>
+    <string name="settings_excluded_folders">제외 파일·폴더</string>
+    <string name="settings_extension_placeholder">zip, apk 등</string>
+    <string name="settings_folder_placeholder">Android, DCIM 등</string>
+
+    <string name="settings_search_sensitivity">검색 민감도</string>
+
+    <string name="sensitivity_super_strict">초정밀 매칭</string>
+    <string name="sensitivity_super_strict_desc">질문과 거의 같은 뜻의 태그만 아주 엄격하게 찾습니다.</string>
+    <string name="sensitivity_strict">정밀 매칭</string>
+    <string name="sensitivity_strict_desc">잡음을 줄이고 뜻이 분명한 태그 위주로 찾습니다.</string>
+    <string name="sensitivity_normal">기본 매칭</string>
+    <string name="sensitivity_normal_desc">정확도와 폭이 가장 균형 잡힌 방식입니다.</string>
+    <string name="sensitivity_wide">넓은 매칭</string>
+    <string name="sensitivity_wide_desc">느슨하게 연관된 태그까지 폭넓게 찾습니다.</string>
+
+    <string name="settings_theme">테마</string>
+    <string name="settings_theme_system">시스템 설정 따르기</string>
+    <string name="settings_theme_light">라이트</string>
+    <string name="settings_theme_dark">다크</string>
+    <string name="settings_language">언어</string>
+    <string name="settings_language_desc">시스템 언어 설정에서 바꿉니다</string>
+
+    <string name="settings_oss_license">오픈소스 라이선스</string>
+
+    <!-- ─────────── 권한 ─────────── -->
+    <string name="permission_title">파일 관리를 시작할까요?</string>
+    <string name="permission_description">AI 태그 기능을 쓰려면\n모든 파일 접근 권한이 필요합니다.</string>
+    <string name="permission_action">권한 허용하고 시작</string>
+
+    <!-- ─────────── 알림 ─────────── -->
+    <string name="notification_channel_name">파일 동기화</string>
+    <string name="notification_sync_title">파일 동기화 중</string>
+    <string name="notification_sync_text">파일을 분석하고 있습니다…</string>
+    <string name="notification_sync_progress_title">%1$s 동기화 중</string>
+    <string name="notification_sync_progress_text">%1$s개의 파일 처리 완료</string>
+
+    <!-- ─────────── 토스트 ─────────── -->
+    <string name="toast_no_app_to_open">이 파일을 열 수 있는 앱이 없습니다.</string>
+    <plurals name="toast_copied">
+        <item quantity="other">%1$d개의 항목을 복사했습니다.</item>
+    </plurals>
+    <plurals name="toast_moved">
+        <item quantity="other">%1$d개의 항목을 이동했습니다.</item>
+    </plurals>
+    <plurals name="toast_deleted">
+        <item quantity="other">%1$d개의 항목을 삭제했습니다.</item>
+    </plurals>
+    <plurals name="toast_excluded">
+        <item quantity="other">%1$d개의 항목을 색인에서 제외했습니다.</item>
+    </plurals>
+    <string name="toast_created">만들었습니다.</string>
+    <string name="toast_renamed">이름을 바꿨습니다.</string>
+    <string name="toast_tag_created">태그를 만들었습니다.</string>
+    <string name="toast_tag_saved">태그를 저장했습니다.</string>
+    <plurals name="toast_tag_deleted">
+        <item quantity="other">태그 %1$d개를 삭제했습니다.</item>
+    </plurals>
+
+    <string name="toast_copy_failed">복사하지 못했습니다: %1$s</string>
+    <string name="toast_move_failed">이동하지 못했습니다: %1$s</string>
+    <string name="toast_delete_failed">삭제하지 못했습니다: %1$s</string>
+    <string name="toast_exclude_failed">제외하지 못했습니다: %1$s</string>
+    <string name="toast_create_failed">만들지 못했습니다: %1$s</string>
+    <string name="toast_rename_failed">이름을 바꾸지 못했습니다: %1$s</string>
+    <string name="toast_tag_save_failed">태그를 저장하지 못했습니다.</string>
+    <string name="toast_tag_delete_failed">태그를 삭제하지 못했습니다.</string>
+
+    <!-- ─────────── 오류 ─────────── -->
+    <string name="error_unknown">알 수 없는 오류</string>
+    <string name="error_name_exists">이미 있는 이름입니다.</string>
+    <string name="error_name_blank">이름을 입력해주세요.</string>
+    <string name="error_invalid_name">이름에 다음 문자는 쓸 수 없습니다: \\ / : * ? \" &lt; &gt; |</string>
+    <string name="error_same_name">기존 이름과 같습니다.</string>
+    <string name="error_tag_name_too_short">태그 이름은 2자 이상이어야 합니다.</string>
+    <string name="error_not_found">파일을 찾을 수 없습니다.</string>
+    <string name="error_permission_denied">파일에 접근할 권한이 없습니다.</string>
+    <string name="error_target_exists">같은 이름의 항목이 이미 있습니다.</string>
+    <string name="error_io">파일을 처리하지 못했습니다.</string>
+
+    <!-- ─────────── 날짜 ─────────── -->
+    <string name="date_today">오늘</string>
+    <string name="date_yesterday">어제</string>
 </resources>

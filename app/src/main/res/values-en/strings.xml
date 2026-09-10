@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tag File</string>
+
+    <!-- ─────────── Bottom navigation ─────────── -->
+    <string name="nav_files">Files</string>
+    <string name="nav_tags">Tags</string>
+    <string name="nav_ai">AI Search</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- ─────────── Common actions ─────────── -->
+    <string name="action_cancel">Cancel</string>
+    <string name="action_confirm">OK</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_move">Move</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_create">Create</string>
+    <string name="action_add">Add</string>
+    <string name="action_apply">Apply</string>
+    <string name="action_save">Save</string>
+    <string name="action_change">Rename</string>
+    <string name="action_back">Back</string>
+    <string name="action_search">Search</string>
+    <string name="action_more">More</string>
+    <string name="action_open">Open</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_select_all">Select all</string>
+    <string name="action_deselect_all">Deselect all</string>
+    <string name="action_reset_default">Reset to defaults</string>
+    <string name="action_view_all">View all</string>
+    <string name="label_none">None</string>
+
+    <!-- ─────────── Files ─────────── -->
+    <string name="files_title">Files</string>
+    <string name="files_quick_access">Quick access</string>
+    <string name="files_recent_tags">Recently used tags</string>
+    <string name="files_recent_tags_empty">No tags yet. Try tagging a file.</string>
+    <string name="files_empty">No files here</string>
+    <string name="files_parent_folder">Go to parent folder</string>
+    <string name="files_parent_folder_short">Parent folder</string>
+    <string name="files_moving_item">Item being moved</string>
+    <string name="files_moving_short">Moving</string>
+    <string name="files_search_result">Search results</string>
+    <string name="files_search_placeholder">Search files or tags</string>
+    <string name="files_no_tags">No tags</string>
+    <string name="files_view_grid">Grid view</string>
+    <string name="files_view_list">List view</string>
+    <string name="files_sort_order">Sort order</string>
+    <string name="files_sort_ascending">Ascending</string>
+    <string name="files_sort_descending">Descending</string>
+
+    <!-- Storage -->
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd">SD card</string>
+    <string name="storage_root">Storage</string>
+    <string name="storage_internal_short">Internal</string>
+    <string name="storage_switch">Switch storage</string>
+    <string name="storage_current_location">Current location</string>
+    <string name="storage_usage_format">%2$s of %1$s used</string>
+    <string name="storage_used_format">%1$s used</string>
+    <string name="storage_free_format">%1$s free</string>
+    <string name="storage_percent_format">%1$d%%</string>
+
+    <!-- Categories and quick access -->
+    <string name="category_images">Images</string>
+    <string name="category_videos">Videos</string>
+    <string name="category_audios">Audio</string>
+    <string name="category_documents">Documents</string>
+    <string name="folder_downloads">Downloads</string>
+    <string name="folder_pictures">Pictures</string>
+    <string name="folder_music">Music</string>
+    <string name="folder_movies">Movies</string>
+
+    <!-- Sorting -->
+    <string name="sort_recent">Recent</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_size">Size</string>
+    <string name="sort_selected">Selected</string>
+
+    <!-- ─────────── Selection ─────────── -->
+    <plurals name="selection_item_count">
+        <item quantity="one">%1$d item</item>
+        <item quantity="other">%1$d items</item>
+    </plurals>
+    <plurals name="selection_selected_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="files_count">
+        <item quantity="one">%1$d file</item>
+        <item quantity="other">%1$d files</item>
+    </plurals>
+    <plurals name="item_count">
+        <item quantity="one">%1$d item</item>
+        <item quantity="other">%1$d items</item>
+    </plurals>
+
+    <string name="move_mode_title_empty">Moving items…</string>
+    <string name="move_mode_title_single">Moving “%1$s”</string>
+    <plurals name="move_mode_title_multi">
+        <item quantity="one">Moving %1$d item</item>
+        <item quantity="other">Moving %1$d items</item>
+    </plurals>
+
+    <!-- ─────────── File actions ─────────── -->
+    <string name="action_open_with">Open with…</string>
+    <string name="action_go_to_location">Go to location</string>
+    <string name="action_copy_or_move">Copy or move</string>
+    <string name="action_edit_tags">Edit tags</string>
+    <string name="action_exclude_indexing">Exclude from indexing</string>
+    <string name="action_copy_here">Copy here</string>
+    <string name="action_move_here">Move here</string>
+
+    <!-- ─────────── Dialogs ─────────── -->
+    <string name="dialog_delete_title">Delete items</string>
+    <string name="dialog_delete_message">Delete %1$s?\nThis can\'t be undone.</string>
+    <string name="dialog_copy_title">Copy items</string>
+    <string name="dialog_copy_message">Copy %1$s?</string>
+    <string name="dialog_move_title">Move items</string>
+    <string name="dialog_move_message">Move %1$s?</string>
+    <string name="dialog_exclude_title">Exclude from indexing</string>
+    <string name="dialog_exclude_message">Exclude %1$s from indexing?\nYou can undo this in Settings.</string>
+    <string name="dialog_exclude_confirm">Exclude</string>
+
+    <string name="dialog_rename_file_title">Rename file</string>
+    <string name="dialog_rename_folder_title">Rename folder</string>
+    <string name="dialog_rename_label">New name</string>
+
+    <string name="dialog_add_title">New item</string>
+    <string name="dialog_add_hint">Names without a dot (.) become folders; names with one become files.</string>
+    <string name="dialog_add_placeholder">Enter a name</string>
+
+    <string name="dialog_app_selector_title">Open with</string>
+    <string name="dialog_app_selector_always">Always use this app</string>
+
+    <!-- ─────────── Tags ─────────── -->
+    <string name="tags_title">Tags</string>
+    <plurals name="tags_total_count">
+        <item quantity="one">%1$d tag</item>
+        <item quantity="other">%1$d tags</item>
+    </plurals>
+    <plurals name="tags_applied_files">
+        <item quantity="one">applied to %1$d file</item>
+        <item quantity="other">applied to %1$d files</item>
+    </plurals>
+    <string name="tags_search_placeholder">Search tags</string>
+    <string name="tags_empty">Add your first tag</string>
+    <string name="tag_sort_name">Name</string>
+    <string name="tag_sort_recent">Recently used</string>
+    <string name="tag_sort_count">File count</string>
+    <plurals name="tag_file_count">
+        <item quantity="one">%1$d file</item>
+        <item quantity="other">%1$d files</item>
+    </plurals>
+    <string name="tag_created_at">Created %1$s</string>
+    <string name="tag_color">Tag color</string>
+    <string name="tag_name_placeholder">Tag name</string>
+    <string name="tag_edit_title">Edit tags</string>
+    <string name="tag_delete_title">Delete tags</string>
+    <string name="tag_delete_message">Delete %1$s?\nThis can\'t be undone.</string>
+    <string name="tag_search_or_create_placeholder">Search tags or type a new one</string>
+    <string name="tag_action_create">Create tag</string>
+    <string name="tag_action_add">Add tag</string>
+
+    <!-- First-run starter tag suggestions -->
+    <string name="starter_tags_title">We set up a few tags for you</string>
+    <string name="starter_tags_description">These words come up often in your file names. Drop the ones you do not need.</string>
+    <string name="starter_tags_dismiss">Dismiss</string>
+    <string name="starter_tags_skip">Not now</string>
+    <plurals name="starter_tags_apply">
+        <item quantity="one">Apply to %1$d file</item>
+        <item quantity="other">Apply to %1$d files</item>
+    </plurals>
+    <plurals name="toast_starter_tags_created">
+        <item quantity="one">Created %1$d tag.</item>
+        <item quantity="other">Created %1$d tags.</item>
+    </plurals>
+
+    <!-- AI tag suggestions -->
+    <string name="ai_tag_recommend_action">Suggest tags with AI</string>
+    <string name="ai_tag_analyzing">Analyzing your files…</string>
+    <string name="ai_tag_none">No tag suggestions found</string>
+    <string name="ai_tag_badge">AI suggested</string>
+    <string name="ai_tag_create_new">Create these as new tags?</string>
+
+    <!-- ─────────── AI search ─────────── -->
+    <string name="ai_title">AI Search</string>
+    <string name="ai_hero">What are you\nlooking for?</string>
+    <plurals name="ai_subtitle_indexed">
+        <item quantity="one">On device · %1$d file indexed</item>
+        <item quantity="other">On device · %1$d files indexed</item>
+    </plurals>
+    <string name="ai_subtitle_on_device">Runs entirely on your device</string>
+    <string name="ai_input_placeholder">What are you looking for?</string>
+    <string name="ai_reset_conversation">Clear conversation</string>
+    <string name="ai_send">Send</string>
+    <string name="ai_suggestions_title">Try asking</string>
+    <string name="ai_suggestion_receipt">Find last month\'s receipts</string>
+    <string name="ai_suggestion_working">Show files I worked on this week</string>
+    <string name="ai_suggestion_important">Find important documents</string>
+
+    <string name="ai_sort_recent">Newest</string>
+    <string name="ai_sort_size">Size</string>
+    <string name="ai_sort_name">Name</string>
+    <plurals name="ai_view_all">
+        <item quantity="one">View %1$d result</item>
+        <item quantity="other">View all %1$d results</item>
+    </plurals>
+    <string name="ai_result_no_files">No matching files</string>
+
+    <string name="ai_result_with_tags">Found %2$d files tagged %1$s.</string>
+    <string name="ai_result_with_tags_in_period">Found %2$d files tagged %1$s in that period.</string>
+    <string name="ai_result_in_period">Found %1$d files in that period.</string>
+    <plurals name="ai_result_plain">
+        <item quantity="one">Found %1$d file.</item>
+        <item quantity="other">Found %1$d files.</item>
+    </plurals>
+    <string name="ai_result_no_matched_tags">I couldn\'t find any related tags.</string>
+    <string name="ai_result_nothing_found">I couldn\'t find any matching files.</string>
+    <string name="ai_result_nothing_in_period">No matching files in that period.</string>
+
+    <string name="ai_failure_title">No results</string>
+    <string name="ai_failure_subtitle">Want to try a different way?</string>
+    <string name="ai_retry_relax_sensitivity">Loosen sensitivity</string>
+    <string name="ai_retry_name_or_tag">Search names and tags</string>
+    <string name="ai_retry_ignore_date">Ignore dates</string>
+    <string name="ai_retry_default">Basic search</string>
+    <string name="ai_error">Something went wrong. Please try again.</string>
+
+    <!-- ─────────── Settings ─────────── -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_group_indexing">Indexing</string>
+    <string name="settings_group_exclude">Exclusions</string>
+    <string name="settings_group_ai">AI search</string>
+    <string name="settings_group_appearance">Appearance</string>
+    <string name="settings_group_about">About</string>
+
+    <string name="settings_auto_scan_title">Index everything on launch</string>
+    <string name="settings_auto_scan_desc">Indexes all files automatically when the app opens</string>
+    <string name="settings_drag_scan_title">Pull to re-index</string>
+    <string name="settings_drag_scan_desc">Pull down on a list to refresh the index</string>
+    <string name="settings_hidden_files_title">Show hidden files</string>
+    <string name="settings_hidden_files_desc">Also shows files whose names start with a dot (.)</string>
+
+    <string name="settings_excluded_extensions">Excluded extensions</string>
+    <string name="settings_excluded_folders">Excluded files and folders</string>
+    <string name="settings_extension_placeholder">zip, apk, …</string>
+    <string name="settings_folder_placeholder">Android, DCIM, …</string>
+
+    <string name="settings_search_sensitivity">Search sensitivity</string>
+
+    <string name="sensitivity_super_strict">Very strict</string>
+    <string name="sensitivity_super_strict_desc">Only tags that mean almost exactly what you asked.</string>
+    <string name="sensitivity_strict">Strict</string>
+    <string name="sensitivity_strict_desc">Fewer false matches, clearly related tags only.</string>
+    <string name="sensitivity_normal">Balanced</string>
+    <string name="sensitivity_normal_desc">The best balance of precision and reach.</string>
+    <string name="sensitivity_wide">Broad</string>
+    <string name="sensitivity_wide_desc">Includes loosely related tags too.</string>
+
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">Follow system</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_desc">Change it in your system language settings</string>
+
+    <string name="settings_oss_license">Open source licenses</string>
+
+    <!-- ─────────── Permission ─────────── -->
+    <string name="permission_title">Ready to manage your files?</string>
+    <string name="permission_description">AI tagging needs access\nto all files on this device.</string>
+    <string name="permission_action">Grant access and start</string>
+
+    <!-- ─────────── Notification ─────────── -->
+    <string name="notification_channel_name">File sync</string>
+    <string name="notification_sync_title">Syncing files</string>
+    <string name="notification_sync_text">Analyzing your files…</string>
+    <string name="notification_sync_progress_title">Syncing %1$s</string>
+    <string name="notification_sync_progress_text">%1$s files processed</string>
+
+    <!-- ─────────── Toasts ─────────── -->
+    <string name="toast_no_app_to_open">No app can open this file.</string>
+    <plurals name="toast_copied">
+        <item quantity="one">Copied %1$d item.</item>
+        <item quantity="other">Copied %1$d items.</item>
+    </plurals>
+    <plurals name="toast_moved">
+        <item quantity="one">Moved %1$d item.</item>
+        <item quantity="other">Moved %1$d items.</item>
+    </plurals>
+    <plurals name="toast_deleted">
+        <item quantity="one">Deleted %1$d item.</item>
+        <item quantity="other">Deleted %1$d items.</item>
+    </plurals>
+    <plurals name="toast_excluded">
+        <item quantity="one">Excluded %1$d item from indexing.</item>
+        <item quantity="other">Excluded %1$d items from indexing.</item>
+    </plurals>
+    <string name="toast_created">Created.</string>
+    <string name="toast_renamed">Renamed.</string>
+    <string name="toast_tag_created">Tag created.</string>
+    <string name="toast_tag_saved">Tag saved.</string>
+    <plurals name="toast_tag_deleted">
+        <item quantity="one">Deleted %1$d tag.</item>
+        <item quantity="other">Deleted %1$d tags.</item>
+    </plurals>
+
+    <string name="toast_copy_failed">Couldn\'t copy: %1$s</string>
+    <string name="toast_move_failed">Couldn\'t move: %1$s</string>
+    <string name="toast_delete_failed">Couldn\'t delete: %1$s</string>
+    <string name="toast_exclude_failed">Couldn\'t exclude: %1$s</string>
+    <string name="toast_create_failed">Couldn\'t create: %1$s</string>
+    <string name="toast_rename_failed">Couldn\'t rename: %1$s</string>
+    <string name="toast_tag_save_failed">Couldn\'t save the tag.</string>
+    <string name="toast_tag_delete_failed">Couldn\'t delete the tag.</string>
+
+    <!-- ─────────── Errors ─────────── -->
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_name_exists">That name is already taken.</string>
+    <string name="error_name_blank">Enter a name.</string>
+    <string name="error_invalid_name">These characters can\'t be used in a name: \\ / : * ? \" &lt; &gt; |</string>
+    <string name="error_same_name">That\'s the same name it already has.</string>
+    <string name="error_tag_name_too_short">Tag names need at least 2 characters.</string>
+    <string name="error_not_found">File not found.</string>
+    <string name="error_permission_denied">You don\'t have permission to access this file.</string>
+    <string name="error_target_exists">An item with that name already exists.</string>
+    <string name="error_io">Couldn\'t process the file.</string>
+
+    <!-- ─────────── Dates ─────────── -->
+    <string name="date_today">Today</string>
+    <string name="date_yesterday">Yesterday</string>
+</resources>

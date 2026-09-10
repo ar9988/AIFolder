@@ -1,25 +1,40 @@
 package com.ar9988.domain.usecase.files
 
+import com.ar9988.domain.model.DomainError
+import com.ar9988.domain.model.Resource
 import com.ar9988.domain.repository.ResourceRepository
-import java.io.File
 import javax.inject.Inject
 
 class AddResourceUseCase @Inject constructor(
     private val repository: ResourceRepository
 ) {
-    private val forbiddenChars = Regex("[\\\\/:*?\"<>|]")
+    private val forbiddenChars = Regex("[\\/:*?\"<>|]")
 
-    operator fun invoke(parentPath: String, inputName: String): Result<File> {
-        if (inputName.isBlank()) {
-            return Result.failure(Exception("이름을 입력해주세요."))
+    /**
+     * 이름에 마침표가 없으면 폴더, 있으면 파일로 만든다.
+     *
+     * 만든 즉시 색인에도 들어가므로 스캔을 기다리지 않고 목록에 나타난다.
+     */
+    suspend operator fun invoke(
+        parentPath: String,
+        parentId: Long?,
+        inputName: String
+    ): Result<Resource> {
+        val name = inputName.trim()
+
+        if (name.isBlank()) {
+            return Result.failure(DomainError.NameBlank)
         }
 
-        if (forbiddenChars.containsMatchIn(inputName)) {
-            return Result.failure(Exception("파일명에 다음 문자는 포함할 수 없습니다: \\ / : * ? \" < > |"))
+        if (forbiddenChars.containsMatchIn(name)) {
+            return Result.failure(DomainError.InvalidName)
         }
 
-        val isDirectory = !inputName.contains(".")
-
-        return repository.createPhysicalFile(parentPath, inputName, isDirectory)
+        return repository.createResource(
+            parentPath = parentPath,
+            parentId = parentId,
+            name = name,
+            isDirectory = !name.contains(".")
+        )
     }
 }

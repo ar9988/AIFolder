@@ -1,5 +1,6 @@
 package com.ar9988.domain.usecase.files
 
+import com.ar9988.domain.model.DomainError
 import com.ar9988.domain.repository.ResourceRepository
 import javax.inject.Inject
 
@@ -11,15 +12,15 @@ class RenameResourceUseCase @Inject constructor(
     suspend operator fun invoke(resource: Triple<Long,String,String>, newName: String): Result<Unit> {
         //id, path, name
         if (newName.isBlank()) {
-            return Result.failure(Exception("새 이름을 입력해주세요."))
+            return Result.failure(DomainError.NameBlank)
         }
 
         if (resource.third == newName) {
-            return Result.failure(Exception("기존 이름과 동일합니다."))
+            return Result.failure(DomainError.SameName)
         }
 
         if (forbiddenChars.containsMatchIn(newName)) {
-            return Result.failure(Exception("파일명에 다음 문자는 포함할 수 없습니다: \\ / : * ? \" < > |"))
+            return Result.failure(DomainError.InvalidName)
         }
 
         return resourceRepository.renameResource(resource, newName)
