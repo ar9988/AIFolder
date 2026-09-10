@@ -8,8 +8,18 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
-/build
+# 루트만 막으면 모듈 빌드 산출물이 그대로 새어 나온다.
+build/
+.kotlin/
+/app/release/
+
+# 서명 키와 자격 증명은 절대 올리지 않는다.
+*.jks
+*.keystore
+keystore.properties
+
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+.idea/MarsCodeWorkspaceAppSettings.xml
