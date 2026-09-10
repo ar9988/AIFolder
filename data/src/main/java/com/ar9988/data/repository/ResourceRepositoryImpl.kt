@@ -1,10 +1,13 @@
 package com.ar9988.data.repository
 
+import com.ar9988.domain.model.FileNameRow
 import com.ar9988.data.mapper.toResource
 import com.ar9988.data.repository.local.LocalDataSource
 import com.ar9988.data.scanner.FileScanner
+import com.ar9988.data.scanner.MimeTypeProvider
 import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.domain.model.DateRange
+import com.ar9988.domain.model.DomainError
 import com.ar9988.domain.model.FileCategory
 import com.ar9988.domain.model.Resource
 import com.ar9988.domain.model.ScanEvent
@@ -21,7 +24,8 @@ import javax.inject.Inject
 class ResourceRepositoryImpl @Inject constructor(
     private val localDataSource: LocalDataSource,
     private val fileScanner: FileScanner,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val mimeTypeProvider: MimeTypeProvider,
 ) : ResourceRepository {
     override suspend fun getResourceById(id: Long): Resource? {
         return localDataSource.getResourceById(id)
@@ -101,7 +105,7 @@ class ResourceRepositoryImpl @Inject constructor(
 
     }
 
-    override fun syncStorage(targetPath: String): Flow<ScanEvent> = flow {
+    override fun syncStorage(targetPath: String, fullRescan: Boolean): Flow<ScanEvent> = flow {
         val startFile = File(targetPath)
         if (!startFile.exists()) {
             return@flow
@@ -124,7 +128,11 @@ class ResourceRepositoryImpl @Inject constructor(
             rootResource.id
         }
 
-        emitAll(fileScanner.scanDirectory(startFile, rootId))
+        emitAll(fileScanner.scanDirectory(startFile, rootId, fullRescan))
+    }
+
+    override suspend fun getAllFileNames(): List<FileNameRow> = withContext(Dispatchers.IO) {
+        localDataSource.getAllFileNames()
     }
 
     override fun getResourcesByParentID(id: Long?): Flow<List<Resource>> {
@@ -248,27 +256,34 @@ class ResourceRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun createPhysicalFile(
+    override suspend fun createResource(
         parentPath: String,
-        inputName: String,
+        parentId: Long?,
+        name: String,
         isDirectory: Boolean
-    ): Result<File> = runCatching {
-        val targetFile = File(parentPath, inputName)
+    ): Result<Resource> = withContext(Dispatchers.IO) {
+        runCatching {
+            val targetFile = File(parentPath, name)
 
-        if (targetFile.exists()) {
-            throw Exception("이미 동일한 이름의 항목이 존재합니다.")
-        }
+            if (targetFile.exists()) throw DomainError.TargetExists
 
-        val isSuccess = if (isDirectory) {
-            targetFile.mkdir()
-        } else {
-            targetFile.createNewFile()
-        }
+            val created = if (isDirectory) targetFile.mkdir() else targetFile.createNewFile()
+            if (!created) throw DomainError.Io
 
-        if (isSuccess) {
-            targetFile
-        } else {
-            throw Exception("물리적 생성에 실패했습니다. (권한 또는 저장 공간 확인 필요)")
+            // 부모 id 를 못 받았으면 경로로 찾는다. 스캔 전이라 부모가 아직 없을 수도 있는데,
+            // 그때는 null 로 두고 다음 스캔이 자리를 잡아준다.
+            val resolvedParentId =
+                parentId ?: localDataSource.getResourceByPath(parentPath)?.id
+
+            val resource = targetFile.toResource(
+                parentId = resolvedParentId,
+                mimeType = targetFile.extension
+                    .lowercase()
+                    .takeIf { it.isNotEmpty() && !isDirectory }
+                    ?.let(mimeTypeProvider::getMimeType)
+            )
+
+            resource.copy(id = localDataSource.insertResource(resource))
         }
     }
 
@@ -339,16 +354,22 @@ class ResourceRepositoryImpl @Inject constructor(
 
                 val copiedResource =
                     targetFile.toResource(
-                        parentId = targetParentId
+                        parentId = targetParentId,
+                        mimeType = targetFile.extension
+                            .lowercase()
+                            .takeIf { it.isNotEmpty() && !targetFile.isDirectory }
+                            ?.let(mimeTypeProvider::getMimeType)
                     )
 
-                localDataSource.insertResource(copiedResource)
+                // 삽입이 돌려주는 id 를 반드시 받아야 한다. toResource 는 id 를 0 으로 두므로,
+                // 이걸 놓치면 복사한 폴더의 자식들이 parentId=0 으로 들어가 어디에도 안 보인다.
+                val copiedId = localDataSource.insertResource(copiedResource)
 
                 if (targetFile.isDirectory) {
 
                     insertDirectoryChildrenRecursively(
                         directory = targetFile,
-                        parentId = copiedResource.id
+                        parentId = copiedId
                     )
                 }
             }

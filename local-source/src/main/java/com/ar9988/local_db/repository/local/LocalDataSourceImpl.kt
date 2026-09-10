@@ -1,5 +1,6 @@
 package com.ar9988.local_db.repository.local
 
+import com.ar9988.domain.model.FileNameRow
 import androidx.room.withTransaction
 import com.ar9988.data.repository.local.LocalDataSource
 import com.ar9988.domain.model.CategoryTagGroupModel
@@ -48,6 +49,14 @@ class LocalDataSourceImpl(
         return resourceDao.getResourcesInFolder(parentId).map { entities ->
             entities.map { it.toDomain() }
         }
+    }
+
+    override suspend fun getAllDirectories(): List<Resource> {
+        return resourceDao.getAllDirectories().map { it.toDomain() }
+    }
+
+    override suspend fun getAllFileNames(): List<FileNameRow> {
+        return resourceDao.getAllFileNames().map { FileNameRow(it.id, it.name) }
     }
 
     override suspend fun getResourcesInFolderOnce(parentId: Long?): List<Resource> {

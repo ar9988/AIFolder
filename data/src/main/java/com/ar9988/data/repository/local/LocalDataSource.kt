@@ -2,6 +2,7 @@ package com.ar9988.data.repository.local
 
 import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.domain.model.DateRange
+import com.ar9988.domain.model.FileNameRow
 import com.ar9988.domain.model.Resource
 import com.ar9988.domain.model.ResourceTagCrossRefModel
 import com.ar9988.domain.model.Tag
@@ -15,6 +16,8 @@ interface LocalDataSource {
     fun getResourcesByMimeType(pattern: String) : Flow<List<Resource>>
     fun getResourcesByExtensions(extensions: List<String>) : Flow<List<Resource>>
     suspend fun getResourcesInFolderOnce(parentId: Long?): List<Resource>
+    suspend fun getAllFileNames(): List<FileNameRow>
+    suspend fun getAllDirectories(): List<Resource>
     suspend fun insertResource(resource: Resource) : Long
     suspend fun addTagToResource(resourceId: Long, tagId: Long)
     suspend fun insertAll(resources: List<Resource>)

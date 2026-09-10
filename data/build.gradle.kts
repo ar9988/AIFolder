@@ -8,6 +8,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(project(":domain"))
     implementation(libs.kotlinx.coroutines.core.v1xx)
+
+    testImplementation(libs.junit)
 }
 
 java {

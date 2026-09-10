@@ -12,6 +12,7 @@ import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.local_db.entity.ResourceEntity
 import com.ar9988.local_db.entity.ResourceTagCrossRef
 import com.ar9988.local_db.entity.ResourceWithTags
+import com.ar9988.local_db.entity.FileNameProjection
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -27,6 +28,23 @@ interface ResourceDao {
     @Transaction
     @Query("SELECT * FROM resource WHERE parentId = :parentId")
     fun getResourcesInFolderOnce(parentId: Long?): List<ResourceEntity>
+
+    /**
+     * 폴더 트리 전체.
+     *
+     * 목록 읽기를 건너뛴 폴더에서도 하위 폴더로는 계속 내려가야 하는데,
+     * 그때마다 조회하면 폴더 수만큼 왕복이 생긴다. 한 번에 받아 메모리에서 훑는다.
+     * 파일은 제외하므로 수천 행 수준이다.
+     */
+    @Query("SELECT * FROM resource WHERE isDirectory = 1")
+    suspend fun getAllDirectories(): List<ResourceEntity>
+
+    /**
+     * 시작 태그 제안용. 이름만 필요하므로 태그까지 딸려오는 조회를 쓰지 않는다.
+     * 라이브러리 전체를 훑기 때문에 컬럼 두 개로 줄이는 차이가 크다.
+     */
+    @Query("SELECT id, name FROM resource WHERE isDirectory = 0")
+    suspend fun getAllFileNames(): List<FileNameProjection>
 
     // 2. 특정 태그가 달린 모든 리소스 검색
     @Transaction

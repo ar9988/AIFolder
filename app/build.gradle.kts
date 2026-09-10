@@ -41,9 +41,46 @@ android {
         ndk {
             debugSymbolLevel = "FULL"
         }
+
+        /*
+         * 스캔 프로파일 로그 스위치.
+         *
+         * 어떤 빌드 타입에서도 켤 수 있다. 특히 릴리스에서 재야 의미가 있는데,
+         * 디버그 빌드는 LeakCanary 가 강제 GC 를 돌리고 ART 최적화도 일부 꺼져 있어서
+         * 스캔처럼 할당이 많은 작업의 시간을 크게 부풀리기 때문이다.
+         *
+         *   ./gradlew :app:assembleRelease -PscanProfiling=true
+         *   adb logcat -s ScanProfile
+         *
+         * 기본값이 false 라 실수로 켜진 채 배포될 일은 없다.
+         * 또한 상수이므로, 꺼져 있으면 R8 이 로그 호출 자체를 지운다.
+         */
+        buildConfigField(
+            "boolean",
+            "SCAN_PROFILING",
+            (project.findProperty("scanProfiling") as String? ?: "false")
+        )
+
+        /*
+         * 스캔 시 한 폴더 안의 파일을 동시에 몇 개까지 처리할지.
+         *
+         * 기기·저장장치마다 최적값이 달라 실측으로만 정할 수 있어서 밖으로 뺐다.
+         *
+         *   ./gradlew :app:assembleRelease -PscanParallelism=2
+         */
+        buildConfigField(
+            "int",
+            "SCAN_PARALLELISM",
+            (project.findProperty("scanParallelism") as String? ?: "4")
+        )
     }
 
     buildTypes {
+        debug {
+            // 디버그에서는 늘 켜 둔다. 다만 이 숫자로 성능을 판단하면 안 된다 — 위 주석 참고.
+            buildConfigField("boolean", "SCAN_PROFILING", "true")
+        }
+
         release {
             isMinifyEnabled = true
             signingConfig = signingConfigs.getByName("release")
