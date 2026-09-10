@@ -1,10 +1,13 @@
 package com.ar9988.tagfilemanager.feature.tag.component
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.ar9988.tagfilemanager.R
 import com.ar9988.tagfilemanager.feature.tag.TagsIntent
 import com.ar9988.tagfilemanager.feature.tag.TagsState
 
@@ -13,22 +16,43 @@ fun DeleteTagConfirmDialog(
     state: TagsState,
     onIntent: (TagsIntent) -> Unit,
 ) {
+    val label = state.selectedTagOrNull()?.name
+        ?: pluralStringResource(
+            R.plurals.selection_item_count,
+            state.selectedTagIds.size,
+            state.selectedTagIds.size
+        )
+
     AlertDialog(
         onDismissRequest = { onIntent(TagsIntent.DismissDialog) },
-        title = { Text(text = "태그 삭제") },
-        text = { Text(text = "${state.selectionLabel} 을 삭제하시겠습니까?\n 이 작업은 취소할 수 없습니다.") },
+        shape = MaterialTheme.shapes.extraLarge,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        title = {
+            Text(
+                text = stringResource(R.string.tag_delete_title),
+                style = MaterialTheme.typography.titleMedium
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.tag_delete_message, label),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
         confirmButton = {
-            TextButton(
-                onClick = { onIntent(TagsIntent.ConfirmDelete) }
-            ) {
-                Text(text = "삭제", color = Color.Red)
+            TextButton(onClick = { onIntent(TagsIntent.ConfirmDelete) }) {
+                Text(
+                    text = stringResource(R.string.action_delete),
+                    color = MaterialTheme.colorScheme.error
+                )
             }
         },
         dismissButton = {
-            TextButton(
-                onClick = { onIntent(TagsIntent.DismissDialog) }
-            ) {
-                Text(text = "취소",color = Color.Black)
+            TextButton(onClick = { onIntent(TagsIntent.DismissDialog) }) {
+                Text(
+                    text = stringResource(R.string.action_cancel),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     )

@@ -2,840 +2,566 @@ package com.ar9988.tagfilemanager.feature.file
 
 import androidx.compose.ui.text.input.TextFieldValue
 import com.ar9988.domain.model.AppInfo
-import com.ar9988.domain.model.FileCategory
-import com.ar9988.domain.model.Resource
+import com.ar9988.domain.model.CategoryTagGroupModel
+import com.ar9988.domain.model.FileSortType
+import com.ar9988.domain.model.StarterTagSuggestion
 import com.ar9988.domain.model.TagRecommendResult
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 import com.ar9988.tagfilemanager.feature.common.model.TagUiModel
 import com.ar9988.tagfilemanager.feature.file.model.FileMode
 import com.ar9988.tagfilemanager.feature.file.model.FileOverlay
-import com.ar9988.domain.model.FileSortType
 import com.ar9988.tagfilemanager.feature.file.model.NavigationEntry
-import com.ar9988.tagfilemanager.feature.file.model.SelectionState
 import com.ar9988.tagfilemanager.feature.file.model.StorageUiModel
+import com.ar9988.tagfilemanager.feature.file.model.TagSelectionState
 import com.ar9988.tagfilemanager.feature.file.model.ViewMode
 import com.ar9988.tagfilemanager.service.model.ScanRequestType
 
+/**
+ * 상태 전이는 전부 여기서 일어난다.
+ *
+ * [reduce] 는 순수 함수다. 안드로이드도, 코루틴도, 유즈케이스도 부르지 않는다.
+ * 덕분에 로봇 없이 단위 테스트로 뒤로가기 스택이나 이동 모드를 검증할 수 있다.
+ *
+ * 비동기 결과(파일 목록 도착, 경로 이동 완료 등)는 [reduce] 로 들어올 수 없으므로
+ * 아래쪽 "결과 리듀서" 로 따로 둔다. 그쪽도 마찬가지로 순수하다.
+ */
 object FilesReducer {
-    fun reduceNavigate(
-        currentState: FilesState,
+
+    // ────────────────────────────── 인텐트 ──────────────────────────────
+
+    fun reduce(state: FilesState, intent: FilesIntent): FilesState = when (intent) {
+
+        // ── 탐색 ──
+        is FilesIntent.Back -> back(state)
+
+        // 실제 이동은 경로 조회가 끝난 뒤 navigated() 에서 마무리된다.
+        // 여기서는 폴더를 떠나며 선택만 정리한다.
+        is FilesIntent.NavigateTo,
+        is FilesIntent.NavigateToParent,
+        is FilesIntent.OpenContainingFolder -> leavingFolder(state)
+
+        is FilesIntent.FilterByCategory -> state.copy(
+            nav = state.pushNav(ViewMode.DASHBOARD).copy(
+                viewMode = ViewMode.CATEGORY_TAG_GROUP,
+                selectedCategory = intent.category
+            )
+        )
+
+        is FilesIntent.ClearFilter -> state.copy(
+            nav = state.nav.copy(
+                currentPath = "",
+                currentFolderId = null,
+                selectedCategory = null
+            )
+        )
+
+        is FilesIntent.SelectCategoryTag -> state.copy(
+            nav = state.pushNav(ViewMode.CATEGORY_TAG_GROUP).copy(
+                categorySelectedTagId = intent.tagId,
+                viewMode = ViewMode.CATEGORY_TAG_FILES
+            )
+        )
+
+        // ── 목록 ──
+        is FilesIntent.TriggerScan -> state
+
+        is FilesIntent.ToggleGridView -> state.copy(
+            content = state.content.copy(isGridView = !state.content.isGridView)
+        )
+
+        is FilesIntent.ToggleSortDropdown -> state.copy(
+            content = state.content.copy(isSortMenuVisible = !state.content.isSortMenuVisible)
+        )
+
+        is FilesIntent.ToggleSortOrder -> {
+            val ascending = !state.content.isAscending
+            state.copy(
+                content = state.content.copy(
+                    isAscending = ascending,
+                    files = state.content.sorted(ascending = ascending)
+                )
+            )
+        }
+
+        is FilesIntent.ChangeSortType -> state.copy(
+            content = state.content.copy(
+                sortType = intent.sortType,
+                files = state.content.sorted(sortType = intent.sortType)
+            )
+        )
+
+        is FilesIntent.SaveScrollPosition -> state.copy(
+            content = state.content.copy(
+                scrollPositions = state.content.scrollPositions +
+                        (intent.scrollKey to (intent.index to intent.offset))
+            )
+        )
+
+        // ── 선택 ──
+        is FilesIntent.ClickResource ->
+            if (state.selection.isActive && state.nav.fileMode != FileMode.Move) {
+                state.copy(selection = state.selection.toggle(intent.resource.id))
+            } else {
+                state
+            }
+
+        is FilesIntent.LongClickResource -> state.copy(
+            selection = state.selection.copy(ids = state.selection.ids + intent.resource.id)
+        )
+
+        is FilesIntent.ToggleSelection ->
+            if (state.nav.fileMode == FileMode.Move) state
+            else state.copy(selection = state.selection.toggle(intent.resource.id))
+
+        is FilesIntent.ShowFileDetail -> state.copy(
+            selection = state.selection.copy(ids = setOf(intent.resource.id))
+        )
+
+        is FilesIntent.ClearSelection -> state.copy(selection = state.selection.cleared())
+
+        is FilesIntent.SelectAll -> state.copy(
+            selection = state.selection.copy(
+                ids = state.content.files.filterNot { it.isParent }.map { it.id }.toSet()
+            )
+        )
+
+        // ── 파일 열기 ──
+        is FilesIntent.FileOpen -> state
+        is FilesIntent.SelectDefaultApp -> state.copy(overlay = null)
+        is FilesIntent.CloseImageViewer -> state.copy(overlay = null)
+
+        // ── 파일 조작 ──
+        is FilesIntent.ShowAddButton -> state.copy(overlay = FileOverlay.Add)
+
+        is FilesIntent.ShowRenameDialog ->
+            state.singleSelectedFile
+                ?.let { state.copy(overlay = FileOverlay.Rename(it)) }
+                ?: state
+
+        is FilesIntent.ShowDeleteConfirmDialog ->
+            state.withTargetOverlay(FileOverlay::Delete)
+
+        is FilesIntent.ShowCopyDialog ->
+            state.withTargetOverlay(FileOverlay::Copy)
+
+        is FilesIntent.ShowExcludeDialog ->
+            state.withTargetOverlay(FileOverlay::Exclude)
+
+        is FilesIntent.ShowMoveDialog ->
+            if (state.selection.moveTargets.isEmpty()) state
+            else state.copy(overlay = FileOverlay.Move(state.selection.moveTargets))
+
+        // 확인만 하는 다이얼로그는 누른 즉시 닫는다.
+        // 실제 작업은 부수효과로 이어지고 결과는 토스트로 알린다.
+        is FilesIntent.ConfirmDelete,
+        is FilesIntent.ConfirmCopy,
+        is FilesIntent.ConfirmExclude -> state.finishOperation()
+
+        // 이름을 입력받는 다이얼로그는 여기서 닫지 않는다.
+        // 이미 있는 이름이거나 쓸 수 없는 문자가 섞이면 그 자리에서 고칠 수 있어야 한다.
+        // 성공했을 때만 ViewModel 이 operationSucceeded() 로 닫는다.
+        is FilesIntent.ConfirmAdd,
+        is FilesIntent.ConfirmRename -> state
+
+        is FilesIntent.ConfirmMove -> state.finishOperation().copy(
+            selection = state.selection.cleared()
+        )
+
+        is FilesIntent.StartMoveOrCopy -> state.copy(
+            nav = state.nav.copy(fileMode = FileMode.Move),
+            selection = state.selection.copy(moveTargets = state.selectedFiles),
+            overlay = null
+        )
+
+        is FilesIntent.CancelMove -> state.finishOperation()
+
+        is FilesIntent.DismissDialog -> state.copy(overlay = null)
+
+        // ── 검색 ──
+        is FilesIntent.OpenSearch -> state.copy(
+            nav = state.nav.copy(fileMode = FileMode.Search),
+            search = SearchState(),
+            tagging = state.tagging.copy(statusMap = emptyMap())
+        )
+
+        is FilesIntent.ConfirmSearch -> state.copy(
+            nav = state.pushNav().copy(fileMode = FileMode.SearchResult)
+        )
+
+        is FilesIntent.UpdateFileSearchQuery -> state.copy(
+            search = state.search.withQuery(intent.query, state.tagging.allTags.values)
+        )
+
+        is FilesIntent.AddActiveTag -> state.copy(
+            search = state.search.copy(
+                activeTagIds = state.search.activeTagIds + intent.tag.id,
+                query = TextFieldValue(""),
+                suggestions = emptyList()
+            )
+        )
+
+        is FilesIntent.RemoveActiveTag -> state.copy(
+            search = state.search.copy(activeTagIds = state.search.activeTagIds - intent.tag.id)
+        )
+
+        is FilesIntent.UpdateSearchTag -> state.copy(
+            nav = state.pushNav().copy(
+                viewMode = ViewMode.LIST,
+                fileMode = FileMode.SearchResult
+            ),
+            search = state.search.copy(activeTagIds = setOf(intent.tagId))
+        )
+
+        // ── 태그 편집 ──
+        is FilesIntent.ShowTagActionSheet -> showTagSheet(state)
+
+        is FilesIntent.HideTagActionSheet,
+        is FilesIntent.ApplyTagChanges -> state.finishOperation().copy(
+            tagging = state.tagging.copy(
+                attachedTagIds = emptySet(),
+                statusMap = emptyMap(),
+                sheetQuery = "",
+                sheetSuggestions = emptyList()
+            )
+        )
+
+        is FilesIntent.UpdateTagSheetQuery -> state.copy(
+            tagging = state.tagging.withSheetQuery(intent.query)
+        )
+
+        is FilesIntent.CreateAndAddTag -> state.copy(
+            tagging = state.tagging.copy(isCreatingTag = true, sheetQuery = "")
+        )
+
+        is FilesIntent.AddTag -> state.copy(tagging = state.tagging.attach(intent.tag))
+
+        is FilesIntent.ToggleTagSelection -> state.copy(
+            tagging = state.tagging.copy(
+                statusMap = state.tagging.statusMap + (intent.tag.id to intent.nextState)
+            )
+        )
+
+        is FilesIntent.RequestAiTagRecommend -> state.copy(
+            tagging = state.tagging.copy(aiRequested = true, isAiRecommending = true)
+        )
+
+        // ── 시작 태그 제안 ──
+        is FilesIntent.ToggleStarterTag -> state.copy(
+            starterTags = state.starterTags.copy(
+                selectedNames = state.starterTags.selectedNames.let {
+                    if (intent.name in it) it - intent.name else it + intent.name
+                }
+            )
+        )
+
+        is FilesIntent.CreateStarterTags -> state.copy(
+            starterTags = state.starterTags.copy(isCreating = true)
+        )
+
+        is FilesIntent.DismissStarterTags -> state.copy(starterTags = StarterTagsState())
+    }
+
+    // ───────────────────────────── 결과 리듀서 ─────────────────────────────
+
+    /** 경로 조회가 끝나 실제로 폴더에 들어갔을 때. */
+    fun navigated(
+        state: FilesState,
         path: String,
-        resource: Resource?,
+        folderId: Long?,
         preserveCurrentState: Boolean
     ): FilesState {
-        val newStack =
-            if (
-                preserveCurrentState &&
-                currentState.viewMode != ViewMode.DASHBOARD
-            ) {
-                currentState.navigationStack + NavigationEntry(
-                    path = currentState.currentPath,
-                    folderId = currentState.currentFolderId,
-                    category = currentState.selectedCategory,
-                    fileMode = currentState.fileMode,
-                    viewMode = currentState.viewMode,
-                    categorySelectedTagId = currentState.categorySelectedTagId,
-                    activeTags = currentState.activeTags,
-                    searchQuery = currentState.searchQuery,
-                )
+        val stack =
+            if (preserveCurrentState && state.nav.viewMode != ViewMode.DASHBOARD) {
+                state.pushNav().stack
             } else {
-                currentState.navigationStack
+                state.nav.stack
             }
 
+        // 검색 결과에서 폴더로 들어가면 검색 모드는 끝난다. 이동 모드는 유지된다.
         val nextFileMode =
-            when (currentState.fileMode) {
-
-                FileMode.SearchResult ->
-                    FileMode.Normal
-
-                FileMode.Move ->
-                    FileMode.Move
-
-                else ->
-                    FileMode.Normal
-            }
-
-        return currentState.copy(
-            navigationStack = newStack,
-            currentPath = path,
-            currentFolderId = resource?.id,
-            viewMode = ViewMode.LIST,
-            fileMode = nextFileMode,
-            selectedCategory = null
-        )
-    }
-
-    fun reduceCategoryFilter(
-        currentState: FilesState,
-        category: FileCategory
-    ): FilesState {
-        val newStack = currentState.navigationStack + NavigationEntry(
-            path = currentState.currentPath,
-            folderId = currentState.currentFolderId,
-            category = currentState.selectedCategory,
-            fileMode = currentState.fileMode,
-            activeTags = currentState.activeTags,
-            searchQuery = currentState.searchQuery,
-            viewMode = ViewMode.DASHBOARD
-        )
-        return currentState.copy(
-            navigationStack = newStack,
-            viewMode = ViewMode.CATEGORY_TAG_GROUP,
-            selectedCategory = category,
-        )
-    }
-
-    fun reduceClearFilter(
-        currentState: FilesState
-    ): FilesState {
-        return currentState.copy(
-            currentPath = "",
-            currentFolderId = null,
-            selectedCategory = null,
-        )
-    }
-
-    fun reduceShowDeleteConfirmDialog(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileOverlay = FileOverlay.DeleteDialog,
-        )
-    }
-
-    fun reduceShowRenameDialog(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileOverlay = FileOverlay.RenameDialog,
-        )
-    }
-
-    fun reduceClearRenameDialog(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileOverlay = null
-        )
-    }
-
-    fun reduceObserveFiles(
-        currentState: FilesState,
-        resourceList: List<FileItemUiModel>
-    ): FilesState {
-        val tempState = currentState.copy(files = resourceList)
-        val sortedList = tempState.sortedFiles()
-        return currentState.copy(
-            files = sortedList,
-        )
-    }
-
-    fun reduceShowAddButton(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileOverlay = FileOverlay.AddDialog,
-        )
-    }
-
-    fun reduceDismissDialog(
-        currentState: FilesState
-    ): FilesState {
-        return currentState.copy(
-            fileOverlay = null,
-            appSelectorList = emptyList(),
-            targetFilePathForOpen = null
-        )
-    }
-
-    fun reduceShowMoveDialog(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileOverlay = FileOverlay.MoveDialog,
-        )
-    }
-
-    fun reduceUpdateQuery(
-        currentState: FilesState,
-        query: String
-    ): FilesState {
-
-        val allTagsList =
-            currentState.allTags.values
-
-        val filteredTags =
-            if (query.isEmpty()) {
-                emptyList()
-            } else {
-                allTagsList
-                    .filter {
-                        it.name.contains(
-                            query,
-                            ignoreCase = true
-                        )
-                    }
-                    .filterNot {
-                        it.id in currentState.activeTags
-                    }
-            }
-
-        val isExactMatch =
-            allTagsList.any {
-                it.name.equals(
-                    query,
-                    ignoreCase = true
-                )
-            }
-
-        return currentState.copy(
-            tagSearchQuery = query,
-            filteredTags = filteredTags,
-            isExactMatch = isExactMatch
-        )
-    }
-
-    fun reduceOpenSearch(
-        currentState: FilesState
-    ): FilesState {
-
-        return currentState.copy(
-            fileMode = FileMode.Search,
-            searchQuery = TextFieldValue(""),
-            activeTags = emptySet(),
-            tagStatusMap = emptyMap()
-        )
-    }
-
-    fun reduceConfirmSearch(
-        currentState: FilesState
-    ): FilesState {
-
-        val newStack =
-            currentState.navigationStack + NavigationEntry(
-                path = currentState.currentPath,
-                folderId = currentState.currentFolderId,
-                category = currentState.selectedCategory,
-                fileMode = currentState.fileMode,
-                activeTags = currentState.activeTags,
-                searchQuery = currentState.searchQuery,
-                viewMode = currentState.viewMode
-            )
-
-        return currentState.copy(
-            navigationStack = newStack,
-            fileMode = FileMode.SearchResult
-        )
-    }
-
-
-    fun reduceObserveTags(
-        currentState: FilesState,
-        tags: List<TagUiModel>
-    ): FilesState {
-        return currentState.copy(
-            allTags = tags.associateBy { it.id }
-        )
-    }
-
-    fun reduceToggleTag(
-        currentState: FilesState,
-        tag: TagUiModel,
-        nextState: SelectionState
-    ): FilesState {
-        val newTagStatusMap =
-            currentState.tagStatusMap.toMutableMap().apply {
-                put(tag.id, nextState)
-            }
-
-        return currentState.copy(
-            tagStatusMap = newTagStatusMap,
-        )
-    }
-
-    fun reduceCreateAndAddTag(
-        currentState: FilesState,
-        newTag: TagUiModel
-    ): FilesState {
-
-        val newActiveTags =
-            currentState.activeTags.toMutableSet().apply {
-                add(newTag.id)
-            }
-
-        val newTagStatusMap =
-            currentState.tagStatusMap.toMutableMap().apply {
-                put(newTag.id, SelectionState.ALL)
-            }
-
-        return currentState.copy(
-            activeTags = newActiveTags,
-            tagStatusMap = newTagStatusMap,
-            tagSearchQuery = "",
-            isLoading = false
-        )
-    }
-
-    fun reduceAddActiveTag(
-        currentState: FilesState,
-        tag: TagUiModel
-    ): FilesState {
-
-        return currentState.copy(
-            activeTags = currentState.activeTags + tag.id,
-            searchQuery = TextFieldValue("")
-        )
-    }
-
-    fun reduceRemoveActiveTag(
-        currentState: FilesState,
-        tag: TagUiModel
-    ): FilesState {
-
-        return currentState.copy(
-            activeTags = currentState.activeTags - tag.id
-        )
-    }
-
-    fun reduceUpdateSearchTag(
-        currentState: FilesState,
-        tagId: Long
-    ): FilesState {
-        val newStack =
-            currentState.navigationStack + NavigationEntry(
-                path = currentState.currentPath,
-                folderId = currentState.currentFolderId,
-                category = currentState.selectedCategory,
-                fileMode = currentState.fileMode,
-                activeTags = currentState.activeTags,
-                searchQuery = currentState.searchQuery,
-                viewMode = currentState.viewMode
-            )
-
-        return currentState.copy(
-            navigationStack = newStack,
-            viewMode = ViewMode.LIST,
-            fileMode = FileMode.SearchResult,
-            activeTags = setOf(tagId)
-        )
-    }
-
-    fun reduceShowExcludeDialog(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileOverlay = FileOverlay.ExcludeDialog,
-        )
-    }
-
-    fun reduceObserveScan(
-        currentState: FilesState,
-        isScanning: Boolean,
-        currentScanType: ScanRequestType?
-    ): FilesState {
-        return currentState.copy(
-            isScanning = isScanning,
-            currentScanRequestType = currentScanType
-        )
-    }
-
-    fun reduceUpdateStorageInfo(
-        it: FilesState,
-        storageList: MutableList<StorageUiModel>
-    ): FilesState {
-        return it.copy(
-            storageList = storageList,
-            storageRootPaths = storageList.map { storageUiModel -> storageUiModel.path }.toSet()
-        )
-    }
-
-    fun reduceRecommendResult(it: FilesState, result: TagRecommendResult): FilesState {
-        return it.copy(
-            isAiTagRecommending = false,
-            tagRecommendResult = result,
-        )
-    }
-
-    fun reduceRecommentRequest(it: FilesState): FilesState {
-        return it.copy(
-            aiTagRecommendRequested = true,
-            isAiTagRecommending = true
-        )
-    }
-
-    fun reduceStartCreateTag(it: FilesState): FilesState {
-        return it.copy(
-            isLoading = true,
-            tagSearchQuery = "",
-        )
-    }
-
-    fun reduceFileSearchQuery(currentState: FilesState, query: TextFieldValue): FilesState {
-        val allTagsList =
-            currentState.allTags.values
-
-        val filteredTags =
-            if (query.text.isEmpty()) {
-                emptyList()
-            } else {
-                allTagsList
-                    .filter {
-                        it.name.contains(
-                            query.text,
-                            ignoreCase = true
-                        )
-                    }
-                    .filterNot {
-                        it.id in currentState.activeTags
-                    }
-            }
-
-        val isExactMatch =
-            allTagsList.any {
-                it.name.equals(
-                    query.text,
-                    ignoreCase = true
-                )
-            }
-
-        return currentState.copy(
-            searchQuery = query,
-            filteredTags = filteredTags,
-            isExactMatch = isExactMatch
-        )
-    }
-
-    fun reduceToggleGridView(it: FilesState): FilesState {
-        return it.copy(
-            isGridView = !it.isGridView
-        )
-    }
-
-    fun reduceToggleSortOrder(
-        state: FilesState
-    ): FilesState {
-        val ascending =
-            !state.isAscending
+            if (state.nav.fileMode == FileMode.Move) FileMode.Move else FileMode.Normal
 
         return state.copy(
-            isAscending = ascending,
-            files = state.sortedFiles(
-                ascending = ascending
+            nav = state.nav.copy(
+                stack = stack,
+                currentPath = path,
+                currentFolderId = folderId,
+                viewMode = ViewMode.LIST,
+                fileMode = nextFileMode,
+                selectedCategory = null
             )
         )
     }
 
+    fun filesLoaded(state: FilesState, files: List<FileItemUiModel>): FilesState {
+        val loaded = state.content.copy(files = files)
+        return state.copy(content = loaded.copy(files = loaded.sorted()))
+    }
 
-    fun reduceChangeSortType(
+    fun tagsLoaded(state: FilesState, tags: List<TagUiModel>): FilesState =
+        state.copy(tagging = state.tagging.copy(allTags = tags.associateBy { it.id }))
+
+    fun categoryTagGroupsLoaded(
         state: FilesState,
-        sortType: FileSortType
-    ): FilesState {
-        return state.copy(
-            fileSortType = sortType,
-            files = state.sortedFiles(
-                sortType = sortType
-            )
-        )
-    }
+        groups: List<CategoryTagGroupModel>
+    ): FilesState = state.copy(content = state.content.copy(categoryTagGroups = groups))
 
-    fun reduceToggleDropdown(it: FilesState): FilesState {
-        return it.copy(
-            isSortDropdownVisible = !it.isSortDropdownVisible
-        )
-    }
+    fun storagesLoaded(state: FilesState, storages: List<StorageUiModel>): FilesState =
+        state.copy(nav = state.nav.copy(storages = storages))
 
+    fun scanChanged(
+        state: FilesState,
+        isScanning: Boolean,
+        requestType: ScanRequestType?
+    ): FilesState = state.copy(
+        scan = state.scan.copy(isScanning = isScanning, requestType = requestType)
+    )
 
-    private fun FilesState.sortedFiles(
-        sortType: FileSortType = fileSortType,
-        ascending: Boolean = isAscending
-    ): List<FileItemUiModel> {
+    fun sortSettingsLoaded(
+        state: FilesState,
+        sortType: FileSortType,
+        isAscending: Boolean,
+        dragDownEnabled: Boolean
+    ): FilesState = state.copy(
+        content = state.content.copy(sortType = sortType, isAscending = isAscending),
+        scan = state.scan.copy(dragDownEnabled = dragDownEnabled)
+    )
 
-        val parentPointer =
-            files.filter { it.isParent }
-
-        val resources =
-            files.filterNot { it.isParent }
-
-        val secondaryComparator: Comparator<FileItemUiModel> =
-            when (sortType) {
-                FileSortType.Name -> compareBy<FileItemUiModel> { it.name.lowercase() }
-                FileSortType.Size -> compareBy<FileItemUiModel> { it.size }
-                FileSortType.Recent -> compareBy<FileItemUiModel> { it.lastModified }
-            }.let { comparator ->
-                if (ascending) comparator else comparator.reversed()
-            }
-
-        val fullComparator: Comparator<FileItemUiModel> =
-            compareByDescending<FileItemUiModel> { it.isDirectory }
-                .then(secondaryComparator)
-
-        val sorted = resources.sortedWith(fullComparator)
-
-        return parentPointer + sorted
-    }
-
-    fun reduceSelectCategoryTag(state: FilesState, tagId: Long): FilesState {
-        val newStack = state.navigationStack + NavigationEntry(
-            path = state.currentPath,
-            folderId = state.currentFolderId,
-            category = state.selectedCategory,
-            fileMode = state.fileMode,
-            activeTags = state.activeTags,
-            searchQuery = state.searchQuery,
-            viewMode = ViewMode.CATEGORY_TAG_GROUP,
-        )
-        return state.copy(
-            navigationStack = newStack,
-            categorySelectedTagId = tagId,
-            viewMode = ViewMode.CATEGORY_TAG_FILES
-        )
-    }
-
-    fun reduceLongClickResource(
-        currentState: FilesState,
-        resource: FileItemUiModel
-    ): FilesState {
-        return currentState.copy(
-            selectedFileIds = currentState.selectedFileIds + resource.id,
-            selectedFiles = currentState.selectedFiles + resource
-        )
-    }
-
-    fun reduceToggleSelection(
-        currentState: FilesState,
-        resource: FileItemUiModel
-    ): FilesState {
-        if (currentState.fileMode == FileMode.Move) return currentState
-
-        return if (resource.id in currentState.selectedFileIds) {
-            currentState.copy(
-                selectedFileIds = currentState.selectedFileIds - resource.id,
-                selectedFiles = currentState.selectedFiles.filter { it.id != resource.id }
-            )
-        } else {
-            currentState.copy(
-                selectedFileIds = currentState.selectedFileIds + resource.id,
-                selectedFiles = currentState.selectedFiles + resource
-            )
-        }
-    }
-
-    fun reduceShowFileDetail(
-        currentState: FilesState,
-        resource: FileItemUiModel
-    ): FilesState {
-        return currentState.copy(
-            selectedFileIds = setOf(resource.id),
-            selectedFiles = listOf(resource)
-        )
-    }
-
-    fun reduceStartMove(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileMode = FileMode.Move,
-            fileOverlay = null,
-            moveTargets = currentState.selectedFiles
-        )
-    }
-
-    fun reduceBack(currentState: FilesState): FilesState {
-        return when {
-            currentState.isImageViewerVisible -> reduceCloseImageViewer(currentState)
-
-            currentState.fileOverlay != null -> {
-                currentState.copy(
-                    fileOverlay = null,
-                    appSelectorList = emptyList(),
-                    targetFilePathForOpen = null
-                )
-            }
-
-            currentState.fileMode == FileMode.Move && currentState.navigationStack.isNotEmpty() -> {
-                val last = currentState.navigationStack.last()
-                val exitingMove = last.fileMode != FileMode.Move
-
-                currentState.copy(
-                    navigationStack = currentState.navigationStack.dropLast(1),
-                    currentPath = last.path,
-                    currentFolderId = last.folderId,
-                    selectedCategory = last.category,
-                    fileMode = last.fileMode,
-                    activeTags = last.activeTags,
-                    searchQuery = last.searchQuery,
-                    viewMode = last.viewMode,
-                    categorySelectedTagId = last.categorySelectedTagId,
-                    moveTargets = if (exitingMove) emptyList() else currentState.moveTargets,
-                    selectedFileIds = if (exitingMove) emptySet() else currentState.selectedFileIds,
-                    selectedFiles = if (exitingMove) emptyList() else currentState.selectedFiles,
-                )
-            }
-
-            currentState.fileMode == FileMode.Move -> {
-                currentState.copy(
-                    fileMode = FileMode.Normal,
-                    moveTargets = emptyList(),
-                    selectedFileIds = emptySet(),
-                    selectedFiles = emptyList()
-                )
-            }
-
-            currentState.isSelectionMode -> {
-                currentState.copy(
-                    selectedFileIds = emptySet(),
-                    selectedFiles = emptyList()
-                )
-            }
-
-            currentState.fileMode == FileMode.Search -> {
-                currentState.copy(
-                    fileMode = FileMode.Normal,
-                    searchQuery = TextFieldValue(""),
-                    activeTags = emptySet()
-                )
-            }
-
-            currentState.navigationStack.isNotEmpty() -> {
-                val last = currentState.navigationStack.last()
-                currentState.copy(
-                    navigationStack = currentState.navigationStack.dropLast(1),
-                    currentPath = last.path,
-                    currentFolderId = last.folderId,
-                    selectedCategory = last.category,
-                    fileMode = last.fileMode,
-                    activeTags = last.activeTags,
-                    searchQuery = last.searchQuery,
-                    viewMode = last.viewMode,
-                    categorySelectedTagId = last.categorySelectedTagId,
-                )
-            }
-
-            else -> {
-                currentState.copy(
-                    navigationStack = emptyList(),
-                    currentFolderId = null,
-                    currentPath = "",
-                    selectedCategory = null,
-                    activeTags = emptySet(),
-                    searchQuery = TextFieldValue(""),
-                    fileMode = FileMode.Normal,
-                    viewMode = ViewMode.DASHBOARD,
-                    categorySelectedTagId = null,
-                    categoryTagGroups = emptyList(),
-                    moveTargets = emptyList(),
-                    selectedFileIds = emptySet(),
-                    selectedFiles = emptyList()
-                )
-            }
-        }
-    }
-
-    fun reduceOpenFolder(currentState: FilesState): FilesState {
-        return currentState.copy(
-            fileOverlay = null,
-            selectedFileIds = if (currentState.fileMode == FileMode.Move) {
-                currentState.selectedFileIds
-            } else {
-                emptySet()
-            },
-            selectedFiles = if (currentState.fileMode == FileMode.Move) {
-                currentState.selectedFiles
-            } else {
-                emptyList()
-            }
-        )
-    }
-
-    fun reduceShowTagActionSheet(currentState: FilesState): FilesState {
-        val targets = currentState.selectedFiles
-        val activeTags = targets
-            .flatMap { it.tags }
-            .distinctBy { it.id }
-            .map(TagUiModel::id)
-
-        val tagStatusMap = activeTags.associateWith { id ->
-            val count = targets.count { res -> res.tags.any { it.id == id } }
-            if (count == targets.size) SelectionState.ALL else SelectionState.SOME
-        }
-
-        return currentState.copy(
-            fileOverlay = FileOverlay.TagActionSheet,
-            tagRecommendResult = null,
-            isAiTagRecommending = false,
-            aiTagRecommendRequested = false,
-            activeTags = activeTags.toSet(),
-            tagStatusMap = tagStatusMap,
-            tagSearchQuery = ""
-        )
-    }
-
-    fun reduceSaveScrollPosition(state: FilesState, key: String, index: Int, offset: Int): FilesState {
-        return state.copy(
-            scrollPositions = state.scrollPositions + (key to (index to offset))
-        )
-    }
-
-    fun reduceShowAppSelectorDialog(
-        currentState: FilesState,
+    fun appsResolved(
+        state: FilesState,
         apps: List<AppInfo>,
-        targetFilePath: String
-    ): FilesState {
-        return currentState.copy(
-            appSelectorList = apps,
-            targetFilePathForOpen = targetFilePath,
-            fileOverlay = FileOverlay.AppSelectorDialog,
-        )
-    }
+        targetPath: String
+    ): FilesState = state.copy(overlay = FileOverlay.AppSelector(apps, targetPath))
 
-    fun reduceSelectDefaultApp(it: FilesState) : FilesState {
-        return it.copy(
-            fileOverlay = null,
-            appSelectorList = emptyList(),
-            targetFilePathForOpen = null
-        )
-    }
-
-    fun reduceShowCopyDialog(it: FilesState): FilesState {
-        return it.copy(
-            fileOverlay = FileOverlay.CopyDialog,
-        )
-    }
-
-    fun reduceOpenImageViewer(currentState: FilesState, resource: FileItemUiModel): FilesState {
-        val imageFiles = currentState.files.filter {
+    /** 이미지 파일을 눌렀을 때. 같은 폴더의 이미지들을 함께 넘겨 좌우로 넘길 수 있게 한다. */
+    fun imageViewerOpened(state: FilesState, resource: FileItemUiModel): FilesState {
+        val images = state.content.files.filter {
             !it.isParent && it.mimeType?.startsWith("image/") == true
         }
-        val initialIndex = imageFiles.indexOfFirst { it.id == resource.id }.coerceAtLeast(0)
-
-        return currentState.copy(
-            isImageViewerVisible = true,
-            imageViewerFiles = imageFiles,
-            imageViewerInitialIndex = initialIndex
-        )
+        val index = images.indexOfFirst { it.id == resource.id }.coerceAtLeast(0)
+        return state.copy(overlay = FileOverlay.ImageViewer(images, index))
     }
 
-    fun reduceCloseImageViewer(currentState: FilesState): FilesState {
-        return currentState.copy(
-            isImageViewerVisible = false,
-            imageViewerFiles = emptyList(),
-            imageViewerInitialIndex = 0
+    /** 제안이 도착했을 때. 전부 켠 상태로 시작한다 — 끄는 것이 켜는 것보다 쉽다. */
+    fun starterTagsLoaded(
+        state: FilesState,
+        suggestions: List<StarterTagSuggestion>
+    ): FilesState = state.copy(
+        starterTags = StarterTagsState(
+            suggestions = suggestions,
+            selectedNames = suggestions.map { it.name }.toSet()
         )
-    }
+    )
 
-    fun reduceConfirmDelete(currentState: FilesState): FilesState {
-        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
-            FileMode.SearchResult
-        } else {
-            FileMode.Normal
+    /** 만들기가 끝났을 때. 카드는 사라지고 태그 목록이 그 자리를 대신한다. */
+    fun starterTagsCreated(state: FilesState): FilesState =
+        state.copy(starterTags = StarterTagsState())
+
+    /** 이름 입력 다이얼로그의 작업이 성공했을 때. 실패하면 열린 채로 둔다. */
+    fun operationSucceeded(state: FilesState): FilesState = state.finishOperation()
+
+    fun tagCreated(state: FilesState, tag: TagUiModel): FilesState =
+        state.copy(tagging = state.tagging.attach(tag).copy(isCreatingTag = false))
+
+    fun tagCreateFailed(state: FilesState): FilesState =
+        state.copy(tagging = state.tagging.copy(isCreatingTag = false))
+
+    fun tagRecommendResult(state: FilesState, result: TagRecommendResult): FilesState =
+        state.copy(tagging = state.tagging.copy(isAiRecommending = false, aiResult = result))
+
+    fun tagRecommendFailed(state: FilesState): FilesState =
+        state.copy(tagging = state.tagging.copy(isAiRecommending = false))
+
+    // ────────────────────────────── 내부 ──────────────────────────────
+
+    /**
+     * 뒤로가기.
+     *
+     * 위에서부터 순서대로 "지금 덮여 있는 것" 을 한 겹씩 벗긴다.
+     * 순서가 곧 사용자가 기대하는 취소 순서다.
+     */
+    private fun back(state: FilesState): FilesState = when {
+
+        state.overlay != null -> state.copy(overlay = null)
+
+        state.nav.fileMode == FileMode.Move && state.nav.stack.isNotEmpty() -> {
+            val last = state.nav.stack.last()
+            val leavingMove = last.fileMode != FileMode.Move
+            state.copy(
+                nav = state.nav.popped(last),
+                search = state.search.copy(
+                    query = last.searchQuery,
+                    activeTagIds = last.activeTags
+                ),
+                selection = if (leavingMove) state.selection.cleared() else state.selection
+            )
         }
-        return currentState.copy(
-            fileMode = nextFileMode,
-            fileOverlay = null,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList()
-        )
-    }
 
-    fun reduceRenameSuccess(currentState: FilesState): FilesState {
-        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
-            FileMode.SearchResult
-        } else {
-            FileMode.Normal
+        state.nav.fileMode == FileMode.Move -> state.copy(
+            nav = state.nav.copy(fileMode = FileMode.Normal),
+            selection = state.selection.cleared()
+        )
+
+        state.selection.isActive -> state.copy(selection = state.selection.cleared())
+
+        state.nav.fileMode == FileMode.Search -> state.copy(
+            nav = state.nav.copy(fileMode = FileMode.Normal),
+            search = SearchState()
+        )
+
+        state.nav.stack.isNotEmpty() -> {
+            val last = state.nav.stack.last()
+            state.copy(
+                nav = state.nav.popped(last),
+                search = state.search.copy(
+                    query = last.searchQuery,
+                    activeTagIds = last.activeTags
+                )
+            )
         }
-        return currentState.copy(
-            fileOverlay = null,
-            fileMode = nextFileMode,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList()
+
+        // 더 벗길 것이 없으면 대시보드로 되돌아간다.
+        else -> FilesState(
+            nav = NavState(storages = state.nav.storages),
+            content = ContentState(
+                sortType = state.content.sortType,
+                isAscending = state.content.isAscending,
+                isGridView = state.content.isGridView,
+                scrollPositions = state.content.scrollPositions
+            ),
+            tagging = TaggingState(allTags = state.tagging.allTags),
+            scan = state.scan
         )
     }
 
-    fun reduceConfirmMove(currentState: FilesState): FilesState {
-        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
-            FileMode.SearchResult
+    /** 폴더를 떠날 때. 이동 모드에서는 옮길 대상을 놓치면 안 되므로 선택을 유지한다. */
+    private fun leavingFolder(state: FilesState): FilesState = state.copy(
+        overlay = null,
+        selection = if (state.nav.fileMode == FileMode.Move) {
+            state.selection
         } else {
-            FileMode.Normal
+            state.selection.cleared()
         }
-        return currentState.copy(
-            fileMode = nextFileMode,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList(),
-            moveTargets = emptyList(),
-            fileOverlay = null
-        )
-    }
+    )
 
-    fun reduceHideTagActionSheet(currentState: FilesState): FilesState {
-        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
-            FileMode.SearchResult
-        } else {
-            FileMode.Normal
+    private fun showTagSheet(state: FilesState): FilesState {
+        val targets = state.selectedFiles
+        val attached = targets.flatMap { it.tags }.distinctBy { it.id }.map(TagUiModel::id)
+
+        val statusMap = attached.associateWith { id ->
+            val count = targets.count { file -> file.tags.any { it.id == id } }
+            if (count == targets.size) TagSelectionState.ALL else TagSelectionState.SOME
         }
-        return currentState.copy(
-            fileOverlay = null,
-            fileMode = nextFileMode,
-            selectedTagIds = emptySet(),
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList()
+
+        return state.copy(
+            overlay = FileOverlay.TagSheet,
+            tagging = state.tagging.copy(
+                attachedTagIds = attached.toSet(),
+                statusMap = statusMap,
+                sheetQuery = "",
+                sheetSuggestions = emptyList(),
+                aiResult = null,
+                aiRequested = false,
+                isAiRecommending = false
+            )
         )
     }
 
-    fun reduceCancelMove(currentState: FilesState): FilesState {
-        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
-            FileMode.SearchResult
-        } else {
-            FileMode.Normal
+    /** 대상이 있는 오버레이를 연다. 선택이 비어 있으면 아무것도 하지 않는다. */
+    private fun FilesState.withTargetOverlay(
+        create: (List<FileItemUiModel>) -> FileOverlay
+    ): FilesState {
+        val targets = selectedFiles
+        return if (targets.isEmpty()) this else copy(overlay = create(targets))
+    }
+
+    /** 작업이 끝난 뒤 공통 정리. 검색 결과 화면이었다면 그 상태로 남는다. */
+    private fun FilesState.finishOperation(): FilesState = copy(
+        nav = nav.copy(
+            fileMode = if (nav.fileMode == FileMode.SearchResult) {
+                FileMode.SearchResult
+            } else {
+                FileMode.Normal
+            }
+        ),
+        selection = selection.cleared(),
+        overlay = null
+    )
+
+    /**
+     * 현재 위치를 뒤로가기 스택에 쌓는다.
+     * 검색어와 활성 태그까지 함께 기록해야 뒤로 왔을 때 검색 결과가 되살아난다.
+     * [asViewMode] 를 주면 그 화면으로 되돌아가도록 기록한다.
+     */
+    private fun FilesState.pushNav(asViewMode: ViewMode? = null): NavState = nav.copy(
+        stack = nav.stack + NavigationEntry(
+            path = nav.currentPath,
+            folderId = nav.currentFolderId,
+            category = nav.selectedCategory,
+            fileMode = nav.fileMode,
+            viewMode = asViewMode ?: nav.viewMode,
+            categorySelectedTagId = nav.categorySelectedTagId,
+            activeTags = search.activeTagIds,
+            searchQuery = search.query
+        )
+    )
+
+    private fun NavState.popped(last: NavigationEntry): NavState = copy(
+        stack = stack.dropLast(1),
+        currentPath = last.path,
+        currentFolderId = last.folderId,
+        selectedCategory = last.category,
+        fileMode = last.fileMode,
+        viewMode = last.viewMode,
+        categorySelectedTagId = last.categorySelectedTagId
+    )
+
+    private fun SearchState.withQuery(
+        query: TextFieldValue,
+        allTags: Collection<TagUiModel>
+    ): SearchState = copy(
+        query = query,
+        suggestions = allTags.matching(query.text).filterNot { it.id in activeTagIds },
+        isExactMatch = allTags.any { it.name.equals(query.text, ignoreCase = true) }
+    )
+
+    private fun TaggingState.withSheetQuery(query: String): TaggingState = copy(
+        sheetQuery = query,
+        sheetSuggestions = allTags.values.matching(query).filterNot { it.id in attachedTagIds },
+        isExactMatch = allTags.values.any { it.name.equals(query, ignoreCase = true) }
+    )
+
+    private fun TaggingState.attach(tag: TagUiModel): TaggingState = copy(
+        attachedTagIds = attachedTagIds + tag.id,
+        statusMap = statusMap + (tag.id to TagSelectionState.ALL),
+        sheetQuery = "",
+        sheetSuggestions = emptyList()
+    )
+
+    private fun Collection<TagUiModel>.matching(query: String): List<TagUiModel> =
+        if (query.isEmpty()) emptyList()
+        else filter { it.name.contains(query, ignoreCase = true) }
+
+    /**
+     * 폴더를 먼저, 그 다음 선택한 기준으로 정렬한다.
+     * 상위 폴더 포인터("..")는 언제나 맨 위에 고정한다.
+     */
+    private fun ContentState.sorted(
+        sortType: FileSortType = this.sortType,
+        ascending: Boolean = isAscending
+    ): List<FileItemUiModel> {
+        val parentPointer = files.filter { it.isParent }
+        val rest = files.filterNot { it.isParent }
+
+        val byType: Comparator<FileItemUiModel> = when (sortType) {
+            FileSortType.Name -> compareBy { it.name.lowercase() }
+            FileSortType.Size -> compareBy { it.size }
+            FileSortType.Recent -> compareBy { it.lastModified }
         }
-        return currentState.copy(
-            fileMode = nextFileMode,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList(),
-            fileOverlay = null,
-            moveTargets = emptyList(),
-        )
-    }
 
-    fun reduceConfirmCopy(currentState: FilesState): FilesState {
-        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
-            FileMode.SearchResult
-        } else {
-            FileMode.Normal
-        }
-        return currentState.copy(
-            fileMode = nextFileMode,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList(),
-            fileOverlay = null
-        )
-    }
+        val comparator = compareByDescending<FileItemUiModel> { it.isDirectory }
+            .then(if (ascending) byType else byType.reversed())
 
-    fun reduceConfirmExclude(currentState: FilesState): FilesState {
-        val nextFileMode = if (currentState.fileMode == FileMode.SearchResult) {
-            FileMode.SearchResult
-        } else {
-            FileMode.Normal
-        }
-        return currentState.copy(
-            fileMode = nextFileMode,
-            fileOverlay = null,
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList()
-        )
-    }
-
-    fun reduceClearSelection(currentState: FilesState): FilesState{
-        return currentState.copy(
-            selectedFileIds = emptySet(),
-            selectedFiles = emptyList()
-        )
-    }
-
-    fun reduceToggleSelectAll(currentState: FilesState): FilesState{
-        return currentState.copy(
-            selectedFileIds = currentState.files.map { it.id }.toSet(),
-            selectedFiles = currentState.files
-        )
+        return parentPointer + rest.sortedWith(comparator)
     }
 }

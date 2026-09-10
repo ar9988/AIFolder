@@ -28,6 +28,7 @@ import com.ar9988.tagfilemanager.feature.assistant.component.AssistantMessageIte
 import com.ar9988.tagfilemanager.feature.assistant.component.AssistantTopBar
 import com.ar9988.tagfilemanager.feature.assistant.model.AssistantSortType
 import com.ar9988.tagfilemanager.feature.common.model.SortOrder
+import com.ar9988.tagfilemanager.ui.theme.Spacing
 
 @Composable
 fun AssistantScreen(
@@ -61,7 +62,7 @@ fun AssistantScreen(
                 .fillMaxWidth(),
             contentAlignment = Alignment.TopCenter
         ) {
-            Column(modifier = Modifier.widthIn(max = 640.dp).fillMaxSize()) {
+            Column(modifier = Modifier.widthIn(max = Spacing.contentMaxWidth).fillMaxSize()) {
                 if (state.messages.isEmpty()) {
                     AssistantEmptyState(
                         onSuggestionClick = viewModel::onIntent,

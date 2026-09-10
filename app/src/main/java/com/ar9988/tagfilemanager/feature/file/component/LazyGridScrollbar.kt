@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -182,7 +183,7 @@ fun LazyGridScrollbar(
                 )
                 .align(Alignment.TopEnd)
                 .background(
-                    Color.Gray,
+                    MaterialTheme.colorScheme.outline,
                     RoundedCornerShape(2.dp)
                 )
         )

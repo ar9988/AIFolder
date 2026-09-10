@@ -6,7 +6,9 @@ import com.ar9988.tagfilemanager.feature.assistant.model.AssistantMessage
 import com.ar9988.tagfilemanager.feature.assistant.model.AssistantSortType
 import com.ar9988.tagfilemanager.feature.assistant.model.MessageContent
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
+import com.ar9988.tagfilemanager.R
 import com.ar9988.tagfilemanager.feature.common.model.SortOrder
+import com.ar9988.tagfilemanager.feature.common.model.UiText
 import com.ar9988.tagfilemanager.feature.common.model.toUiModel
 import java.time.Instant
 import java.time.ZoneId
@@ -137,10 +139,12 @@ object AssistantReducer {
             }
         }
 
+        // 표시 문자열이 아니라 실제 값으로 정렬한다.
+        // 예전에는 "9KB"/"1.6MB" 같은 문자열을 사전순으로 비교해서 크기순이 어긋났다.
         val sorted = when (sortType) {
-            AssistantSortType.Recent -> filtered.sortedBy { it.dateText }
-            AssistantSortType.Size -> filtered.sortedBy { it.sizeText }
-            AssistantSortType.Name -> filtered.sortedBy { it.name }
+            AssistantSortType.Recent -> filtered.sortedBy { it.lastModified }
+            AssistantSortType.Size -> filtered.sortedBy { it.size }
+            AssistantSortType.Name -> filtered.sortedBy { it.name.lowercase() }
         }
 
         return if (sortOrder == SortOrder.ASC) sorted else sorted.reversed()
@@ -178,21 +182,22 @@ object AssistantReducer {
             when (result) {
                 is AssistantResult.Success -> {
                     matchedTagIds = result.matchedTags.map { it.id }.toSet()
-                    val description =
-                        buildString {
+                    // 문장을 조각으로 이어붙이면 어순이 다른 언어로 번역되지 않는다.
+                    // 경우의 수마다 문장 전체를 리소스로 두고 고른다.
+                    val tagNames = result.matchedTags.joinToString(", ") { it.name }
+                    val fileCount = result.files.size
+                    val description = when {
+                        result.matchedTags.isNotEmpty() && result.dateRange != null ->
+                            UiText.res(R.string.ai_result_with_tags_in_period, tagNames, fileCount)
 
-                            if (result.matchedTags.isNotEmpty()) {
-                                append(
-                                    "${result.matchedTags.joinToString(", ") { it.name }} 태그로 "
-                                )
-                            }
+                        result.matchedTags.isNotEmpty() ->
+                            UiText.res(R.string.ai_result_with_tags, tagNames, fileCount)
 
-                            if (result.dateRange != null) {
-                                append("해당 기간에서 ")
-                            }
+                        result.dateRange != null ->
+                            UiText.res(R.string.ai_result_in_period, fileCount)
 
-                            append("${result.files.size}개의 파일을 찾았어요.")
-                        }
+                        else -> UiText.plural(R.plurals.ai_result_plain, fileCount)
+                    }
 
                     AssistantMessage(
                         content = MessageContent.FileResult(
@@ -213,18 +218,18 @@ object AssistantReducer {
                 }
 
                 is AssistantResult.Failure -> {
-                    val description =
+                    val description = UiText.res(
                         when (result.reason) {
-
                             SearchFailureReason.NoMatchedTags ->
-                                "관련 태그를 찾지 못했어요."
+                                R.string.ai_result_no_matched_tags
 
                             SearchFailureReason.NoFilesFound ->
-                                "조건에 맞는 파일을 찾지 못했어요."
+                                R.string.ai_result_nothing_found
 
                             is SearchFailureReason.NoFilesWithDate ->
-                                "해당 기간에는 조건에 맞는 파일이 없어요."
+                                R.string.ai_result_nothing_in_period
                         }
+                    )
 
                     AssistantMessage(
                         content = MessageContent.SearchFailure(

@@ -32,11 +32,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.ar9988.tagfilemanager.R
 import com.ar9988.tagfilemanager.feature.tag.TagsIntent
 import com.ar9988.tagfilemanager.feature.tag.TagsState
+import com.ar9988.tagfilemanager.ui.theme.Spacing
 
 @Composable
 fun EditTagBottomSheet(
@@ -49,14 +51,18 @@ fun EditTagBottomSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(24.dp)
+            .padding(Spacing.xl)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Edit Tag", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                text = stringResource(R.string.tag_edit_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             IconButton(onClick = {onIntent(TagsIntent.DismissEdit)}) {
                 Icon(Icons.Default.Close, contentDescription = null)
             }
@@ -64,15 +70,20 @@ fun EditTagBottomSheet(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(text = "TAG NAME", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold)
+        Text(
+            text = stringResource(R.string.dialog_rename_label),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         OutlinedTextField(
             value = state.tempEditName,
             onValueChange = {onIntent(TagsIntent.UpdateTagName(it))},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),
-            shape = RoundedCornerShape(12.dp),
-            placeholder = { Text("Tag name") },
+            shape = MaterialTheme.shapes.medium,
+            placeholder = { Text(stringResource(R.string.tag_name_placeholder)) },
+            singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
                 onDone = {
@@ -83,7 +94,11 @@ fun EditTagBottomSheet(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(text = "TAG COLOR", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold)
+        Text(
+            text = stringResource(R.string.tag_color),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
         Box(
             modifier = Modifier
@@ -109,9 +124,17 @@ fun EditTagBottomSheet(
                     .weight(1f)
                     .height(56.dp),
             ) {
-                Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red)
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
                 Spacer(Modifier.width(8.dp))
-                Text(text = "태그 삭제", color = Color.Red, maxLines = 1)
+                Text(
+                    text = stringResource(R.string.tag_delete_title),
+                    color = MaterialTheme.colorScheme.error,
+                    maxLines = 1
+                )
             }
             TextButton(
                 onClick = {onIntent(TagsIntent.SaveTag)},
@@ -124,7 +147,7 @@ fun EditTagBottomSheet(
             ) {
                 Icon(Icons.Default.Check, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("저장")
+                Text(stringResource(R.string.action_save))
             }
         }
     }
@@ -133,7 +156,7 @@ fun EditTagBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .background(Color.White.copy(alpha = 0.7f)),
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(

@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ar9988.domain.model.Tag
-import com.ar9988.tagfilemanager.ui.theme.CardWhite
 
 
 @Composable
@@ -47,7 +46,7 @@ fun FilterableTagChip(
         onClick = onToggle,
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        color = CardWhite,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(
             width = if (isSelected) 2.dp else 0.5.dp,
             color = borderColor

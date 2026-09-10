@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -184,7 +185,7 @@ fun LazyColumnScrollbar(
                 .align(Alignment.TopEnd)
                 .alpha(targetAlpha)
                 .background(
-                    Color.Gray,
+                    MaterialTheme.colorScheme.outline,
                     RoundedCornerShape(2.dp)
                 )
         )

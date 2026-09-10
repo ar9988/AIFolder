@@ -1,6 +1,5 @@
 package com.ar9988.tagfilemanager.feature.assistant.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -23,108 +20,90 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.ar9988.tagfilemanager.R
 import com.ar9988.tagfilemanager.feature.assistant.AssistantIntent
 import com.ar9988.tagfilemanager.feature.assistant.AssistantState
-import com.ar9988.tagfilemanager.ui.theme.CardBlack
-import com.ar9988.tagfilemanager.ui.theme.CardWhite
+import com.ar9988.tagfilemanager.ui.theme.Spacing
 
+/** 질문 입력줄. 보낼 수 있을 때만 전송 버튼에 색이 들어온다. */
 @Composable
 fun AssistantInputBar(
     state: AssistantState,
     onIntent: (AssistantIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val canSend = state.query.isNotBlank() && !state.isLoading
+
     Column(modifier = modifier) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(CardWhite),
+                .background(MaterialTheme.colorScheme.surface),
             contentAlignment = Alignment.Center
         ) {
             Row(
                 modifier = Modifier
-                    .widthIn(max = 640.dp)
+                    .widthIn(max = Spacing.contentMaxWidth)
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = Spacing.m, vertical = Spacing.s),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.s)
             ) {
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    BasicTextField(
-                        value = state.query,
-                        onValueChange = { onIntent(AssistantIntent.OnQueryChange(it)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                color = CardWhite,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        decorationBox = { inner ->
+                BasicTextField(
+                    value = state.query,
+                    onValueChange = { onIntent(AssistantIntent.OnQueryChange(it)) },
+                    modifier = Modifier.weight(1f),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurface
+                    ),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    decorationBox = { inner ->
+                        Box(
+                            modifier = Modifier
+                                .clip(MaterialTheme.shapes.extraLarge)
+                                .background(MaterialTheme.colorScheme.surfaceContainer)
+                                .padding(horizontal = Spacing.l, vertical = Spacing.m),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
                             if (state.query.isEmpty()) {
                                 Text(
-                                    "Ask AI anything...",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    text = stringResource(R.string.ai_input_placeholder),
+                                    style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             inner()
                         }
-                    )
-                }
+                    }
+                )
 
                 Surface(
-                    onClick = {
-                        if (state.query.isNotBlank() && !state.isLoading) {
-                            onIntent(AssistantIntent.OnSendMessage)
-                        }
-                    },
-                    shape = CircleShape,
-                    color = if (state.query.isNotBlank() && !state.isLoading)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        CardWhite,
-                    modifier = Modifier.size(40.dp)
+                    onClick = { if (canSend) onIntent(AssistantIntent.OnSendMessage) },
+                    enabled = canSend,
+                    shape = MaterialTheme.shapes.medium,
+                    color =
+                        if (canSend) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(44.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "전송",
-                            tint = if (state.query.isNotBlank() && !state.isLoading)
-                                CardWhite
-                            else
-                                CardBlack,
+                            contentDescription = stringResource(R.string.ai_send),
+                            tint =
+                                if (canSend) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
         }
-
-        Text(
-            text = "POWERED BY ON-DEVICE AI",
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(CardWhite)
-                .padding(bottom = 8.dp),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            letterSpacing = 1.sp,
-            fontSize = 9.sp
-        )
     }
 }

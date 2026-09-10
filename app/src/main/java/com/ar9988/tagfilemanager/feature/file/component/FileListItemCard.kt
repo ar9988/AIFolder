@@ -3,16 +3,17 @@ package com.ar9988.tagfilemanager.feature.file.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -20,23 +21,31 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha // 추가됨
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ar9988.tagfilemanager.R
 import com.ar9988.tagfilemanager.feature.common.component.FileExtensionIcon
-import com.ar9988.tagfilemanager.feature.file.FilesIntent
-import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
+import com.ar9988.tagfilemanager.feature.common.component.FolderIcon
 import com.ar9988.tagfilemanager.feature.common.component.TagChip
+import com.ar9988.tagfilemanager.feature.common.component.fileDisplayName
+import com.ar9988.tagfilemanager.feature.common.component.rememberMetaText
+import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
+import com.ar9988.tagfilemanager.feature.file.FilesIntent
 import com.ar9988.tagfilemanager.feature.file.model.FileMode
-import com.ar9988.tagfilemanager.ui.theme.CardWhite
+import com.ar9988.tagfilemanager.ui.theme.Spacing
+import com.ar9988.tagfilemanager.ui.theme.tabularNums
 import com.ar9988.tagfilemanager.util.FileTypeUtils
 
+/**
+ * 목록의 한 행.
+ *
+ * 예전에는 행마다 radius 20dp 카드가 붙어 화면당 파일이 4~5개밖에 들어가지 않았다.
+ * 이제 56dp 행 + 구분선으로 그리고, 카드는 실제로 묶어야 할 것에만 남긴다.
+ */
 @Composable
 fun FileListItemCard(
     resource: FileItemUiModel,
@@ -47,170 +56,156 @@ fun FileListItemCard(
 ) {
     val isParent = resource.isParent
     val isMoving = fileMode == FileMode.Move && isSelected
-    val isResult = fileMode == FileMode.SearchResult
+    val isSearchResult = fileMode == FileMode.SearchResult
 
+    // 선택 중에는 ".." 로 빠져나갈 수 없게 막는다. 이동 모드에서는 위로 올라가야 하므로 예외.
     val isParentDisabled = isParent && hasSelection && fileMode != FileMode.Move
 
-    val backgroundColor = when {
-        isParentDisabled -> Color(0xFFF5F5F5)
-        isMoving -> Color(0xFFE0E0E0)
-        isParent -> Color(0xFFF5F5F5)
-        resource.isDirectory -> Color(0xFFFFECB3)
-        else -> Color(0xFFE3F2FD)
-    }
-
-    val iconTint = when {
-        isParentDisabled -> Color(0xFFBDBDBD)
-        isParent -> Color(0xFF757575)
-        else -> Color(0xFFFFA000)
-    }
-
-    val iconRes = if (isParent) R.drawable.baseline_arrow_upward_24 else R.drawable.outline_folder_24
+    val showCheckbox = hasSelection && !isParent && fileMode != FileMode.Move
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (isMoving) Color.Black.copy(alpha = 0.05f) else CardWhite)
-            .alpha(if (isParentDisabled) 0.4f else 1f)
+            .background(
+                if (isSelected && fileMode != FileMode.Move) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.background
+                }
+            )
+            .alpha(if (isParentDisabled || isMoving) 0.4f else 1f)
             .combinedClickable(
                 enabled = !isMoving && !isParentDisabled,
                 onClick = {
                     when {
-                        isParent -> {
-                            onIntent(FilesIntent.NavigateToParent(resource.path))
-                        }
-                        fileMode == FileMode.Move -> {
-                            if (resource.isDirectory) {
-                                onIntent(FilesIntent.ClickResource(resource))
-                            }
-                        }
-                        hasSelection -> {
-                            onIntent(FilesIntent.ToggleSelection(resource))
-                        }
-                        else -> {
-                            onIntent(FilesIntent.FileOpen(resource))
-                        }
+                        isParent -> onIntent(FilesIntent.NavigateToParent(resource.path))
+                        fileMode == FileMode.Move ->
+                            if (resource.isDirectory) onIntent(FilesIntent.ClickResource(resource))
+                        hasSelection -> onIntent(FilesIntent.ToggleSelection(resource))
+                        else -> onIntent(FilesIntent.FileOpen(resource))
                     }
                 },
-                onLongClick = if (fileMode == FileMode.Move || isParentDisabled) null else {
-                    {
-                        if (!hasSelection) {
-                            onIntent(FilesIntent.ToggleSelection(resource))
-                        }
+                onLongClick =
+                    if (fileMode == FileMode.Move || isParentDisabled || isParent) null
+                    else {
+                        { if (!hasSelection) onIntent(FilesIntent.ToggleSelection(resource)) }
                     }
-                }
             )
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .heightIn(min = Spacing.listRow)
+            .padding(horizontal = Spacing.screen, vertical = Spacing.s),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.m)
     ) {
-        if (hasSelection && !isParent && fileMode != FileMode.Move){
-            Checkbox(
-                checked = isSelected,
-                onCheckedChange = null
-            )
-            Spacer(modifier = Modifier.width(12.dp))
+        if (showCheckbox) {
+            Checkbox(checked = isSelected, onCheckedChange = null)
         }
 
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(backgroundColor),
-            contentAlignment = Alignment.Center
+        FileLeadingIcon(resource = resource, modifier = Modifier.size(40.dp))
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            if (resource.isDirectory || isParent) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(iconRes),
-                    contentDescription = null,
-                    tint = if (isMoving) Color.Gray else iconTint
-                )
-            } else {
-                val isImage = FileTypeUtils.isImage(resource.extension)
-                val isVideo = FileTypeUtils.isVideo(resource.extension)
-
-                if (isImage || isVideo) {
-                    ThumbnailImage(
-                        path = resource.path,
-                        isVideo = isVideo,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    FileExtensionIcon(
-                        modifier = Modifier.size(36.dp),
-                        extension = resource.extension,
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = if (isParent) ".." else resource.name,
+                text = fileDisplayName(resource),
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (isParent) FontWeight.Medium else FontWeight.Bold,
-                color = when {
-                    isParentDisabled -> Color(0xFF9E9E9E)
-                    isMoving -> Color.LightGray
-                    isParent -> Color.Gray
-                    else -> MaterialTheme.colorScheme.onSurface
-                },
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            if (isMoving) {
-                Text(
-                    text = "이동 중인 항목",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
-                )
-            } else if (!isParent) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (resource.tags.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .basicMarquee(iterations = Int.MAX_VALUE),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            resource.tags.forEach { tag ->
-                                TagChip(tag)
-                            }
-                        }
-                    }
-
-                    if (resource.metaText.isNotEmpty()) {
-                        Text(
-                            text = resource.metaText,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.Gray,
-                            maxLines = 1,
-                        )
-                    }
-                }
-                if (isResult) {
-                    Text(
-                        text = resource.path,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.DarkGray,
-                        maxLines = 1,
-                    )
-                }
-            } else {
-                Text(
-                    text = "상위 폴더로 이동",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
-                )
+            when {
+                isMoving -> SecondaryLine(stringResource(R.string.files_moving_item))
+                isParent -> Unit
+                else -> FileSecondaryLine(resource, isSearchResult)
             }
         }
+
+        if (!isParent) {
+            Text(
+                text = rememberMetaText(resource),
+                style = MaterialTheme.typography.labelMedium.tabularNums(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+                maxLines = 2
+            )
+        }
+    }
+}
+
+/** 파일명 아래 줄: 태그가 있으면 태그, 없으면 "태그 없음". 검색 결과에서는 경로도 보여준다. */
+@Composable
+private fun FileSecondaryLine(resource: FileItemUiModel, isSearchResult: Boolean) {
+    if (resource.tags.isNotEmpty()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .basicMarquee(iterations = Int.MAX_VALUE),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            resource.tags.forEach { TagChip(tag = it) }
+        }
+    } else if (!resource.isDirectory) {
+        SecondaryLine(stringResource(R.string.files_no_tags))
+    }
+
+    if (isSearchResult) {
+        SecondaryLine(resource.path)
+    }
+}
+
+@Composable
+private fun SecondaryLine(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+/**
+ * 행 앞의 아이콘.
+ * 이미지·동영상은 실제 썸네일을, 나머지는 확장자별 아이콘을 보여준다.
+ */
+@Composable
+fun FileLeadingIcon(
+    resource: FileItemUiModel,
+    modifier: Modifier = Modifier,
+    iconSize: androidx.compose.ui.unit.Dp = 20.dp,
+) {
+    when {
+        resource.isParent -> Box(
+            modifier = modifier
+                .clip(MaterialTheme.shapes.medium)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowUpward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(iconSize)
+            )
+        }
+
+        resource.isDirectory -> FolderIcon(modifier = modifier, iconSize = iconSize)
+
+        FileTypeUtils.isImage(resource.extension) || FileTypeUtils.isVideo(resource.extension) ->
+            Box(modifier = modifier.clip(MaterialTheme.shapes.medium)) {
+                ThumbnailImage(
+                    path = resource.path,
+                    isVideo = FileTypeUtils.isVideo(resource.extension),
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+        else -> FileExtensionIcon(
+            extension = resource.extension,
+            modifier = modifier,
+            iconSize = iconSize
+        )
     }
 }

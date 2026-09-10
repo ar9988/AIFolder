@@ -3,16 +3,16 @@ package com.ar9988.tagfilemanager.feature.main.component
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,21 +21,22 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.ar9988.tagfilemanager.R
-import com.ar9988.tagfilemanager.ui.theme.CardWhite
+import com.ar9988.tagfilemanager.ui.theme.Spacing
 import com.ar9988.tagfilemanager.util.PermissionManager
 
-
+/**
+ * 모든 파일 접근 권한을 받기 전에 보여주는 화면.
+ *
+ * 권한은 시스템 설정에서 켜고 돌아오므로, 화면이 다시 보일 때마다 다시 확인한다.
+ */
 @Composable
 fun PermissionGatewayScreen(onGranted: () -> Unit) {
     val context = LocalContext.current
@@ -43,60 +44,80 @@ fun PermissionGatewayScreen(onGranted: () -> Unit) {
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                if (PermissionManager.hasAllFilesAccess(context)) {
-                    onGranted()
-                }
+            if (event == Lifecycle.Event.ON_RESUME &&
+                PermissionManager.hasAllFilesAccess(context)
+            ) {
+                onGranted()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(Spacing.xl),
+        contentAlignment = Alignment.Center
+    ) {
         Column(
             modifier = Modifier
-                .padding(24.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(
-                    color = CardWhite,
-                    shape = RoundedCornerShape(16.dp)
-                ).padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .clip(MaterialTheme.shapes.extraLarge)
+                .background(MaterialTheme.colorScheme.surface)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = MaterialTheme.shapes.extraLarge
+                )
+                .padding(Spacing.xxl),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Spacing.l)
         ) {
-            Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.outline_folder_24),
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = Color(0xFF2196F3)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Folder,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
             Text(
-                "파일 관리를 시작할까요?",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                text = stringResource(R.string.permission_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
             )
+
             Text(
-                "AI 태그 기능을 사용하려면\n모든 파일 접근 권한이 필요합니다.",
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 12.dp),
-                color = Color.DarkGray
+                text = stringResource(R.string.permission_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
+
             Button(
                 onClick = {
-                    try {
-                        val intent = PermissionManager.getAllFilesAccessIntent(context)
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
-                        // fallback
-                        val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                        context.startActivity(intent)
+                    runCatching {
+                        context.startActivity(PermissionManager.getAllFilesAccessIntent(context))
+                    }.onFailure {
+                        runCatching {
+                            context.startActivity(
+                                Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                            )
+                        }
                     }
                 },
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                shape = MaterialTheme.shapes.medium
             ) {
-                Text("권한 허용 및 시작")
+                Text(stringResource(R.string.permission_action))
             }
         }
     }

@@ -6,6 +6,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.draw.rotate
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.*
@@ -16,12 +19,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.ar9988.tagfilemanager.R
+import com.ar9988.tagfilemanager.feature.common.model.asString
 import com.ar9988.tagfilemanager.feature.assistant.model.AssistantSortType
 import com.ar9988.tagfilemanager.feature.assistant.model.MessageContent
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 import com.ar9988.tagfilemanager.feature.common.model.SortOrder
-import com.ar9988.tagfilemanager.feature.common.component.SortOrderButton
-import com.ar9988.tagfilemanager.ui.theme.CardWhite
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -44,27 +49,26 @@ fun FileResultBubble(
         if (isExpanded) displayFiles else displayFiles.take(5)
     }
 
-    val sortOptions = remember {
-        listOf(
-            AssistantSortType.Recent to "최신순",
-            AssistantSortType.Size to "용량순",
-            AssistantSortType.Name to "이름순"
-        )
-    }
+    // stringResource 는 컴포저블이라 remember 블록 안에서는 부를 수 없다.
+    val sortOptions = listOf(
+        AssistantSortType.Recent to stringResource(R.string.ai_sort_recent),
+        AssistantSortType.Size to stringResource(R.string.ai_sort_size),
+        AssistantSortType.Name to stringResource(R.string.ai_sort_name)
+    )
 
     Surface(
         shape = RoundedCornerShape(
             topStart = 4.dp, topEnd = 16.dp,
             bottomStart = 16.dp, bottomEnd = 16.dp
         ),
-        color = CardWhite,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             // 설명
             Text(
-                text = content.description,
+                text = content.description.asString(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -130,18 +134,18 @@ fun FileResultBubble(
                         Surface(
                             onClick = { onSortTypeChange(type) },
                             shape = RoundedCornerShape(24.dp),
-                            color = CardWhite,
-                            border = BorderStroke(
-                                width = if (isSelected) 2.dp else 1.dp,
-                                color = if (isSelected)
-                                    Color(0xFF00ACC1)
-                                else
-                                    Color(0xFFE0E0E0)
+                            color = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surface,
+                            border = if (isSelected) null else BorderStroke(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant
                             ),
                             contentColor = if (isSelected)
-                                Color(0xFF00ACC1)
+                                MaterialTheme.colorScheme.onPrimaryContainer
                             else
-                                Color(0xFF464553)
+                                MaterialTheme.colorScheme.onSurfaceVariant
                         ) {
                             Text(
                                 text = label,
@@ -149,20 +153,25 @@ fun FileResultBubble(
                                     horizontal = 12.dp,
                                     vertical = 6.dp
                                 ),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = if (isSelected)
-                                    FontWeight.Bold
-                                else
-                                    FontWeight.Medium
+                                style = MaterialTheme.typography.labelMedium
                             )
                         }
                     }
                 }
 
-                SortOrderButton(
-                    sortOrder = currentSortOrder,
-                    onToggle = onSortOrderToggle
-                )
+                IconButton(onClick = onSortOrderToggle, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowUpward,
+                        contentDescription = stringResource(
+                            if (currentSortOrder == SortOrder.ASC) R.string.files_sort_ascending
+                            else R.string.files_sort_descending
+                        ),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .rotate(if (currentSortOrder == SortOrder.ASC) 0f else 180f)
+                    )
+                }
             }
 
             Spacer(Modifier.height(6.dp))
@@ -186,23 +195,25 @@ fun FileResultBubble(
                         onClick = { isExpanded = true },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
-                        color = CardWhite,
+                        color = MaterialTheme.colorScheme.surface,
                         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Text(
-                            text = "전체 ${displayFiles.size}개 보기",
+                            text = pluralStringResource(
+                                R.plurals.ai_view_all, displayFiles.size, displayFiles.size
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 10.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.Black,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
                             textAlign = TextAlign.Center
                         )
                     }
                 }
             } else {
                 Text(
-                    text = "해당하는 파일이 없어요",
+                    text = stringResource(R.string.ai_result_no_files),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

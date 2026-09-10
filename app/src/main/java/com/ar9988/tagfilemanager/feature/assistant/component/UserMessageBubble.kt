@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.ar9988.tagfilemanager.feature.assistant.model.MessageContent
-import com.ar9988.tagfilemanager.ui.theme.CardWhite
+import com.ar9988.tagfilemanager.feature.common.model.asString
 
 @Composable
 fun UserMessageBubble(
@@ -33,14 +33,10 @@ fun UserMessageBubble(
                 topStart = 16.dp, topEnd = 4.dp,
                 bottomStart = 16.dp, bottomEnd = 16.dp
             ),
-            border = BorderStroke(
-                1.dp,
-                Color.White.copy(alpha = 0.25f)
-            ),
-            color = CardWhite
+            color = MaterialTheme.colorScheme.primary
         ) {
             Text(
-                text = (content as? MessageContent.Text)?.text ?: "",
+                text = (content as? MessageContent.Text)?.text?.asString().orEmpty(),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimary

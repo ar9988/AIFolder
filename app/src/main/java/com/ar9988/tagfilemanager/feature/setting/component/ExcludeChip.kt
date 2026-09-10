@@ -16,7 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import com.ar9988.tagfilemanager.R
 
 @Composable
 fun ExcludeChip(
@@ -26,6 +28,7 @@ fun ExcludeChip(
 ) {
     Surface(
         shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(
             modifier = Modifier.padding(
@@ -61,7 +64,7 @@ fun ExcludeChip(
 
             Icon(
                 imageVector = Icons.Outlined.Close,
-                contentDescription = "제거",
+                contentDescription = stringResource(R.string.action_remove),
                 tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier
                     .padding(start = 8.dp)

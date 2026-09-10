@@ -2,6 +2,9 @@ package com.ar9988.tagfilemanager.feature.tag
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ar9988.tagfilemanager.R
+import com.ar9988.tagfilemanager.feature.common.model.UiText
+import com.ar9988.tagfilemanager.feature.common.model.toUiText
 import com.ar9988.domain.usecase.common.CreateTagUseCase
 import com.ar9988.domain.usecase.tag.DeleteTagUseCase
 import com.ar9988.domain.usecase.tag.GetTagsWithCountUseCase
@@ -171,13 +174,13 @@ class TagsViewModel @Inject constructor(
 
             result
                 .onSuccess {
-                    _sideEffect.emit(TagsSideEffect.ShowToast("태그 저장 성공"))
+                    _sideEffect.emit(TagsSideEffect.ShowToast(UiText.res(R.string.toast_tag_saved)))
                     _uiState.update {
                         TagsReducer.reduceSaveSuccess(it).copy(isTagSaving = false)
                     }
                 }
                 .onFailure {e->
-                    _sideEffect.emit(TagsSideEffect.ShowToast(e.message ?: "태그 저장 실패"))
+                    _sideEffect.emit(TagsSideEffect.ShowToast(e.toUiText()))
                     _uiState.update { it.copy(isTagSaving = false) }
                 }
         }
@@ -197,13 +200,13 @@ class TagsViewModel @Inject constructor(
 
             result
                 .onSuccess {
-                    _sideEffect.emit(TagsSideEffect.ShowToast("태그 ${tagIds.size}개 삭제 성공"))
+                    _sideEffect.emit(TagsSideEffect.ShowToast(UiText.plural(R.plurals.toast_tag_deleted, tagIds.size)))
                     _uiState.update {
                         TagsReducer.reduceDeleteSuccess(it)
                     }
                 }
                 .onFailure {
-                    _sideEffect.emit(TagsSideEffect.ShowToast("태그 삭제 실패"))
+                    _sideEffect.emit(TagsSideEffect.ShowToast(UiText.res(R.string.toast_tag_delete_failed)))
                 }
         }
     }

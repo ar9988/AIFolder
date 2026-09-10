@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ar9988.tagfilemanager.feature.common.component.FileExtensionIcon
+import com.ar9988.tagfilemanager.feature.common.component.rememberMetaText
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 
 @Composable
@@ -53,7 +54,7 @@ fun FileResultItem(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = file.metaText,
+                text = rememberMetaText(file),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

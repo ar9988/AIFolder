@@ -25,7 +25,6 @@ import com.ar9988.tagfilemanager.feature.assistant.model.AssistantSortType
 import com.ar9988.tagfilemanager.feature.assistant.model.MessageContent
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 import com.ar9988.tagfilemanager.feature.common.model.SortOrder
-import com.ar9988.tagfilemanager.ui.theme.CardWhite
 
 @Composable
 fun AssistantMessageBubble(
@@ -48,7 +47,7 @@ fun AssistantMessageBubble(
     ) {
         Surface(
             shape = RoundedCornerShape(10.dp),
-            color = CardWhite,
+            color = MaterialTheme.colorScheme.surface,
             modifier = Modifier.size(32.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {

@@ -1,9 +1,14 @@
 package com.ar9988.tagfilemanager.feature.common.model
 
 import com.ar9988.domain.model.Resource
-import com.ar9988.tagfilemanager.util.formatCreateDate
 import com.ar9988.tagfilemanager.util.formatFileSize
 
+/**
+ * 목록에 그릴 파일 하나.
+ *
+ * 표시 문자열은 여기서 만들지 않는다. 날짜는 "오늘"/"어제" 처럼 로케일을 타므로
+ * 화면에서 [com.ar9988.tagfilemanager.feature.common.component.rememberMetaText] 로 조립한다.
+ */
 data class FileItemUiModel(
     val id: Long,
     val name: String,
@@ -15,31 +20,21 @@ data class FileItemUiModel(
     val path: String,
     val extension: String?,
     val mimeType: String?,
-){
+) {
+    /** 숫자와 단위뿐이라 로케일을 타지 않는다. */
     val sizeText: String
         get() = if (isDirectory) "" else formatFileSize(size)
-
-    val dateText: String
-        get() = formatCreateDate(lastModified)
-
-    val metaText: String
-        get() = listOfNotNull(
-            sizeText.takeIf { it.isNotEmpty() },
-            dateText.takeIf { it.isNotEmpty() }
-        ).joinToString(" · ")
 }
 
-fun Resource.toUiModel(): FileItemUiModel {
-    return FileItemUiModel(
-        id = this.id,
-        name = if (this.isParentPointer) "상위 폴더로 이동" else this.name,
-        isDirectory = this.isDirectory,
-        isParent = this.isParentPointer,
-        tags = this.tags.map { it.toUiModel() },
-        path = this.path,
-        extension = this.extension,
-        mimeType = this.mimeType,
-        size = this.size,
-        lastModified = this.lastModified
-    )
-}
+fun Resource.toUiModel(): FileItemUiModel = FileItemUiModel(
+    id = id,
+    name = name,
+    isDirectory = isDirectory,
+    isParent = isParentPointer,
+    tags = tags.map { it.toUiModel() },
+    path = path,
+    extension = extension,
+    mimeType = mimeType,
+    size = size,
+    lastModified = lastModified
+)

@@ -1,6 +1,7 @@
 package com.ar9988.tagfilemanager.feature.setting
 
 import com.ar9988.domain.model.SearchSensitivity
+import com.ar9988.domain.model.ThemeMode
 
 sealed class SettingsIntent {
     data class ToggleAutoScan(val enabled: Boolean) : SettingsIntent()
@@ -12,5 +13,6 @@ sealed class SettingsIntent {
     data class SetSearchSensitivity(val sensitivity: SearchSensitivity) : SettingsIntent()
     data class ToggleShowHiddenFiles(val enabled: Boolean) : SettingsIntent()
     data object ResetExcludedExtensions : SettingsIntent()
+    data class SetThemeMode(val mode: ThemeMode) : SettingsIntent()
     data object ResetExcludedFolders : SettingsIntent()
 }

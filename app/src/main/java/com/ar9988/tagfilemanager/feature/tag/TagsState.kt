@@ -25,14 +25,8 @@ data class TagsState(
     val isSingleSelection: Boolean
         get() = selectedTagIds.size == 1 || selectedTagId!=null
 
-    val selectionLabel: String
-        get() = if (isSingleSelection) {
-            selectedFileOrNull()?.name.orEmpty()
-        } else {
-            "${selectedTagIds.size}개의 항목"
-        }
-
-    fun selectedFileOrNull(): TagWithCountUiModel? {
+    /** 선택한 태그가 하나뿐이면 그 항목. 문구는 화면이 만든다. */
+    fun selectedTagOrNull(): TagWithCountUiModel? {
         return if (selectedTagIds.size == 1) {
             filteredTags.firstOrNull { it.id in selectedTagIds }
         } else if (selectedTagId!=null){

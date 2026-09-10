@@ -16,8 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ar9988.domain.model.SearchStrategy
+import androidx.compose.ui.res.stringResource
+import com.ar9988.tagfilemanager.R
 import com.ar9988.tagfilemanager.feature.assistant.model.MessageContent
-import com.ar9988.tagfilemanager.ui.theme.CardWhite
+import com.ar9988.tagfilemanager.feature.common.model.asString
 
 @Composable
 fun SearchFailureBubble(
@@ -33,7 +35,7 @@ fun SearchFailureBubble(
             bottomStart = 16.dp,
             bottomEnd = 16.dp
         ),
-        color = CardWhite,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(
             0.5.dp,
             MaterialTheme.colorScheme.outlineVariant
@@ -46,21 +48,24 @@ fun SearchFailureBubble(
         ) {
 
             Text(
-                text = content.description,
-                style = MaterialTheme.typography.bodyMedium
+                text = content.description.asString(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(Modifier.height(12.dp))
 
             if (suggestions.isNotEmpty()) {
                 Text(
-                    text = "다른 방식으로 찾아볼까요?",
+                    text = stringResource(R.string.ai_failure_subtitle),
                     style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Text(
-                    text = "검색 결과가 없습니다",
+                    text = stringResource(R.string.ai_failure_title),
                     style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 

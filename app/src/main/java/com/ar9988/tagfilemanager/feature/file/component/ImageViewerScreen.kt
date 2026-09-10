@@ -19,16 +19,18 @@ import androidx.compose.ui.window.DialogProperties
 import coil.ImageLoader
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.ar9988.tagfilemanager.R
+import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 import com.ar9988.tagfilemanager.feature.common.model.ZoomState
 import com.ar9988.tagfilemanager.feature.file.FilesIntent
-import com.ar9988.tagfilemanager.feature.file.FilesState
 import java.io.File
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImageViewerScreen(
-    state: FilesState,
+    files: List<FileItemUiModel>,
+    initialIndex: Int,
     onIntent: (FilesIntent) -> Unit
 ) {
     val context = LocalContext.current
@@ -48,18 +50,18 @@ fun ImageViewerScreen(
     val zoomStates = remember { mutableStateMapOf<String, ZoomState>() }
 
     Dialog(
-        onDismissRequest = { onIntent(FilesIntent.Back) },
+        onDismissRequest = { onIntent(FilesIntent.CloseImageViewer) },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
             decorFitsSystemWindows = false
         )
     ) {
         val pagerState = rememberPagerState(
-            initialPage = state.imageViewerInitialIndex,
-            pageCount = { state.imageViewerFiles.size }
+            initialPage = initialIndex,
+            pageCount = { files.size }
         )
 
-        val currentPath = state.imageViewerFiles.getOrNull(pagerState.currentPage)?.path
+        val currentPath = files.getOrNull(pagerState.currentPage)?.path
         val isCurrentZoomed = (zoomStates[currentPath]?.scale ?: 1f) > 1f
 
         Surface(
@@ -74,7 +76,7 @@ fun ImageViewerScreen(
                     beyondViewportPageCount = 1,
                     userScrollEnabled = !isCurrentZoomed
                 ) { page ->
-                    val fileItem = state.imageViewerFiles[page]
+                    val fileItem = files[page]
                     val savedState = zoomStates[fileItem.path] ?: ZoomState()
 
                     ZoomableImage(
@@ -92,23 +94,23 @@ fun ImageViewerScreen(
                     title = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = state.imageViewerFiles.getOrNull(pagerState.currentPage)?.name ?: "",
+                                text = files.getOrNull(pagerState.currentPage)?.name.orEmpty(),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.White,
                                 maxLines = 1
                             )
                             Text(
-                                text = "${pagerState.currentPage + 1} / ${state.imageViewerFiles.size}",
+                                text = "${pagerState.currentPage + 1} / ${files.size}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.LightGray
                             )
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = { onIntent(FilesIntent.Back) }) {
+                        IconButton(onClick = { onIntent(FilesIntent.CloseImageViewer) }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
+                                contentDescription = androidx.compose.ui.res.stringResource(R.string.action_back),
                                 tint = Color.White
                             )
                         }

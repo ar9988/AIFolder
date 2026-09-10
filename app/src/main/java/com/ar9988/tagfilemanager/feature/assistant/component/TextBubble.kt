@@ -9,11 +9,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.ar9988.tagfilemanager.ui.theme.CardWhite
+import com.ar9988.tagfilemanager.feature.common.model.UiText
+import com.ar9988.tagfilemanager.feature.common.model.asString
 
 @Composable
 fun TextBubble(
-    text: String,
+    text: UiText,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -21,12 +22,12 @@ fun TextBubble(
             topStart = 4.dp, topEnd = 16.dp,
             bottomStart = 16.dp, bottomEnd = 16.dp
         ),
-        color = CardWhite,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier
     ) {
         Text(
-            text = text,
+            text = text.asString(),
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface

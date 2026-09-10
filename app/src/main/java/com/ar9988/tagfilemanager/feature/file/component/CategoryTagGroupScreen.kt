@@ -21,12 +21,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.ar9988.domain.model.CategoryTagGroupModel
 import com.ar9988.domain.model.FileCategory
-import com.ar9988.tagfilemanager.ui.theme.CyanGradient
+import com.ar9988.tagfilemanager.R
+import com.ar9988.tagfilemanager.feature.common.component.labelRes
+import com.ar9988.tagfilemanager.ui.theme.Spacing
 
 @Composable
 fun CategoryTagGroupScreen(
@@ -39,7 +40,7 @@ fun CategoryTagGroupScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(CyanGradient)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // 헤더
         Row(
@@ -56,9 +57,9 @@ fun CategoryTagGroupScreen(
                 )
             }
             Text(
-                text = category.toString(),
+                text = stringResource(category.labelRes),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -68,18 +69,18 @@ fun CategoryTagGroupScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "파일이 없습니다",
+                    text = stringResource(R.string.files_empty),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(Spacing.screen),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.m),
+                verticalArrangement = Arrangement.spacedBy(Spacing.m)
             ) {
                 items(tagGroups, key = { it.tagId }) { group ->
                     CategoryTagGroupCard(

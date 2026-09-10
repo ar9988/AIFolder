@@ -1,7 +1,9 @@
 package com.ar9988.tagfilemanager.feature.main.component
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -10,11 +12,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -26,7 +25,6 @@ import com.ar9988.tagfilemanager.feature.file.FilesDashboardScreen
 import com.ar9988.tagfilemanager.feature.main.model.Screen
 import com.ar9988.tagfilemanager.feature.setting.SettingsScreen
 import com.ar9988.tagfilemanager.feature.tag.TagsDashboardScreen
-import com.ar9988.tagfilemanager.ui.theme.CardWhite
 
 @Composable
 fun MainContentWithBottomBar() {
@@ -34,17 +32,17 @@ fun MainContentWithBottomBar() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val items = listOf(Screen.Files, Screen.Tags, Screen.AI, Screen.Settings)
-
     Scaffold(
-        containerColor = Color.Transparent,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             NavigationBar(
-                containerColor = CardWhite,
+                containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp
             ) {
-                items.forEach { screen ->
-                    val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                Screen.entries.forEach { screen ->
+                    val selected =
+                        currentDestination?.hierarchy?.any { it.route == screen.route } == true
 
                     NavigationBarItem(
                         selected = selected,
@@ -58,16 +56,24 @@ fun MainContentWithBottomBar() {
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = Color.LightGray
-                        ) ,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
                         icon = {
-                            if (screen.iconRes != null) {
-                                Icon(ImageVector.vectorResource(screen.iconRes), contentDescription = screen.title)
-                            } else if (screen.iconVector != null) {
-                                Icon(screen.iconVector, contentDescription = screen.title)
-                            }
+                            Icon(
+                                imageVector = screen.icon,
+                                contentDescription = stringResource(screen.titleRes)
+                            )
                         },
-                        label = { Text(screen.title, fontSize = 10.sp) }
+                        label = {
+                            Text(
+                                text = stringResource(screen.titleRes),
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
                     )
                 }
             }
@@ -78,7 +84,7 @@ fun MainContentWithBottomBar() {
             startDestination = Screen.Files.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Files.route) {backStackEntry ->
+            composable(Screen.Files.route) { backStackEntry ->
                 val navigatePath = backStackEntry.savedStateHandle.get<String>("navigatePath")
                 FilesDashboardScreen(navigatePath = navigatePath)
             }
@@ -88,9 +94,7 @@ fun MainContentWithBottomBar() {
             composable(Screen.AI.route) {
                 AssistantScreen(
                     onNavigateToFile = { path ->
-                        navController.navigate(Screen.Files.route) {
-                            launchSingleTop = true
-                        }
+                        navController.navigate(Screen.Files.route) { launchSingleTop = true }
                         navController.getBackStackEntry(Screen.Files.route)
                             .savedStateHandle["navigatePath"] = path
                     }

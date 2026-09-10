@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ar9988.domain.model.SearchStrategy
 import com.ar9988.domain.usecase.assistant.AssistantSearchUseCase
+import com.ar9988.tagfilemanager.R
+import com.ar9988.tagfilemanager.feature.common.model.UiText
 import com.ar9988.tagfilemanager.feature.assistant.model.AssistantMessage
 import com.ar9988.tagfilemanager.feature.assistant.model.MessageContent
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -101,7 +103,7 @@ class AssistantViewModel @Inject constructor(
         val originalQuery = query
 
         val userMessage = AssistantMessage(
-            content = MessageContent.Text(query),
+            content = MessageContent.Text(UiText.Raw(query)),
             isUser = true
         )
 
@@ -124,7 +126,7 @@ class AssistantViewModel @Inject constructor(
 
                 val errorMessage = AssistantMessage(
                     content = MessageContent.Text(
-                        "오류가 발생했어요. 다시 시도해주세요."
+                        UiText.res(R.string.ai_error)
                     ),
                     isUser = false
                 )

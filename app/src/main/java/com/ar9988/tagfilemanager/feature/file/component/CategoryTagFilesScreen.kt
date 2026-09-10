@@ -35,8 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -45,7 +44,8 @@ import androidx.paging.compose.itemKey
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 import com.ar9988.tagfilemanager.feature.file.FilesIntent
 import com.ar9988.tagfilemanager.feature.file.FilesState
-import com.ar9988.tagfilemanager.ui.theme.CyanGradient
+import com.ar9988.tagfilemanager.R
+import com.ar9988.tagfilemanager.ui.theme.Spacing
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
@@ -57,8 +57,8 @@ fun CategoryTagFilesScreen(
     onIntent: (FilesIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val scrollKey = state.currentScrollKey
-    val savedPosition = state.scrollPositions[scrollKey] ?: (0 to 0)
+    val scrollKey = state.scrollKey
+    val savedPosition = state.content.scrollPositions[scrollKey] ?: (0 to 0)
 
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = savedPosition.first,
@@ -88,7 +88,7 @@ fun CategoryTagFilesScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(CyanGradient)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Row(
             modifier = Modifier
@@ -100,16 +100,16 @@ fun CategoryTagFilesScreen(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
             }
             Text(
-                text = state.categoryTagGroups
-                    .find { it.tagId == state.categorySelectedTagId }
-                    ?.tagName ?: "",
+                text = state.content.categoryTagGroups
+                    .find { it.tagId == state.nav.categorySelectedTagId }
+                    ?.tagName.orEmpty(),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
             IconButton(onClick = { onIntent(FilesIntent.ToggleGridView) }) {
                 Icon(
-                    imageVector = if (state.isGridView) Icons.AutoMirrored.Outlined.ViewList
+                    imageVector = if (state.content.isGridView) Icons.AutoMirrored.Outlined.ViewList
                     else Icons.Outlined.GridView,
                     contentDescription = null
                 )
@@ -135,20 +135,20 @@ fun CategoryTagFilesScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "파일이 없습니다",
+                        text = stringResource(R.string.files_empty),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
             else {
-                if (state.isGridView) {
+                if (state.content.isGridView) {
                     LazyVerticalGrid(
                         state = gridState,
                         columns = GridCells.Fixed(3),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(Spacing.m),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.s),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(
@@ -159,9 +159,9 @@ fun CategoryTagFilesScreen(
                             val file = pagedFiles[index] ?: return@items
                             FileGridItemCard(
                                 resource = file,
-                                isSelected = file.id in state.selectedFileIds,
-                                hasSelection = state.hasSelection,
-                                fileMode = state.fileMode,
+                                isSelected = file.id in state.selection.ids,
+                                hasSelection = state.selection.isActive,
+                                fileMode = state.nav.fileMode,
                                 onIntent = onIntent
                             )
                         }
@@ -184,8 +184,7 @@ fun CategoryTagFilesScreen(
                 } else {
                     LazyColumn(
                         state = listState,
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(vertical = Spacing.s),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(
@@ -196,9 +195,9 @@ fun CategoryTagFilesScreen(
                             val file = pagedFiles[index] ?: return@items
                             FileListItemCard(
                                 resource = file,
-                                isSelected = file.id in state.selectedFileIds,
-                                hasSelection = state.hasSelection,
-                                fileMode = state.fileMode,
+                                isSelected = file.id in state.selection.ids,
+                                hasSelection = state.selection.isActive,
+                                fileMode = state.nav.fileMode,
                                 onIntent = onIntent
                             )
                         }
@@ -223,12 +222,12 @@ fun CategoryTagFilesScreen(
         }
 
         AnimatedVisibility(
-            visible = state.hasSelection,
+            visible = state.selection.isActive,
             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
             exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
         ) {
             FilesBottomActionBar(
-                isCategory = state.selectedCategory != null,
+                isCategory = state.nav.selectedCategory != null,
                 state = state,
                 onIntent = onIntent
             )
