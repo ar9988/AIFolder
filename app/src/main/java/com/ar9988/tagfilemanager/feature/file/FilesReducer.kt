@@ -467,11 +467,22 @@ object FilesReducer {
         )
     }
 
-    /** 대상이 있는 오버레이를 연다. 선택이 비어 있으면 아무것도 하지 않는다. */
+    /**
+     * 대상이 있는 오버레이를 연다. 선택이 비어 있으면 아무것도 하지 않는다.
+     *
+     * 이동·복사 모드에서는 selectedFiles 를 쓰면 안 된다. 그건 지금 보고 있는 폴더의
+     * 목록에서 고른 항목을 찾는 것이라, 목적지 폴더로 옮겨온 뒤에는 늘 비어 있다.
+     * 그래서 "여기로 복사" 를 눌러도 대상이 없다고 보고 아무 일도 일어나지 않았다.
+     * 이동은 ConfirmMove 가 moveTargets 를 직접 쓰고 있어 드러나지 않았다.
+     */
     private fun FilesState.withTargetOverlay(
         create: (List<FileItemUiModel>) -> FileOverlay
     ): FilesState {
-        val targets = selectedFiles
+        val targets = if (nav.fileMode == FileMode.Move) {
+            selection.moveTargets
+        } else {
+            selectedFiles
+        }
         return if (targets.isEmpty()) this else copy(overlay = create(targets))
     }
 
@@ -482,6 +493,19 @@ object FilesReducer {
                 FileMode.SearchResult
             } else {
                 FileMode.Normal
+            },
+            // 뒤로가기 스택에 남은 "이동 중" 기록도 같이 지운다.
+            //
+            // pushNav 는 그 시점의 fileMode 까지 적어두고, popped 는 그대로 되돌린다.
+            // 그래서 이동모드로 폴더를 옮겨 다닌 뒤 이동을 끝내면, 현재 모드만 Normal 로
+            // 바뀌고 스택에는 Move 가 남아 뒤로가기 한 번에 이동모드가 되살아났다.
+            // 이미 끝난 작업이므로 되돌아갈 상태로서 의미가 없다.
+            stack = nav.stack.map { entry ->
+                if (entry.fileMode == FileMode.Move) {
+                    entry.copy(fileMode = FileMode.Normal)
+                } else {
+                    entry
+                }
             }
         ),
         selection = selection.cleared(),

@@ -5,6 +5,7 @@ import com.ar9988.domain.model.FileSortType
 import com.ar9988.tagfilemanager.feature.common.model.FileItemUiModel
 import com.ar9988.tagfilemanager.feature.file.model.FileMode
 import com.ar9988.tagfilemanager.feature.file.model.FileOverlay
+import com.ar9988.tagfilemanager.feature.file.model.NavigationEntry
 import com.ar9988.tagfilemanager.feature.file.model.ViewMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -296,6 +297,104 @@ class FilesReducerTest {
     }
 
     // ────────────────────────── 도우미 ──────────────────────────
+
+    // ────────────────────── 이동모드에서 복사 ──────────────────────
+
+    @Test
+    fun `목적지 폴더에서 복사를 눌러도 확인 다이얼로그가 뜬다`() {
+        // 실기기에서 나온 문제다. selectedFiles 는 지금 보고 있는 폴더의 목록에서
+        // 고른 항목을 찾으므로, 목적지 폴더로 옮겨온 뒤에는 비어 있다.
+        // 그래서 대상이 없다고 보고 다이얼로그가 아예 열리지 않았다.
+        val atDestination = movedIntoFolderWhileInMoveMode()
+            .let { it.copy(content = it.content.copy(files = emptyList())) }
+
+        assertTrue(atDestination.selectedFiles.isEmpty())
+        assertEquals(1, atDestination.selection.moveTargets.size)
+
+        val next = FilesReducer.reduce(atDestination, FilesIntent.ShowCopyDialog)
+
+        val overlay = next.overlay
+        assertTrue(overlay is FileOverlay.Copy)
+        assertEquals(1, (overlay as FileOverlay.Copy).targets.size)
+    }
+
+    // ────────────────────── 이동 후 뒤로가기 ──────────────────────
+
+    @Test
+    fun `이동을 끝낸 뒤 뒤로가기를 눌러도 이동모드로 돌아가지 않는다`() {
+        // 실기기에서 나온 문제다. 이동모드로 폴더를 옮겨 다니면 뒤로가기 스택에
+        // fileMode = Move 인 기록이 쌓인다. 이동을 끝내도 그 기록이 남아 있으면
+        // popped 가 fileMode 를 그대로 되돌리므로 이동모드가 다시 켜졌다.
+        val moving = movedIntoFolderWhileInMoveMode()
+
+        val done = FilesReducer.reduce(moving, FilesIntent.ConfirmMove)
+        assertEquals(FileMode.Normal, done.nav.fileMode)
+
+        val back = FilesReducer.reduce(done, FilesIntent.Back)
+
+        assertEquals(FileMode.Normal, back.nav.fileMode)
+        assertTrue(back.selection.moveTargets.isEmpty())
+    }
+
+    @Test
+    fun `이동을 취소한 뒤 뒤로가기를 눌러도 이동모드로 돌아가지 않는다`() {
+        val moving = movedIntoFolderWhileInMoveMode()
+
+        val cancelled = FilesReducer.reduce(moving, FilesIntent.CancelMove)
+        val back = FilesReducer.reduce(cancelled, FilesIntent.Back)
+
+        assertEquals(FileMode.Normal, back.nav.fileMode)
+    }
+
+    @Test
+    fun `이동모드에서 뒤로가기는 이동모드를 유지한 채 이전 폴더로 간다`() {
+        // 목적지를 고르는 중에는 뒤로가기가 탐색이어야 한다. 여기서 모드가 풀리면
+        // 상위 폴더로 올라가려다 이동이 취소된다.
+        val moving = movedIntoFolderWhileInMoveMode()
+
+        val back = FilesReducer.reduce(moving, FilesIntent.Back)
+
+        assertEquals(FileMode.Move, back.nav.fileMode)
+        assertEquals("/storage/emulated/0/Download", back.nav.currentPath)
+    }
+
+    @Test
+    fun `이동 시작 지점에서 뒤로가기를 누르면 이동이 취소된다`() {
+        val started = FilesReducer.reduce(
+            stateWithFiles().let { it.copy(selection = it.selection.copy(ids = setOf(1L))) },
+            FilesIntent.StartMoveOrCopy
+        )
+        assertEquals(FileMode.Move, started.nav.fileMode)
+
+        val back = FilesReducer.reduce(started, FilesIntent.Back)
+
+        assertEquals(FileMode.Normal, back.nav.fileMode)
+        assertTrue(back.selection.ids.isEmpty())
+    }
+
+    /** 파일을 고르고 이동모드로 들어간 뒤 하위 폴더까지 한 번 내려간 상태. */
+    private fun movedIntoFolderWhileInMoveMode(): FilesState {
+        val selected = stateWithFiles()
+            .let { it.copy(selection = it.selection.copy(ids = setOf(1L))) }
+
+        val inMoveMode = FilesReducer.reduce(selected, FilesIntent.StartMoveOrCopy)
+
+        // 실제 이동은 조회가 끝난 뒤 navigated() 가 마무리하므로, 여기서는
+        // 스택에 기록이 쌓인 상태를 직접 만든다.
+        return inMoveMode.copy(
+            nav = inMoveMode.nav.copy(
+                stack = inMoveMode.nav.stack + NavigationEntry(
+                    path = inMoveMode.nav.currentPath,
+                    folderId = inMoveMode.nav.currentFolderId,
+                    category = null,
+                    fileMode = FileMode.Move,
+                    viewMode = inMoveMode.nav.viewMode
+                ),
+                currentPath = "/storage/emulated/0/Download/Reports",
+                currentFolderId = 200L
+            )
+        )
+    }
 
     private fun stateWithFiles(includeParent: Boolean = false): FilesState {
         val files = buildList {
