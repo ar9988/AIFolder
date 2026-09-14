@@ -13,9 +13,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.LongBuffer
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.io.use
 import kotlin.math.sqrt
 
+@Singleton
 class OnnxEmbeddingModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : EmbeddingModel {
@@ -24,6 +26,8 @@ class OnnxEmbeddingModel @Inject constructor(
         OrtEnvironment.getEnvironment()
 
     private val mutex = Mutex()
+
+    private val embeddingCache = EmbeddingCache()
 
     private var session: OrtSession? = null
 
@@ -62,6 +66,12 @@ class OnnxEmbeddingModel @Inject constructor(
         }
 
     override suspend fun encode(
+        text: String
+    ): FloatArray = embeddingCache.getOrCompute(text) {
+        encodeUncached(text)
+    }
+
+    private suspend fun encodeUncached(
         text: String
     ): FloatArray = withContext(Dispatchers.Default) {
 
@@ -171,6 +181,8 @@ class OnnxEmbeddingModel @Inject constructor(
     }
 
     fun closeSession() {
+
+        embeddingCache.clear()
 
         session?.close()
 
